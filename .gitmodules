@@ -1,0 +1,3 @@
+[submodule "libchik"]
+	path = libchik
+	url = https://github.com/p0lyh3dron/libchik
