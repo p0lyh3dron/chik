@@ -10,6 +10,7 @@
 #include "image.h"
 
 #include <malloc.h>
+#include <string.h>
 
 /*
  *    Creates an image.
@@ -59,6 +60,27 @@ u32 image_set_pixel( image_t *image, u32 x, u32 y, u32 color ) {
     }
 
     image->apData[ y * image->aWidth + x ] = color;
+
+    return 1;
+}
+
+/*
+ *    Clears an image.
+ *
+ *    @param  image_t *     The image.
+ *    @param  u32           The color to clear the image with.
+ *
+ *    @return u32           1 if the image was cleared, 0 if the image could not be cleared.
+ */
+u32 image_clear( image_t *spImage, u32 sColor ) {
+    if ( spImage == NULL ) {
+        return 0;
+    }
+    
+    /*
+     *    Fastest way to clear is to memset the entire buffer.
+     */
+    memset( spImage->apData, sColor, spImage->aWidth * spImage->aHeight * sizeof( u32 ) );
 
     return 1;
 }

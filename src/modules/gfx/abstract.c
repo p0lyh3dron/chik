@@ -23,12 +23,12 @@ __attribute__( ( constructor ) )
 void platform_init( void ) {
     s32 width  = args_get_int( "-w" );
     s32 height = args_get_int( "-h" );
-    if ( width == -1 || height == -1 ) {
+    /*if ( width == -1 || height == -1 ) {
         width  = 1280;
         height = 720;
-    }
+    }*/
 #if USE_SDL
-    gpSurface = surface_create( 1280, 720, 32 );
+    gpSurface = surface_create( DEFAULT_WIDTH, DEFAULT_HEIGHT, 32 );
     if( gpSurface == NULL ) {
         log_fatal( "Could not create surface." );
     }
@@ -61,4 +61,5 @@ void platform_draw_frame( void ) {
     SDL_RenderCopy( gpSurface->apRenderer, gpSurface->apTexture, NULL, NULL );
     SDL_RenderPresent( gpSurface->apRenderer );
 #endif /* USE_SDL  */
+    image_clear( gpRenderTarget->apTarget, 0xFF000000 );
 }

@@ -16,7 +16,7 @@ typedef struct {
     u32          aHeight;
     u32          aFormat;
     u32          aDataLen;
-    u8          *apData;
+    u32         *apData;
 } image_t;
 
 /*
@@ -43,6 +43,16 @@ image_t *image_create( u32 width, u32 height, u32 format );
  *    @return u32          1 if the pixel was set, 0 if the pixel could not be set.
  */
 u32 image_set_pixel( image_t *image, u32 x, u32 y, u32 color );
+
+/*
+ *    Clears an image.
+ *
+ *    @param image_t *     The image.
+ *    @param u32           The color to clear the image with.
+ *
+ *    @return u32          1 if the image was cleared, 0 if the image could not be cleared.
+ */
+u32 image_clear( image_t *spImage, u32 sColor );
 
 /*
  *    Frees an image.
