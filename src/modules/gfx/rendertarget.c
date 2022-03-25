@@ -43,11 +43,12 @@ rendertarget_t *rendertarget_create( u32 sWidth, u32 sHeight, u32 sFormat ) {
      *    Make a new list of render targets if there is none.
      */
     if ( gpRenderTargets == NULL ) {
-        gpRenderTargets = calloc( 0, sizeof( rendertarget_t * ) * 2 );
+        gpRenderTargets = malloc( sizeof( rendertarget_t * ) * 2 );
         if( gpRenderTargets == NULL ) {
             log_error( "Could not allocate memory for render target list." );
         }
         gpRenderTargets[ 0 ] = pRenderTarget;
+        gpRenderTargets[ 1 ] = NULL;
     }
     else {
         u32 i = 0;
