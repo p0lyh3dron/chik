@@ -21,26 +21,32 @@ resource_t *gpVBuffer = NULL;
 /*
  *    Draw a scanline.
  *
- *    @param float       The starting x position of the scanline.
- *    @param float       The ending x position of the scanline.
- *    @param float       The starting y position of the scanline.
+ *    @param int       The starting x position of the scanline.
+ *    @param int       The ending x position of the scanline.
+ *    @param int       The starting y position of the scanline.
  */
-void draw_scanline( float x1, float x2, float y ) {
-    if ( gpRenderTarget == NULL ) {
-        gpRenderTarget = rendertarget_get_backbuffer();
+void draw_scanline( int x1, int x2, int y ) {
+    /*
+     *    Early out if the scanline is outside the render target.
+     */
+    if ( y < 0 || y >= gpRenderTarget->apTarget->aHeight ) {
         return;
     }
-    float x = x1;
-    while ( x < x2 ) {
-        int xRaster = ( int )( ( x + 1.f ) * gpRenderTarget->apTarget->aWidth / 2 );
-        int yRaster = ( int )( ( y + 1.f ) * gpRenderTarget->apTarget->aHeight / 2 );
+    /*
+     *    Rasterize the scanline.
+     */
+    int x    = MIN( x1, x2 );
+        x    = MAX( x, 0 );
+    int endx = MAX( x1, x2 );
+        endx = MIN( endx, ( s32 )gpRenderTarget->apTarget->aWidth );
+    while ( x < endx ) {
         /*
          *    Don't draw outside the render target.
          */
-        if ( xRaster >= 0 && xRaster < gpRenderTarget->apTarget->aWidth && yRaster >= 0 && yRaster < gpRenderTarget->apTarget->aHeight ) {
-            gpRenderTarget->apTarget->apData[ xRaster + yRaster * gpRenderTarget->apTarget->aWidth ] = 0xFFFFFFFF;
+        if ( x >= 0 && x < gpRenderTarget->apTarget->aWidth && y >= 0 && y < gpRenderTarget->apTarget->aHeight ) {
+            gpRenderTarget->apTarget->apData[ x + y * gpRenderTarget->apTarget->aWidth ] = 0xFFFFFFFF;
         }
-        x += 2.f / gpRenderTarget->apTarget->aWidth;
+        x++;
     }
 }
 
@@ -52,13 +58,13 @@ void draw_scanline( float x1, float x2, float y ) {
  *    @param vec3_t    The third point of the triangle.
  */
 void draw_triangle( vec3_t a, vec3_t b, vec3_t c ) {
-    float y0 = a.y;
-    float y1 = b.y;
-    float y2 = c.y;
+    int y0 = ( a.y + 1 ) * gpRenderTarget->apTarget->aHeight / 2;
+    int y1 = ( b.y + 1 ) * gpRenderTarget->apTarget->aHeight / 2;
+    int y2 = ( c.y + 1 ) * gpRenderTarget->apTarget->aHeight / 2;
 
-    float x0 = a.x;
-    float x1 = b.x;
-    float x2 = c.x;
+    int x0 = ( a.x + 1 ) * gpRenderTarget->apTarget->aWidth / 2;
+    int x1 = ( b.x + 1 ) * gpRenderTarget->apTarget->aWidth / 2;
+    int x2 = ( c.x + 1 ) * gpRenderTarget->apTarget->aWidth / 2;
 
     /*
      *    Sort the points by y-coordinate.
@@ -66,7 +72,7 @@ void draw_triangle( vec3_t a, vec3_t b, vec3_t c ) {
      *    y0 at the top, y2 at the bottom.
      */
     if ( y0 < y1 ) {
-        float temp = y0;
+        int temp = y0;
         y0 = y1;
         y1 = temp;
 
@@ -75,7 +81,7 @@ void draw_triangle( vec3_t a, vec3_t b, vec3_t c ) {
         x1 = temp;
     }
     if ( y1 < y2 ) {
-        float temp = y1;
+        int temp = y1;
         y1 = y2;
         y2 = temp;
 
@@ -84,7 +90,7 @@ void draw_triangle( vec3_t a, vec3_t b, vec3_t c ) {
         x2 = temp;
     }
     if ( y0 < y1 ) {
-        float temp = y0;
+        int temp = y0;
         y0 = y1;
         y1 = temp;
 
@@ -103,11 +109,37 @@ void draw_triangle( vec3_t a, vec3_t b, vec3_t c ) {
     /*
      *    Calculate the slopes of the lines.
      */
-    float dy0 = ( x1 - x0 ) / ( y1 - y0 );
-    float dy1 = ( x2 - x0 ) / ( y2 - y0 );
-    float dy2 = ( x2 - x1 ) / ( y2 - y1 );
+    float dy0 = ( ( float )x1 - x0 ) / ( y1 - y0 );
+    float dy1 = ( ( float )x2 - x0 ) / ( y2 - y0 );
+    float dy2 = ( ( float )x2 - x1 ) / ( y2 - y1 );
+    
+    /*
+     *    Rasterize the starting y position.
+     */
+    int y = y0;
 
-    float y = y0;
+    /*
+     *    Check for flat top.
+     */
+    if ( y0 == y1 ) {
+        while ( y >= y2 ) {
+            draw_scanline( x0 + dy1 * ( y - y0 ), x1 + dy2 * ( y - y0 ), y );
+            y--;
+        }
+        return;
+    }
+
+    /*
+     *    Check for flat bottom.
+     */
+    else if ( y1 == y2 ) {
+        while ( y >= y2 ) {
+            draw_scanline( x0 + dy0 * ( y - y0 ), x0 + dy1 * ( y - y0 ), y );
+            y--;
+        }
+        return;
+    }
+
     while ( y >= y2 ) {
         /*
          *    Bend is on the left.
@@ -131,7 +163,7 @@ void draw_triangle( vec3_t a, vec3_t b, vec3_t c ) {
                 draw_scanline( x0 + dy1 * ( y - y0 ), x1 + dy2 * ( y - y1 ), y );
             }
         }
-        y -= 2.f / gpRenderTarget->apTarget->aHeight;
+        y--;
     }
 }
 
@@ -166,6 +198,12 @@ static float theta = 0.f;
  *    @param handle_t          The handle to the vertex buffer.
  */
 void draw_vertex_buffer( handle_t sBuffer ) {
+    if ( gpRenderTarget == NULL ) {
+        log_error( "No render target.\n" );
+        gpRenderTarget = rendertarget_get_backbuffer();
+        return;
+    }
+
     chik_vertex_t *spVertices = resource_get( gpVBuffer, sBuffer );
     if ( spVertices == NULL ) {
         log_error( "Failed to get vertex resource.\n" );
@@ -173,8 +211,10 @@ void draw_vertex_buffer( handle_t sBuffer ) {
     }
     theta += .01f;
     log_note( "Theta: %f\n", theta );
-    rendertarget_get_backbuffer()->aCamera.aDirection.x = theta;
-    rendertarget_get_backbuffer()->aCamera.aDirection.y = theta;
+    //rendertarget_get_backbuffer()->aCamera.aFOV = 179.f;
+    rendertarget_get_backbuffer()->aCamera.aDirection.y = sin( theta * 1.f ) * .4f;
+    rendertarget_get_backbuffer()->aCamera.aDirection.x = sin( theta * 1.f ) * .9f;
+    //rendertarget_get_backbuffer()->aCamera.aDirection.y = theta;
     camera_t camera = rendertarget_get_backbuffer()->aCamera;
     mat4_t   view   = camera_view( &camera );
     log_note( "View:\n" );
@@ -188,15 +228,19 @@ void draw_vertex_buffer( handle_t sBuffer ) {
         chik_vertex_t b = spVertices[ i + 1 ];
         chik_vertex_t c = spVertices[ i + 2 ];
 
-        mat4_t        ma = m4_mul_m4( view, m4_translate( a.aPos ) );
-        mat4_t        mb = m4_mul_m4( view, m4_translate( b.aPos ) );
-        mat4_t        mc = m4_mul_m4( view, m4_translate( c.aPos ) );
+        /*mat4_t        ma = m4_mul_v4( m4_translate( ( vec3_t ){ 0, 0, 0 } ), ( vec4_t ){ a.aPos.x, a.aPos.y, a.aPos.z, 1 } );//m4_mul_m4( view, m4_translate( a.aPos ) );
+        mat4_t        mb = m4_mul_v4( m4_identity(), ( vec4_t ){ b.aPos.x, b.aPos.y, b.aPos.z, 1 } );//m4_mul_m4( view, m4_translate( b.aPos ) );
+        mat4_t        mc = m4_mul_v4( m4_identity(), ( vec4_t ){ c.aPos.x, c.aPos.y, c.aPos.z, 1 } );//m4_mul_m4( view, m4_translate( c.aPos ) );
+*/
+        mat4_t        ma = m4_mul_v4( view, ( vec4_t ){ a.aPos.x, a.aPos.y, a.aPos.z, 1 } );
+        mat4_t        mb = m4_mul_v4( view, ( vec4_t ){ b.aPos.x, b.aPos.y, b.aPos.z, 1 } );
+        mat4_t        mc = m4_mul_v4( view, ( vec4_t ){ c.aPos.x, c.aPos.y, c.aPos.z, 1 } );
 
-        int j = 3;
+        int j = 0;
 
-        draw_triangle( ( vec3_t ){ ma.v[ j ], ma.v[ j + 4 ], ma.v[ j + 4 ] },
-                       ( vec3_t ){ mb.v[ j ], mb.v[ j + 4 ], mb.v[ j + 4 ] },
-                       ( vec3_t ){ mc.v[ j ], mc.v[ j + 4 ], mc.v[ j + 4 ] } );
+        draw_triangle( ( vec3_t ){ ma.v[ j ] / ma.v[ j + 12 ], ma.v[ j + 4 ] / ma.v[ j + 12 ], ma.v[ j + 8 ] / ma.v[ j + 12 ] },
+                       ( vec3_t ){ mb.v[ j ] / mb.v[ j + 12 ], mb.v[ j + 4 ] / mb.v[ j + 12 ], mb.v[ j + 8 ] / mb.v[ j + 12 ] },
+                       ( vec3_t ){ mc.v[ j ] / mc.v[ j + 12 ], mc.v[ j + 4 ] / mc.v[ j + 12 ], mc.v[ j + 8 ] / mc.v[ j + 12 ] } );
     }
 }
 

@@ -18,6 +18,7 @@ typedef struct {
     float       aFOV;
     float       aNear;
     float       aFar;
+    float       aAspect;
 } camera_t;
 
 /*

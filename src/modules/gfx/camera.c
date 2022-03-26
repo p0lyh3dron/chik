@@ -36,13 +36,50 @@ mat4_t camera_view( camera_t *spCamera ) {
  */
 mat4_t camera_projection( camera_t *spCamera ) {
     float scale = 1.0f / tan( spCamera->aFOV * 0.5f * 3.14159265358979323846f / 180.0f );
+    float fov   = 1 / tan( spCamera->aFOV * 0.5f * 3.14159265358979323846f / 180.0f );
 
-    mat4_t projection = {
+    float right = scale / ( 1 / spCamera->aAspect );
+    float left = -right;
+
+    float top = scale;
+    float bottom = -top;
+
+    /*mat4_t projection = {
         scale, 0, 0, 0,
         0, scale, 0, 0,
         0, 0, -spCamera->aFar / ( spCamera->aFar - spCamera->aNear ), -1,
         0, 0, -( spCamera->aFar * spCamera->aNear ) / ( ( spCamera->aFar - spCamera->aNear ) ), 0
+    };*/
+    mat4_t projection = {
+        fov * spCamera->aAspect, 0, 0, 0,
+        0, fov, 0, 0,
+        0, 0, ( spCamera->aFar + spCamera->aNear ) / ( spCamera->aFar - spCamera->aNear ), -1,
+        0, 0, -2 * spCamera->aFar * spCamera->aNear / ( spCamera->aFar - spCamera->aNear ), 0
     };
+    /*mat4_t projection = {
+        fov / spCamera->aAspect, 0, 0, 0,
+        0, fov, 0, 0,
+        0, 0, ( spCamera->aFar + spCamera->aNear ) / ( spCamera->aFar - spCamera->aNear ), -1,
+        0, 0, -2 * spCamera->aFar * spCamera->aNear / ( spCamera->aFar - spCamera->aNear ), 0
+    };*/
+    /*mat4_t projection = {
+        right, 0, 0, 0,
+        0, fov, 0, 0,
+        0, 0, ( spCamera->aFar ) / ( spCamera->aFar - spCamera->aNear ), spCamera->aFar * spCamera->aNear / ( spCamera->aFar - spCamera->aNear ),
+        0, 0, 1, 0
+    };*/
+    /*mat4_t projection = {
+        right, 0, 0, 0,
+        0, fov, 0, 0,
+        0, 0, ( spCamera->aFar ) / ( spCamera->aFar - spCamera->aNear ), 1,
+        0, 0, spCamera->aFar * spCamera->aNear / ( spCamera->aFar - spCamera->aNear ), 0
+    };*/
+    /*mat4_t projection = {
+        scale, 0, 0, 0,
+        0, scale, 0, 0,
+        0, 0, -spCamera->aFar / ( spCamera->aFar - spCamera->aNear ), -( spCamera->aFar * spCamera->aNear ) / ( ( spCamera->aFar - spCamera->aNear ) ),
+        0, 0, -1, 0
+    };*/
 
     return projection;
 }
