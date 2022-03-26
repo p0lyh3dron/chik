@@ -121,13 +121,17 @@ rendertarget_t *rendertarget_create_backbuffer( void ) {
         return NULL;
     }
 
-    pRenderTarget->aCamera.aPosition.x = 0;
-    pRenderTarget->aCamera.aPosition.y = 0;
-    pRenderTarget->aCamera.aPosition.z = 0;
+    pRenderTarget->aCamera.aPosition.x = 0.f;
+    pRenderTarget->aCamera.aPosition.y = -1.f;
+    pRenderTarget->aCamera.aPosition.z = 0.f;
 
     pRenderTarget->aCamera.aDirection.x = 0;
     pRenderTarget->aCamera.aDirection.y = 0;
-    pRenderTarget->aCamera.aDirection.z = 0;
+
+    pRenderTarget->aCamera.aNear = 0.1f;
+    pRenderTarget->aCamera.aFar  = 100.f;
+
+    pRenderTarget->aCamera.aFOV = 90.f;
 
     gpBackBuffer = pRenderTarget;
 

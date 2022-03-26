@@ -13,7 +13,27 @@
 #include "libchik.h"
 
 typedef struct {
-    chik_vec3_t aPosition;
-    chik_vec3_t aDirection;
+    vec3_t aPosition;
+    vec2_t aDirection;
     float       aFOV;
+    float       aNear;
+    float       aFar;
 } camera_t;
+
+/*
+ *    Creates a view matrix for the camera.
+ *
+ *    @param camera_t *    The camera.
+ * 
+ *    @return mat4_t       The view matrix.
+ */
+mat4_t camera_view( camera_t *spCamera );
+
+/*
+ *    Creates a projection matrix for the camera.
+ *
+ *    @param camera_t *    The camera.
+ *
+ *    @return mat4_t       The projection matrix.
+ */
+mat4_t camera_projection( camera_t *spCamera );
