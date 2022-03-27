@@ -66,20 +66,6 @@ rendertarget_t *rendertarget_create( u32 sWidth, u32 sHeight, u32 sFormat ) {
 }
 
 /*
- *    Sets a camera to render to a render target.
- *
- *    @param rendertarget_t *    The render target.
- *    @param camera_t *          The camera.
- */
-void rendertarget_set_camera( rendertarget_t *spRenderTarget, camera_t *spCamera ) {
-    if ( spRenderTarget == NULL || spCamera == NULL ) {
-        log_error( "Render target or Camera is NULL.\n" );
-        return;
-    }
-    spRenderTarget->aCamera = *spCamera;
-}
-
-/*
  *    Frees a render target.
  *
  *    @param rendertarget_t *    The render target to free.
@@ -120,19 +106,6 @@ rendertarget_t *rendertarget_create_backbuffer( void ) {
         log_error( "Could not create backbuffer render target." );
         return NULL;
     }
-
-    pRenderTarget->aCamera.aPosition.x = 0.f;
-    pRenderTarget->aCamera.aPosition.y = 0.f;
-    pRenderTarget->aCamera.aPosition.z = 100.f;
-
-    pRenderTarget->aCamera.aDirection.x = 0;//3.14159/2.f;
-    pRenderTarget->aCamera.aDirection.y = 0.6;//3.14159/2.f;
-
-    pRenderTarget->aCamera.aNear   = 0.1f;
-    pRenderTarget->aCamera.aFar    = 100.f;
-    pRenderTarget->aCamera.aAspect = ( float )pSurface->aWidth / ( float )pSurface->aHeight;
-
-    pRenderTarget->aCamera.aFOV = 160.f;
 
     gpBackBuffer = pRenderTarget;
 

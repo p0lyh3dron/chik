@@ -180,13 +180,13 @@ handle_t create_vertex_buffer( chik_vertex_t *spVertices, u32 sCount ) {
     gpVBuffer       = resource_new( 1024 * 1024 * sizeof( chik_vertex_t ) );
     if ( gpVBuffer == NULL ) {
         log_error( "Failed to create vertex resource.\n" );
-        return NULL;
+        return INVALID_HANDLE;
     }
     handle_t handle = resource_add( gpVBuffer, spVertices, sCount * sizeof( chik_vertex_t ) );
-    if ( handle == NULL ) {
+    if ( handle == INVALID_HANDLE ) {
         log_error( "Failed to add vertex resource.\n" );
-        resource_delete( gpVBuffer );
-        return NULL;
+        resource_destroy( gpVBuffer );
+        return INVALID_HANDLE;
     }
     return handle;
 }
@@ -213,9 +213,9 @@ handle_t create_camera( void ) {
     cam.aAspect = ( float )gpBackBuffer->apTarget->aWidth / ( float )gpBackBuffer->apTarget->aHeight;
     
     handle_t handle = resource_add( gpGResources, &cam, sizeof( camera_t ) );
-    if ( handle == NULL ) {
+    if ( handle == INVALID_HANDLE ) {
         log_error( "Failed to add camera resource.\n" );
-        return NULL;
+        return INVALID_HANDLE;
     }
     return handle;
 }
@@ -301,28 +301,12 @@ void draw_vertex_buffer( handle_t sBuffer ) {
         log_error( "Failed to get vertex resource.\n" );
         return;
     }
-    theta += .01f;
-    log_note( "Theta: %f\n", theta );
-    //rendertarget_get_backbuffer()->aCamera.aFOV = 179.f;
-    //gpCamera->aDirection.y = sin( theta * 1.f ) * .4f;
-    //gpCamera->aDirection.x = sin( theta * 1.f ) * .9f;
-    //rendertarget_get_backbuffer()->aCamera.aDirection.y = theta;
     mat4_t   view   = camera_view( gpCamera );
-    log_note( "View:\n" );
-    log_note( "{ %f, %f, %f, %f\n", view.v[ 0 ], view.v[ 1 ], view.v[ 2 ], view.v[ 3 ] );
-    log_note( "{ %f, %f, %f, %f\n", view.v[ 4 ], view.v[ 5 ], view.v[ 6 ], view.v[ 7 ] );
-    log_note( "{ %f, %f, %f, %f\n", view.v[ 8 ], view.v[ 9 ], view.v[ 10 ], view.v[ 11 ] );
-    log_note( "{ %f, %f, %f, %f\n", view.v[ 12 ], view.v[ 13 ], view.v[ 14 ], view.v[ 15 ] );
-    log_note( "}\n" );
     for ( u32 i = 0; i < HANDLE_GET_SIZE( sBuffer ) / sizeof( chik_vertex_t ); i += 3 ) {
         chik_vertex_t a = spVertices[ i ];
         chik_vertex_t b = spVertices[ i + 1 ];
         chik_vertex_t c = spVertices[ i + 2 ];
 
-        /*mat4_t        ma = m4_mul_v4( m4_translate( ( vec3_t ){ 0, 0, 0 } ), ( vec4_t ){ a.aPos.x, a.aPos.y, a.aPos.z, 1 } );//m4_mul_m4( view, m4_translate( a.aPos ) );
-        mat4_t        mb = m4_mul_v4( m4_identity(), ( vec4_t ){ b.aPos.x, b.aPos.y, b.aPos.z, 1 } );//m4_mul_m4( view, m4_translate( b.aPos ) );
-        mat4_t        mc = m4_mul_v4( m4_identity(), ( vec4_t ){ c.aPos.x, c.aPos.y, c.aPos.z, 1 } );//m4_mul_m4( view, m4_translate( c.aPos ) );
-*/
         mat4_t        ma = m4_mul_v4( view, ( vec4_t ){ a.aPos.x, a.aPos.y, a.aPos.z, 1 } );
         mat4_t        mb = m4_mul_v4( view, ( vec4_t ){ b.aPos.x, b.aPos.y, b.aPos.z, 1 } );
         mat4_t        mc = m4_mul_v4( view, ( vec4_t ){ c.aPos.x, c.aPos.y, c.aPos.z, 1 } );

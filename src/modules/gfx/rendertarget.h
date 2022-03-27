@@ -17,7 +17,6 @@
 
 typedef struct {
     image_t *apTarget;
-    camera_t aCamera;
 } rendertarget_t;
 
 /*
@@ -32,14 +31,6 @@ typedef struct {
  *                                The render target should be freed with rendertarget_free().
  */
 rendertarget_t *rendertarget_create( u32 sWidth, u32 sHeight, u32 sFormat );
-
-/*
- *    Sets a camera to render to a render target.
- *
- *    @param rendertarget_t *    The render target.
- *    @param camera_t *          The camera.
- */
-void rendertarget_set_camera( rendertarget_t *spRenderTarget, camera_t *spCamera );
 
 /*
  *    Frees a render target.
