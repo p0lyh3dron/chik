@@ -113,6 +113,10 @@ void draw_triangle( vec3_t a, vec3_t b, vec3_t c ) {
     float dy0 = ( ( float )x1 - x0 ) / ( y1 - y0 );
     float dy1 = ( ( float )x2 - x0 ) / ( y2 - y0 );
     float dy2 = ( ( float )x2 - x1 ) / ( y2 - y1 );
+
+    /*
+     *    Interpolate the colors.
+     */
     
     /*
      *    Rasterize the starting y position.
@@ -319,11 +323,15 @@ void draw_vertex_buffer( handle_t sBuffer ) {
         chik_vertex_t b = spVertices[ i + 1 ];
         chik_vertex_t c = spVertices[ i + 2 ];
 
-        mat4_t        ma = m4_mul_v4( view, ( vec4_t ){ a.aPos.x, a.aPos.y, a.aPos.z, 1 } );
-        mat4_t        mb = m4_mul_v4( view, ( vec4_t ){ b.aPos.x, b.aPos.y, b.aPos.z, 1 } );
-        mat4_t        mc = m4_mul_v4( view, ( vec4_t ){ c.aPos.x, c.aPos.y, c.aPos.z, 1 } );
+        mat4_t        ma = m4_mul_v4( view, ( vec4_t ){ -a.aPos.x, -a.aPos.y, -a.aPos.z, 1 } );
+        mat4_t        mb = m4_mul_v4( view, ( vec4_t ){ -b.aPos.x, -b.aPos.y, -b.aPos.z, 1 } );
+        mat4_t        mc = m4_mul_v4( view, ( vec4_t ){ -c.aPos.x, -c.aPos.y, -c.aPos.z, 1 } );
 
         int j = 0;
+
+        if ( ma.v[ j + 8 ] > 0 && mb.v[ j + 8 ] > 0 && mc.v[ j + 8 ] > 0 ) {
+            continue;
+        }
 
         draw_triangle( ( vec3_t ){ ma.v[ j ] / ma.v[ j + 12 ], ma.v[ j + 4 ] / ma.v[ j + 12 ], ma.v[ j + 8 ] / ma.v[ j + 12 ] },
                        ( vec3_t ){ mb.v[ j ] / mb.v[ j + 12 ], mb.v[ j + 4 ] / mb.v[ j + 12 ], mb.v[ j + 8 ] / mb.v[ j + 12 ] },
