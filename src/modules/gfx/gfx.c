@@ -278,6 +278,18 @@ void set_camera( handle_t sCamera ) {
     }
 }
 
+/*
+ *    Returns the width and height of the screen.
+ *
+ *    @return vec2_t             The width and height of the screen.
+ */
+vec2_t get_screen_size( void ) {
+    vec2_t size;
+    size.x = gpBackBuffer->apTarget->aWidth;
+    size.y = gpBackBuffer->apTarget->aHeight;
+    return size;
+}
+
 static float theta = 0.f;
 
 /*

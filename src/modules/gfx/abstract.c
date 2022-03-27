@@ -50,6 +50,17 @@ void platform_init( void ) {
 #endif /* USE_SDL  */
 }
 
+#if USE_SDL
+/*
+ *    Returns the SDL window.
+ *
+ *    @return SDL_Window *        The SDL window.
+ */
+SDL_Window *get_window( void ) {
+    return gpSurface->apWindow;
+}
+#endif /* USE_SDL  */
+
 /*
  *    Renders buffer to the screen.
  */
