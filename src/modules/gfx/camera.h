@@ -21,6 +21,8 @@ typedef struct {
     float       aAspect;
 } camera_t;
 
+extern camera_t *gpCamera;
+
 /*
  *    Creates a view matrix for the camera.
  *

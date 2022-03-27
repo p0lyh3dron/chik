@@ -14,9 +14,10 @@
 #include "abstract.h"
 #include "rendertarget.h"
 
-extern rendertarget_t *gpRenderTarget;
+extern rendertarget_t *gpBackBuffer;
 
 resource_t *gpVBuffer = NULL;
+resource_t *gpGResources = NULL;
 
 /*
  *    Draw a scanline.
@@ -29,7 +30,7 @@ void draw_scanline( int x1, int x2, int y ) {
     /*
      *    Early out if the scanline is outside the render target.
      */
-    if ( y < 0 || y >= gpRenderTarget->apTarget->aHeight ) {
+    if ( y < 0 || y >= gpBackBuffer->apTarget->aHeight ) {
         return;
     }
     /*
@@ -38,13 +39,13 @@ void draw_scanline( int x1, int x2, int y ) {
     int x    = MIN( x1, x2 );
         x    = MAX( x, 0 );
     int endx = MAX( x1, x2 );
-        endx = MIN( endx, ( s32 )gpRenderTarget->apTarget->aWidth );
+        endx = MIN( endx, ( s32 )gpBackBuffer->apTarget->aWidth );
     while ( x < endx ) {
         /*
          *    Don't draw outside the render target.
          */
-        if ( x >= 0 && x < gpRenderTarget->apTarget->aWidth && y >= 0 && y < gpRenderTarget->apTarget->aHeight ) {
-            gpRenderTarget->apTarget->apData[ x + y * gpRenderTarget->apTarget->aWidth ] = 0xFFFFFFFF;
+        if ( x >= 0 && x < gpBackBuffer->apTarget->aWidth && y >= 0 && y < gpBackBuffer->apTarget->aHeight ) {
+            gpBackBuffer->apTarget->apData[ x + y * gpBackBuffer->apTarget->aWidth ] = 0xFFFFFFFF;
         }
         x++;
     }
@@ -58,13 +59,13 @@ void draw_scanline( int x1, int x2, int y ) {
  *    @param vec3_t    The third point of the triangle.
  */
 void draw_triangle( vec3_t a, vec3_t b, vec3_t c ) {
-    int y0 = ( a.y + 1 ) * gpRenderTarget->apTarget->aHeight / 2;
-    int y1 = ( b.y + 1 ) * gpRenderTarget->apTarget->aHeight / 2;
-    int y2 = ( c.y + 1 ) * gpRenderTarget->apTarget->aHeight / 2;
+    int y0 = ( a.y + 1 ) * gpBackBuffer->apTarget->aHeight / 2;
+    int y1 = ( b.y + 1 ) * gpBackBuffer->apTarget->aHeight / 2;
+    int y2 = ( c.y + 1 ) * gpBackBuffer->apTarget->aHeight / 2;
 
-    int x0 = ( a.x + 1 ) * gpRenderTarget->apTarget->aWidth / 2;
-    int x1 = ( b.x + 1 ) * gpRenderTarget->apTarget->aWidth / 2;
-    int x2 = ( c.x + 1 ) * gpRenderTarget->apTarget->aWidth / 2;
+    int x0 = ( a.x + 1 ) * gpBackBuffer->apTarget->aWidth / 2;
+    int x1 = ( b.x + 1 ) * gpBackBuffer->apTarget->aWidth / 2;
+    int x2 = ( c.x + 1 ) * gpBackBuffer->apTarget->aWidth / 2;
 
     /*
      *    Sort the points by y-coordinate.
@@ -190,6 +191,93 @@ handle_t create_vertex_buffer( chik_vertex_t *spVertices, u32 sCount ) {
     return handle;
 }
 
+/*
+ *    Creates a camera.
+ *
+ *    @return handle_t          The handle to the camera.
+ */
+handle_t create_camera( void ) {
+    camera_t cam;
+    cam.aPosition.x = 0.0f;
+    cam.aPosition.y = 0.0f;
+    cam.aPosition.z = 0.0f;
+
+    cam.aDirection.x = 0.0f;
+    cam.aDirection.y = 0.0f;
+
+    cam.aNear = 0.1f;
+    cam.aFar = 100.0f;
+
+    cam.aFOV = 160.0f;
+
+    cam.aAspect = ( float )gpBackBuffer->apTarget->aWidth / ( float )gpBackBuffer->apTarget->aHeight;
+    
+    handle_t handle = resource_add( gpGResources, &cam, sizeof( camera_t ) );
+    if ( handle == NULL ) {
+        log_error( "Failed to add camera resource.\n" );
+        return NULL;
+    }
+    return handle;
+}
+
+/*
+ *    Sets camera position.
+ *
+ *    @param handle_t           The handle to the camera.
+ *    @param vec3_t             The position of the camera.
+ */
+void set_camera_position( handle_t sCamera, vec3_t sPosition ) {
+    camera_t *pCamera = resource_get( gpGResources, sCamera );
+    if ( pCamera == NULL ) {
+        log_error( "Failed to get camera resource.\n" );
+        return;
+    }
+    pCamera->aPosition = sPosition;
+}
+
+/*
+ *    Sets camera direction.
+ *
+ *    @param handle_t           The handle to the camera.
+ *    @param vec2_t             The direction of the camera.
+ */
+void set_camera_direction( handle_t sCamera, vec2_t sDirection ) {
+    camera_t *pCamera = resource_get( gpGResources, sCamera );
+    if ( pCamera == NULL ) {
+        log_error( "Failed to get camera resource.\n" );
+        return;
+    }
+    pCamera->aDirection = sDirection;
+}
+
+/*
+ *    Sets camera FOV.
+ *
+ *    @param handle_t           The handle to the camera.
+ *    @param float              The FOV of the camera.
+ */
+void set_camera_fov( handle_t sCamera, float sFov ) {
+    camera_t *pCamera = resource_get( gpGResources, sCamera );
+    if ( pCamera == NULL ) {
+        log_error( "Failed to get camera resource.\n" );
+        return;
+    }
+    pCamera->aFOV = sFov;
+}
+
+/*
+ *    Sets the global camera.
+ *
+ *    @param handle_t           The handle to the camera.
+ */
+void set_camera( handle_t sCamera ) {
+    gpCamera = resource_get( gpGResources, sCamera );
+    if ( gpCamera == NULL ) {
+        log_error( "Failed to get camera resource.\n" );
+        return;
+    }
+}
+
 static float theta = 0.f;
 
 /*
@@ -198,9 +286,13 @@ static float theta = 0.f;
  *    @param handle_t          The handle to the vertex buffer.
  */
 void draw_vertex_buffer( handle_t sBuffer ) {
-    if ( gpRenderTarget == NULL ) {
+    if ( gpBackBuffer == NULL ) {
         log_error( "No render target.\n" );
-        gpRenderTarget = rendertarget_get_backbuffer();
+        return;
+    }
+
+    if ( gpCamera == NULL ) {
+        log_error( "No camera.\n" );
         return;
     }
 
@@ -212,11 +304,10 @@ void draw_vertex_buffer( handle_t sBuffer ) {
     theta += .01f;
     log_note( "Theta: %f\n", theta );
     //rendertarget_get_backbuffer()->aCamera.aFOV = 179.f;
-    rendertarget_get_backbuffer()->aCamera.aDirection.y = sin( theta * 1.f ) * .4f;
-    rendertarget_get_backbuffer()->aCamera.aDirection.x = sin( theta * 1.f ) * .9f;
+    //gpCamera->aDirection.y = sin( theta * 1.f ) * .4f;
+    //gpCamera->aDirection.x = sin( theta * 1.f ) * .9f;
     //rendertarget_get_backbuffer()->aCamera.aDirection.y = theta;
-    camera_t camera = rendertarget_get_backbuffer()->aCamera;
-    mat4_t   view   = camera_view( &camera );
+    mat4_t   view   = camera_view( gpCamera );
     log_note( "View:\n" );
     log_note( "{ %f, %f, %f, %f\n", view.v[ 0 ], view.v[ 1 ], view.v[ 2 ], view.v[ 3 ] );
     log_note( "{ %f, %f, %f, %f\n", view.v[ 4 ], view.v[ 5 ], view.v[ 6 ], view.v[ 7 ] );
@@ -249,6 +340,18 @@ void draw_vertex_buffer( handle_t sBuffer ) {
  */
 void draw_frame( void ) {
     platform_draw_frame();
+}
+
+/*
+ *    Creates the graphics context.
+ */
+__attribute( ( constructor ) ) 
+void graphics_init( void ) {
+    gpGResources = resource_new( 1024 * 1024 );
+    if ( gpGResources == NULL ) {
+        log_error( "Failed to create graphics resource.\n" );
+        return;
+    }
 }
 
 /*
