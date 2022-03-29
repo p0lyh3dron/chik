@@ -32,7 +32,7 @@ void platform_init( void ) {
     if( gpSurface == NULL ) {
         log_fatal( "Could not create surface." );
     }
-    SDL_Window *pWindow = SDL_CreateWindow( WINDOW_TITLE, SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, gpSurface->aWidth, gpSurface->aHeight, SDL_WINDOW_SHOWN );
+    SDL_Window *pWindow = SDL_CreateWindow( WINDOW_TITLE, SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, gpSurface->aWidth, gpSurface->aHeight, SDL_WINDOW_SHOWN | SDL_WINDOW_RESIZABLE );
     if( pWindow == NULL ) {
         log_fatal( "Window could not be created! SDL_Error: %s\n", SDL_GetError() );
     }

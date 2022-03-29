@@ -39,7 +39,7 @@ mat4_t camera_view( camera_t *spCamera ) {
  *    @return mat4_t       The projection matrix.
  */
 mat4_t camera_projection( camera_t *spCamera ) {
-    float fov   = 1 / tanf( spCamera->aFOV * 0.5f * 3.14159265358979323846f / 180.0f );
+    float fov   = 0.5f / tanf( spCamera->aFOV * 0.5f * 3.14159265358979323846f / 180.0f );
 
     mat4_t projection = {
         fov / spCamera->aAspect, 0, 0, 0,
