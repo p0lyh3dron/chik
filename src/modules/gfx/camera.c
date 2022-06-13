@@ -41,11 +41,20 @@ mat4_t camera_view( camera_t *spCamera ) {
 mat4_t camera_projection( camera_t *spCamera ) {
     float fov   = 0.5f / tanf( spCamera->aFOV * 0.5f * 3.14159265358979323846f / 180.0f );
 
+    /*
+     *    We'll be using the Vulkan projection matrix.
+     *
+     *    Whatever the fuck this is, the z-coordinate linearly
+     *    interpolates between 0 and near as the camera moves from
+     *    far to near.
+     * 
+     *    Stolen from: https://vincent-p.github.io/posts/vulkan_perspective_matrix/#infinite-perspective
+     */
     mat4_t projection = {
         fov / spCamera->aAspect, 0, 0, 0,
-        0, fov, 0, 0,
-        0, 0, ( spCamera->aFar + spCamera->aNear ) / ( spCamera->aFar - spCamera->aNear ), -1,
-        0, 0, -2 * spCamera->aFar * spCamera->aNear / ( spCamera->aFar - spCamera->aNear ), 0
+        0, -fov, 0, 0,
+        0, 0, ( spCamera->aNear ) / ( spCamera->aFar - spCamera->aNear ), ( spCamera->aNear * spCamera->aFar ) / ( spCamera->aFar - spCamera->aNear ),
+        0, 0, 1, 0
     };
 
     return projection;

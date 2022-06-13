@@ -12,4 +12,5 @@ set_property( GLOBAL PROPERTY CHIK_GAMES ${CMAKE_CURRENT_LIST_DIR}/../games )
 
 add_subdirectory( libchik )
 
+add_subdirectory( src/modules/engine )
 add_subdirectory( src/modules/gfx )

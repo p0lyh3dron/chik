@@ -23,25 +23,159 @@
  *                         NULL if the image could not be created.
  *                         The image should be freed with image_free().
  */
-image_t *image_create( u32 width, u32 height, u32 format ) {
+image_t *image_create( u32 sWidth, u32 sHeight, u32 sFormat ) {
     image_t *pImage = malloc( sizeof( image_t ) );
     if( pImage == NULL ) {
         log_error( "Could not allocate memory for image." );
     }
 
-    pImage->aWidth  = width;
-    pImage->aHeight = height;
-    pImage->aFormat = format;
+    pImage->aWidth  = sWidth;
+    pImage->aHeight = sHeight;
+    pImage->aFormat = sFormat;
     /*
      *    In the future, image data may not be just width * height * format.
      *    For now, we just allocate the amount of memory we need.
      */
-    pImage->apData  = malloc( width * height * sizeof( u32 ) );
+    pImage->apData  = malloc( sWidth * sHeight * sizeof( u32 ) );
     if( pImage->apData == NULL ) {
         log_error( "Could not allocate memory for image buffer." );
     }
 
     return pImage;
+}
+
+/*
+ *    Deduces a file format from a file.
+ *
+ *    @param const s8 *  The file to deduce the format from.
+ * 
+ *    @return file_type_e The file format.
+ *                        FILE_TYPE_UNKNOWN if the file could not be deduced.
+ */
+file_type_e file_type( const s8 *spFile ) {
+    /*
+     *    We'll be lazy and just check the file extension.
+     *    In the future, we'll need to check the file header.
+     */
+    if( strstr( spFile, ".bmp" ) != NULL ) {
+        return FILE_TYPE_BMP;
+    } else if( strstr( spFile, ".png" ) != NULL ) {
+        return FILE_TYPE_PNG;
+    } else if( strstr( spFile, ".jpg" ) != NULL ) {
+        return FILE_TYPE_JPG;
+    } else {
+        return FILE_TYPE_UNKNOWN;
+    }
+}
+
+/*
+ *    Loads a bmp image from a file.
+ *
+ *    @param const s8 *  The file to load the image from.
+ *
+ *    @return image_t *  The image.
+ *                       NULL if the image could not be loaded.
+ *                       The image should be freed with image_free().
+ */
+image_t *image_load_bmp( const s8 *spFile ) {
+    FILE *pFile = fopen( spFile, "rb" );
+    if( pFile == NULL ) {
+        log_error( "Could not open file %s.", spFile );
+        return NULL;
+    }
+
+    /*
+     *   Read the file contents into a buffer.
+     */
+    fseek( pFile, 0, SEEK_END );
+    u32 len = ftell( pFile );
+    fseek( pFile, 0, SEEK_SET );
+    u8 *pBuffer = malloc( len );
+
+    if( pBuffer == NULL ) {
+        log_error( "Could not allocate memory for file %s.", spFile );
+        fclose( pFile );
+        return NULL;
+    }
+
+    fread( pBuffer, 1, len, pFile );
+    fclose( pFile );
+
+    /*
+     *    Read the header.
+     */
+    bmp_header_t header = *( bmp_header_t * )pBuffer;
+
+    header.aWidth  = *( u32 * )( pBuffer + 0x12 );
+    header.aHeight = *( u32 * )( pBuffer + 0x16 );
+
+    header.aOffset = *( u32 * )( pBuffer + 0x0A );
+
+    if ( *( u16* )header.aMagic != 0x4D42 ) {
+        log_error( "File %s is not a bmp file.", spFile );
+        free( pBuffer );
+        return NULL;
+    }
+
+    /*
+     *    Read the image data.
+     */
+    u8 *pData = ( u8 * )( pBuffer + header.aOffset );
+
+    /*
+     *    Create the image.
+     */
+    image_t *pImage = image_create( header.aWidth, header.aHeight, 32 );
+
+    if( pImage == NULL ) {
+        log_error( "Could not create image." );
+        free( pBuffer );
+        return NULL;
+    }
+
+    /*
+     *    Copy the data into the image without the padding.
+     */
+    u32 padding = 0;
+    s64 i;
+    for ( i = 0; i < header.aHeight; i++ ) {
+        /*
+         *    Don't touch.
+         */
+        memcpy( ( u8 * )pImage->apData + ( header.aWidth * i ) * 3, pData + ( header.aWidth * i ) * 3 + i * padding, header.aWidth * 3 );
+        /*
+         *    Literal magic.
+         */
+        padding += ( ( header.aWidth * 3 ) + padding ) % 4;
+    }
+
+    /*
+     *    Free the buffer.
+     */
+    free( pBuffer );
+
+    return pImage;
+}
+
+/*
+ *    Creates an image from a file.
+ *
+ *    @param s8 *        The path to the image file.
+ *    @param u32         The format of the image.
+ * 
+ *    @return image_t *  The image.
+ *                       NULL if the image could not be created.
+ *                       The image should be freed with image_free().
+ */
+image_t *image_create_from_file( s8 *spPath, u32 sFormat ) {
+    file_type_e type = file_type( spPath );
+    if( type == FILE_TYPE_UNKNOWN ) {
+        log_error( "Could not determine file type of image file." );
+        return NULL;
+    }
+    else if ( type == FILE_TYPE_BMP ) {
+        return image_load_bmp( spPath );
+    }
 }
 
 /*
