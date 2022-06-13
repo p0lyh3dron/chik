@@ -40,3 +40,17 @@ stat_t *stat_get();
  *    @return f32    The frame rate.
  */
 f32 stat_get_frame_rate();
+
+/*
+ *    Returns the number of frames.
+ *
+ *    @return s64    The number of frames.
+ */
+s64 stat_get_frames();
+
+/*
+ *    Returns the start time.
+ *
+ *    @return s64    The start time.
+ */
+s64 stat_get_start_time();

@@ -68,3 +68,21 @@ stat_t *stat_get() {
 f32 stat_get_frame_rate() {
     return gStat.aFrameRate;
 }
+
+/*
+ *    Returns the number of frames.
+ *
+ *    @return s64    The number of frames.
+ */
+s64 stat_get_frames() {
+    return gStat.aFrames;
+}
+
+/*
+ *    Returns the start time.
+ *
+ *    @return s64    The start time.
+ */
+s64 stat_get_start_time() {
+    return gStat.aStartTime;
+}
