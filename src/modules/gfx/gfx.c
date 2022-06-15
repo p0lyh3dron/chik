@@ -60,6 +60,9 @@ void sample_texture( fragment_t *spFrag, vec_t *spUV, void *spData ) {
     spFrag->aColor.r = ( ( u8* )pImage->apData )[ ( spUV->v2u.x + spUV->v2u.y * pImage->aHeight ) * 3 + 0 ];
     spFrag->aColor.g = ( ( u8* )pImage->apData )[ ( spUV->v2u.x + spUV->v2u.y * pImage->aHeight ) * 3 + 1 ];
     spFrag->aColor.b = ( ( u8* )pImage->apData )[ ( spUV->v2u.x + spUV->v2u.y * pImage->aHeight ) * 3 + 2 ];
+    /*spFrag->aColor.r = 255;
+    spFrag->aColor.g = 255;
+    spFrag->aColor.b = 255;*/
     spFrag->aColor.a = 1;
 }
 
@@ -70,6 +73,7 @@ v_layout_t gVLayout = {
         { 0,     V_R32G32_F,           sizeof( vec2u_t ), 16 + 16, &sample_texture }
     },
     .aCount   = 2,
+    .aStride  = sizeof( chik_vertex_t ),
 };
 
 /*

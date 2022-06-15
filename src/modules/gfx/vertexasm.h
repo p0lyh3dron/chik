@@ -49,10 +49,11 @@ void *vertex_build_interpolated( void *spV1, void *spV2, f32 sDiff );
  *
  *    @param void *        The raw vertex data.
  *    @param f32           The scalar to scale the vertex by.
+ *    @param u32           A usage flag that determines how to scale the vertex.
  * 
  *    @return void *       The raw vertex data of the scaled vertex.
  */
-void *vertex_scale( void *spV, f32 sScale );
+void *vertex_scale( void *spV, f32 sScale, u32 sFlags );
 
 /*
  *    Binds the fragment shader's uniform data to the vertex assembler.

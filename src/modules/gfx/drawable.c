@@ -265,8 +265,11 @@ void vbuffer_draw( handle_t sBuffer ) {
     mat4_t   view   = camera_view( gpCamera );
     for ( u32 i = 0; i < HANDLE_GET_SIZE( sBuffer ) / sizeof( chik_vertex_t ); i += 3 ) {
         chik_vertex_t a0 = *( chik_vertex_t* )( pBuf->apData + i * sizeof( chik_vertex_t ) + 0 * pBuf->aVStride );
+        a0.aPos.w = 1.0f;
         chik_vertex_t b0 = *( chik_vertex_t* )( pBuf->apData + i * sizeof( chik_vertex_t ) + 1 * pBuf->aVStride );
+        b0.aPos.w = 1.0f;
         chik_vertex_t c0 = *( chik_vertex_t* )( pBuf->apData + i * sizeof( chik_vertex_t ) + 2 * pBuf->aVStride );
+        c0.aPos.w = 1.0f;
 
         mat4_t        ma = m4_mul_v4( view, ( vec4_t ){ -a0.aPos.x, -a0.aPos.y, -a0.aPos.z, 1 } );
         mat4_t        mb = m4_mul_v4( view, ( vec4_t ){ -b0.aPos.x, -b0.aPos.y, -b0.aPos.z, 1 } );
@@ -331,9 +334,9 @@ void vbuffer_draw( handle_t sBuffer ) {
          *    Draw the clipped vertices.
          */
         for ( s64 i = 0; i < numVertices - 2; ++i ) {
-            chik_vertex_t a = pVerts[ 0 ];
-            chik_vertex_t b = pVerts[ i + 1 ];
-            chik_vertex_t c = pVerts[ i + 2 ];
+            chik_vertex_t a = *( chik_vertex_t* )( ( u8 * )pVerts + ( 0 ) * VERTEX_ASM_MAX_VERTEX_SIZE );
+            chik_vertex_t b = *( chik_vertex_t* )( ( u8 * )pVerts + ( 1 + i ) * VERTEX_ASM_MAX_VERTEX_SIZE );
+            chik_vertex_t c = *( chik_vertex_t* )( ( u8 * )pVerts + ( 2 + i ) * VERTEX_ASM_MAX_VERTEX_SIZE );
 
             if ( a.aPos.w == 0.0f || b.aPos.w == 0.0f || c.aPos.w == 0.0f ) {
                 continue;
@@ -344,15 +347,15 @@ void vbuffer_draw( handle_t sBuffer ) {
              */
             a.aPos.x /= a.aPos.w;
             a.aPos.y /= a.aPos.w;
-            a.aPos.z /= a.aPos.w;
+            //a.aPos.z /= a.aPos.w;
 
             b.aPos.x /= b.aPos.w;
             b.aPos.y /= b.aPos.w;
-            b.aPos.z /= b.aPos.w;
+            //b.aPos.z /= b.aPos.w;
 
             c.aPos.x /= c.aPos.w;
             c.aPos.y /= c.aPos.w;
-            c.aPos.z /= c.aPos.w;
+            //c.aPos.z /= c.aPos.w;
             /*
              *    Draw the triangle.
              */

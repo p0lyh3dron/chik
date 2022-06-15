@@ -9,6 +9,8 @@
  */
 #include "vertexasm.h"
 
+#include "cull.h"
+
 v_layout_t  gLayout   = { .aAttribs = { 0 }, .aCount = 0 };
 void       *gpUniform = nullptr;
 
@@ -19,6 +21,8 @@ void       *gpUniform = nullptr;
  */
 void vertexasm_set_layout( v_layout_t sLayout ) {
     gLayout = sLayout;
+
+    cull_set_vertex_size( gLayout.aStride );
 }
 
 /*
@@ -72,20 +76,26 @@ void *vertex_build_interpolated( void *spV1, void *spV2, f32 sDiff ) {
  *
  *    @param void *        The raw vertex data.
  *    @param f32           The scalar to scale the vertex by.
+ *    @param u32           A usage flag that determines how to scale the vertex.
  * 
  *    @return void *       The raw vertex data of the scaled vertex.
  */
-void *vertex_scale( void *spV, f32 sScale ) {
+void *vertex_scale( void *spV, f32 sScale, u32 sFlags ) {
     static u8 buf[ VERTEX_ASM_MAX_VERTEX_SIZE ];
     s64       i;
 
     for ( i = 0; i < gLayout.aCount; i++ ) {
-        vec_scale( 
-            buf  + gLayout.aAttribs[ i ].aOffset, 
-            spV  + gLayout.aAttribs[ i ].aOffset, 
-            sScale, 
-            gLayout.aAttribs[ i ].aFormat 
-        );
+        if ( !( gLayout.aAttribs[ i ].aUsage & sFlags ) ) {
+            vec_scale( 
+                buf  + gLayout.aAttribs[ i ].aOffset, 
+                spV  + gLayout.aAttribs[ i ].aOffset, 
+                sScale, 
+                gLayout.aAttribs[ i ].aFormat 
+            );
+        }
+        else {
+            memcpy( buf + gLayout.aAttribs[ i ].aOffset, spV + gLayout.aAttribs[ i ].aOffset, gLayout.aAttribs[ i ].aStride );
+        }
     }
 
     return buf;

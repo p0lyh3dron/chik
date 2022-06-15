@@ -12,26 +12,40 @@
 #include "vertexasm.h"
 
 frustum_t gFrustum;
+u32       gVertexSize = 0;
+
+/*
+ *    Sets the current vertex size.
+ *
+ *    @param u32           The size of the vertex data.
+ */
+void cull_set_vertex_size( u32 sSize ) {
+    gVertexSize = sSize;
+}
 
 /*
  *    Clips a pair of vertices.
  *
  *    @param plane_t       *    The plane to clip against.
- *    @param chik_vertex_t *    The first vertex.
- *    @param chik_vertex_t *    The second vertex.
- *    @param chik_vertex_t *    The clipped vertex.
+ *    @param void          *    The first vertex.
+ *    @param void          *    The second vertex.
+ *    @param void          *    The clipped vertex.
  *    @param u32                True if this is the first vertex. 
  * 
  *    @return u32               Bitmask of the clip flags.
  *                              0x0 = keep the first vertex.
  *                              0x1 = modify first vertex with the clipped.
+ *                              0x2 = modify the first vertex of the array.
  *
  */
-u32 cull_clip_vertex( plane_t *spP, chik_vertex_t *spV0, chik_vertex_t *spV1, chik_vertex_t *spRet, u32 sFirst ) {
-    f32                  outside     = plane_distance( spP, &spV0->aPos );
-    f32                  nextOutside = plane_distance( spP, &spV1->aPos );
+u32 cull_clip_vertex( plane_t *spP, void *spV0, void *spV1, void *spRet, u32 sFirst ) {
+    vec4_t p0 = vertex_get_position( spV0 );
+    vec4_t p1 = vertex_get_position( spV1 );
 
-    //log_note( "outside = %f, next = %f\n", outside, nextOutside );
+    f32                  outside     = plane_distance( spP, &p0 );
+    f32                  nextOutside = plane_distance( spP, &p1 );
+
+    log_note( "outside = %f, next = %f\n", outside, nextOutside );
     /*
     *    Check if the triangle is outside the frustum.
     */
@@ -40,16 +54,16 @@ u32 cull_clip_vertex( plane_t *spP, chik_vertex_t *spV0, chik_vertex_t *spV1, ch
         /*
         *    Generate a new vertex.
         */
-        *spRet = *spV0;
-        spRet->aPos.x += t * ( spV1->aPos.x - spV0->aPos.x );
-        spRet->aPos.y += t * ( spV1->aPos.y - spV0->aPos.y );
-        spRet->aPos.z += t * ( spV1->aPos.z - spV0->aPos.z );
-        spRet->aPos.w += t * ( spV1->aPos.w - spV0->aPos.w );
+        memcpy( spRet, vertex_build_interpolated( spV0, spV1, t ), gVertexSize );
         /*
         *    If our initial vertex is inside, append the new vertex.
         */
-        if ( outside > 0.f || sFirst ) {
+        if ( outside >= 0.f ) {
             return 0b00000011;
+        }
+        
+        else if ( sFirst ) {
+            return 0b00000111;
         }
         /*
         *    If our initial vertex is outside, replace the first vertex.
@@ -63,7 +77,7 @@ u32 cull_clip_vertex( plane_t *spP, chik_vertex_t *spV0, chik_vertex_t *spV1, ch
     *    discard them.
     */
     else {
-        if ( outside > 0.f ) {
+        if ( outside > 0.f || sFirst ) {
             /*
              *    Keep.
              */
@@ -81,13 +95,13 @@ u32 cull_clip_vertex( plane_t *spP, chik_vertex_t *spV0, chik_vertex_t *spV1, ch
 /*
  *    Inserts a vertex into a clipped vertex list.
  *
- *    @param chik_vertex_t *     The vertex to insert.
- *    @param chik_vertex_t **    The list of vertices.
+ *    @param void           *    The vertex to insert.
+ *    @param void          **    The list of vertices.
  *    @param u32                 The target index.
  *    @param u32                 The number of vertices in the list.
  *    @param u32                 The list size.
  */
-void cull_insert_vertex( chik_vertex_t *spV, chik_vertex_t *spList, u32 sIndex, u32 sCount, u32 sSize ) {
+void cull_insert_vertex( void *spV, void **spList, u32 sIndex, u32 sCount, u32 sSize ) {
     if ( sIndex >= sSize ) {
         log_error( "Index out of bounds.\n" );
         return;
@@ -100,23 +114,23 @@ void cull_insert_vertex( chik_vertex_t *spV, chik_vertex_t *spList, u32 sIndex, 
      *    Shift the vertices down.
      */
     for ( u32 i = sCount; i > sIndex; i-- ) {
-        spList[ i ] = spList[ i - 1 ];
+        memcpy( ( u8 * )spList + i * VERTEX_ASM_MAX_VERTEX_SIZE, ( u8 * )spList + ( i - 1 ) * VERTEX_ASM_MAX_VERTEX_SIZE, gVertexSize );
     }
     /*
      *    Insert the vertex.
      */
-    spList[ sIndex ] = *spV;
+    memcpy( ( u8 * )spList + sIndex * VERTEX_ASM_MAX_VERTEX_SIZE, spV, gVertexSize );
 }
 
 /*
  *    Removes a vertex from a clipped vertex list.
  *
  *    @param u32                 The index to remove.
- *    @param chik_vertex_t **    The list of vertices.
+ *    @param void          **    The list of vertices.
  *    @param u32                 The number of vertices in the list.
  *    @param u32                 The list size.
  */
-void cull_remove_vertex( u32 sIndex, chik_vertex_t *spList, u32 sCount, u32 sSize ) {
+void cull_remove_vertex( u32 sIndex, void **spList, u32 sCount, u32 sSize ) {
     if ( sIndex >= sSize ) {
         log_error( "Index out of bounds.\n" );
         return;
@@ -129,7 +143,11 @@ void cull_remove_vertex( u32 sIndex, chik_vertex_t *spList, u32 sCount, u32 sSiz
      *    Shift the vertices up.
      */
     for ( u32 i = sIndex; i < sCount - 1; i++ ) {
-        spList[ i ] = spList[ i + 1 ];
+        /*
+         *    The scope doesn't seem to know that void **spList is a u8[][], so we'll
+         *    use direct memory access. I hope this works on other platforms.
+         */
+        memcpy( ( u8 * )spList + i * VERTEX_ASM_MAX_VERTEX_SIZE, ( u8 * )spList + ( i + 1 ) * VERTEX_ASM_MAX_VERTEX_SIZE, gVertexSize );
     }
 }
 
@@ -137,20 +155,18 @@ void cull_remove_vertex( u32 sIndex, chik_vertex_t *spList, u32 sCount, u32 sSiz
  *    Creates the view frustum.
  */
 void cull_create_frustum() {
-    f32 tanFov = 1;
-
     f32 n = 0.01f;
     f32 f = 100.f;
 
-    vec2_t nsw = { -n * tanFov, -n * tanFov };
-    vec2_t nse = {  n * tanFov, -n * tanFov };
-    vec2_t nne = {  n * tanFov,  n * tanFov };
-    vec2_t nnw = { -n * tanFov,  n * tanFov };
+    vec2_t nsw = { -n, -n };
+    vec2_t nse = {  n, -n };
+    vec2_t nne = {  n,  n };
+    vec2_t nnw = { -n,  n };
 
-    vec2_t fsw = { -f  * tanFov, -f  * tanFov };
-    vec2_t fse = {  f  * tanFov, -f  * tanFov };
-    vec2_t fne = {  f  * tanFov,  f  * tanFov };
-    vec2_t fnw = { -f  * tanFov,  f  * tanFov };
+    vec2_t fsw = { -f, -f  };
+    vec2_t fse = {  f, -f  };
+    vec2_t fne = {  f,  f  };
+    vec2_t fnw = { -f,  f  };
 
     vec3_t nearTop   = { nnw.x,  nnw.y, n };
     vec3_t nearBot   = { nsw.x,  nsw.y, n };
@@ -194,26 +210,43 @@ void cull_create_frustum() {
  *
  *    Reference: https://youtu.be/hxOw_p0kLfI
  *
- *    @param chik_vertex_t *     The first vertex.
- *    @param chik_vertex_t *     The second vertex.
- *    @param chik_vertex_t *     The third vertex.
- *    @param s32 *               The number of new vertices.
+ *    @param void *     The first vertex.
+ *    @param void *     The second vertex.
+ *    @param void *     The third vertex.
+ *    @param s32  *     The number of new vertices.
  *
  *    @return chik_vertex_t *    The new vertices.
  */
-chik_vertex_t *cull_clip_triangle( chik_vertex_t *spV0, chik_vertex_t *spV1, chik_vertex_t *spV2, s32 *spNumVertices ) {
-    static chik_vertex_t vertices[ 8 ];
+chik_vertex_t *cull_clip_triangle( void *spV0, void *spV1, void *spV2, s32 *spNumVertices ) {
+    static u8 vertices[ 8 * VERTEX_ASM_MAX_VERTEX_SIZE ];
     u32                  numVertices   = 3;
 
-    vertices[ 0 ] = *spV0;
-    vertices[ 1 ] = *spV1;
-    vertices[ 2 ] = *spV2;
+    /*
+     *    Copy the vertices into the array.
+     */
+    memcpy( vertices + 0 * VERTEX_ASM_MAX_VERTEX_SIZE, spV0, gVertexSize );
+    memcpy( vertices + 1 * VERTEX_ASM_MAX_VERTEX_SIZE, spV1, gVertexSize );
+    memcpy( vertices + 2 * VERTEX_ASM_MAX_VERTEX_SIZE, spV2, gVertexSize );
 
     for ( u64 i = 0; i < ARR_LEN( gFrustum.aPlanes ); ++i ) {
-        //log_note( " plane %i\n", i );
-        for ( u64 j = 0; j < numVertices; ++j ) {
-            chik_vertex_t v;
-            u32 ret = cull_clip_vertex( &gFrustum.aPlanes[ i ], &vertices[ j ], &vertices[ ( j + 1 ) % numVertices ], &v, j == 0 );
+        log_note( " plane %i\n", i );
+        u32 removeFirst = 0;
+        for ( u64 j = 0; j < numVertices; ) {
+            u8  v[ VERTEX_ASM_MAX_VERTEX_SIZE ];
+            u32 ret = cull_clip_vertex( 
+                &gFrustum.aPlanes[ i ], 
+                &vertices[ j * VERTEX_ASM_MAX_VERTEX_SIZE ], 
+                &vertices[ ( ( j + 1 ) % numVertices ) * VERTEX_ASM_MAX_VERTEX_SIZE ], 
+                &v, 
+                j == 0 
+            );
+
+            /*
+             *    Remove the first vertex once we are at the end of the loop.
+             */
+            if ( ret & 0b00000100 ) {
+                removeFirst = 1;
+            }
 
             /*
              *    Keep the first vertex.
@@ -229,24 +262,38 @@ chik_vertex_t *cull_clip_triangle( chik_vertex_t *spV0, chik_vertex_t *spV1, chi
                 /*
                  *    No need to insert the new vertex.
                  */
+                ++j;
             }
             else if ( ret & 0b00000010 ) {
                 /*
                  *    Replace the first vertex.
                  */
-                vertices[ j ] = v;
+                memcpy( vertices + j * VERTEX_ASM_MAX_VERTEX_SIZE, &v, gVertexSize );
+                ++j;
             }
             else {
                 /*
                  *    Erase the first vertex.
                  */
-                cull_remove_vertex( j--, &vertices, numVertices--, ARR_LEN( vertices ) );
+                cull_remove_vertex( j, &vertices, numVertices--, ARR_LEN( vertices ) );
             }
+        }
+        if ( removeFirst ) {
+            cull_remove_vertex( 0, &vertices, numVertices--, ARR_LEN( vertices ) );
         }
     }
     *spNumVertices = numVertices;
 
-    //log_note( "Clipped %d vertices.\n", numVertices );
+    log_note( "Clipped %d vertices.\n", numVertices );
+
+    for ( s64 i = 0; i < numVertices; ++i ) {
+        vec3_t v = *( vec3_t* )( vertices + i * VERTEX_ASM_MAX_VERTEX_SIZE );
+        vec2u_t v1 = {
+        .x = ( u32 )( ( v.x + 1.0f ) * 640  / 2 ),
+        .y = ( u32 )( ( v.y + 1.0f ) * 480 / 2 ),
+        };
+        log_note( "  %i: %d %d\n", i, v1.x, v1.y );
+    }
 
     return vertices;
 }

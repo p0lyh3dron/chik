@@ -57,6 +57,9 @@ void raster_draw_scanline( s32 sX1, s32 sX2, s32 sY, void *spV1, void *spV2 ) {
     vec4_t p1 = vertex_get_position( spV1 );
     vec4_t p2 = vertex_get_position( spV2 );
 
+    f32 iz1 = 1.0f / p1.z;
+    f32 iz2 = 1.0f / p2.z;
+
     if ( p1.z == 0.0f || p2.z == 0.0f ) {
         return;
     }
@@ -70,7 +73,7 @@ void raster_draw_scanline( s32 sX1, s32 sX2, s32 sY, void *spV1, void *spV2 ) {
          *    Interpolate the vector values, and apply to the fragment.
          */
         vec_t *pV = vertex_build_interpolated( spV1, spV2, ( f32 )( x - sX1 ) / ( sX2 - sX1 ) );
-        //pV        = vertex_scale( pV, 1 / ( p1.z * ( 1 - ( f32 )( x - sX1 ) / ( sX2 - sX1 ) ) + p2.z * ( f32 )( x - sX1 ) / ( sX2 - sX1 ) ) );
+        pV        = vertex_scale( pV, 1 / ( iz1 * ( 1 - ( f32 )( x - sX1 ) / ( sX2 - sX1 ) ) + iz2 * ( f32 )( x - sX1 ) / ( sX2 - sX1 ) ), V_POS );
 
         fragment_apply( pV, &f );
 
@@ -199,6 +202,9 @@ void raster_rasterize_triangle( void *spV1, void *spV2, void *spV3 ) {
      * 
      *    This has not been implemented yet.
      */
+    memcpy( pIA, vertex_scale( spV1, 1 / z1, V_POS ), VERTEX_ASM_MAX_VERTEX_SIZE );
+    memcpy( pIB, vertex_scale( spV2, 1 / z2, V_POS ), VERTEX_ASM_MAX_VERTEX_SIZE );
+    memcpy( pIC, vertex_scale( spV3, 1 / z3, V_POS ), VERTEX_ASM_MAX_VERTEX_SIZE );
 
     /*
      *    Check for flat top.
@@ -217,17 +223,18 @@ void raster_rasterize_triangle( void *spV1, void *spV2, void *spV3 ) {
             z1 = z2;
             z2 = tempf;
 
-            void *pTemp = spV1;
-            spV1 = spV2;
-            spV2 = pTemp;
+            u8 pTemp[ VERTEX_ASM_MAX_VERTEX_SIZE ];
+            memcpy( pTemp, pIA, VERTEX_ASM_MAX_VERTEX_SIZE );
+            memcpy( pIA, pIB, VERTEX_ASM_MAX_VERTEX_SIZE );
+            memcpy( pIB, pTemp, VERTEX_ASM_MAX_VERTEX_SIZE );
 
             tempf = dy1;
             dy1 = dy2;
             dy2 = tempf;
         }
         while ( y >= v3.y ) {
-            memcpy( v0, vertex_build_interpolated( spV2, spV3, ( f32 )( v1.y - y ) / ( v1.y - v3.y ) ), VERTEX_ASM_MAX_VERTEX_SIZE );
-            memcpy( v,  vertex_build_interpolated( spV1, spV3, ( f32 )( v1.y - y ) / ( v1.y - v3.y ) ), VERTEX_ASM_MAX_VERTEX_SIZE );
+            memcpy( v0, vertex_build_interpolated( pIB, pIC, ( f32 )( v1.y - y ) / ( v1.y - v3.y ) ), VERTEX_ASM_MAX_VERTEX_SIZE );
+            memcpy( v,  vertex_build_interpolated( pIA, pIC, ( f32 )( v1.y - y ) / ( v1.y - v3.y ) ), VERTEX_ASM_MAX_VERTEX_SIZE );
             raster_draw_scanline( v2.x + ( y - v1.y ) * dy2, v1.x + ( y - v1.y ) * dy1, y, v0, v );
             y--;
         }
@@ -251,17 +258,18 @@ void raster_rasterize_triangle( void *spV1, void *spV2, void *spV3 ) {
             z2 = z3;
             z3 = tempf;
 
-            void *pTemp = spV2;
-            spV2 = spV3;
-            spV3 = pTemp;
+            u8 pTemp[ VERTEX_ASM_MAX_VERTEX_SIZE ];
+            memcpy( pTemp, pIB, VERTEX_ASM_MAX_VERTEX_SIZE );
+            memcpy( pIB, pIC, VERTEX_ASM_MAX_VERTEX_SIZE );
+            memcpy( pIC, pTemp, VERTEX_ASM_MAX_VERTEX_SIZE );
 
             tempf = dy1;
             dy1 = dy0;
             dy0 = tempf;
         }
         while ( y >= v3.y ) {
-            memcpy( v0, vertex_build_interpolated( spV1, spV2, ( f32 )( v1.y - y ) / ( v1.y - v3.y ) ), VERTEX_ASM_MAX_VERTEX_SIZE );
-            memcpy( v,  vertex_build_interpolated( spV1, spV3, ( f32 )( v1.y - y ) / ( v1.y - v3.y ) ), VERTEX_ASM_MAX_VERTEX_SIZE );
+            memcpy( v0, vertex_build_interpolated( pIA, pIB, ( f32 )( v1.y - y ) / ( v1.y - v3.y ) ), VERTEX_ASM_MAX_VERTEX_SIZE );
+            memcpy( v,  vertex_build_interpolated( pIA, pIC, ( f32 )( v1.y - y ) / ( v1.y - v3.y ) ), VERTEX_ASM_MAX_VERTEX_SIZE );
             raster_draw_scanline( v1.x + ( y - v1.y ) * dy0, v1.x + ( y - v1.y ) * dy1, y, v0, v );
             y--;
         }
@@ -273,13 +281,13 @@ void raster_rasterize_triangle( void *spV1, void *spV2, void *spV3 ) {
          *    Bend is on the left.
          */
         if ( v2.x < v3.x ) {
-            memcpy( v, vertex_build_interpolated( spV1, spV3, ( f32 )( v1.y - y ) / ( v1.y - v3.y ) ), VERTEX_ASM_MAX_VERTEX_SIZE );
+            memcpy( v, vertex_build_interpolated( pIA, pIC, ( f32 )( v1.y - y ) / ( v1.y - v3.y ) ), VERTEX_ASM_MAX_VERTEX_SIZE );
             if ( y >= v2.y ) {
-                memcpy( v0, vertex_build_interpolated( spV1, spV2, ( f32 )( v1.y - y ) / ( v1.y - v2.y ) ), VERTEX_ASM_MAX_VERTEX_SIZE );
+                memcpy( v0, vertex_build_interpolated( pIA, pIB, ( f32 )( v1.y - y ) / ( v1.y - v2.y ) ), VERTEX_ASM_MAX_VERTEX_SIZE );
                 raster_draw_scanline( v1.x + ( y - v1.y ) * dy0, v1.x + ( y - v1.y ) * dy1, y, v0, v );
             }
             else {
-                memcpy( v0, vertex_build_interpolated( spV2, spV3, ( f32 )( v2.y - y ) / ( v2.y - v3.y ) ), VERTEX_ASM_MAX_VERTEX_SIZE );
+                memcpy( v0, vertex_build_interpolated( pIB, pIC, ( f32 )( v2.y - y ) / ( v2.y - v3.y ) ), VERTEX_ASM_MAX_VERTEX_SIZE );
                 raster_draw_scanline( v2.x + ( y - v2.y ) * dy2, v1.x + ( y - v1.y ) * dy1, y, v0, v );
             }
         }
@@ -287,13 +295,13 @@ void raster_rasterize_triangle( void *spV1, void *spV2, void *spV3 ) {
          *    Bend is on the right.
          */
         else {
-            memcpy( v0, vertex_build_interpolated( spV1, spV3, ( f32 )( v1.y - y ) / ( v1.y - v3.y ) ), VERTEX_ASM_MAX_VERTEX_SIZE );
+            memcpy( v0, vertex_build_interpolated( pIA, pIC, ( f32 )( v1.y - y ) / ( v1.y - v3.y ) ), VERTEX_ASM_MAX_VERTEX_SIZE );
             if ( y >= v2.y ) {
-                memcpy( v, vertex_build_interpolated( spV1, spV2, ( f32 )( v1.y - y ) / ( v1.y - v2.y ) ), VERTEX_ASM_MAX_VERTEX_SIZE );
+                memcpy( v, vertex_build_interpolated( pIA, pIB, ( f32 )( v1.y - y ) / ( v1.y - v2.y ) ), VERTEX_ASM_MAX_VERTEX_SIZE );
                 raster_draw_scanline( v1.x + ( y - v1.y ) * dy1, v1.x + ( y - v1.y ) * dy0, y, v0, v );
             }
             else {
-                memcpy( v, vertex_build_interpolated( spV2, spV3, ( f32 )( v2.y - y ) / ( v2.y - v3.y ) ), VERTEX_ASM_MAX_VERTEX_SIZE );
+                memcpy( v, vertex_build_interpolated( pIB, pIC, ( f32 )( v2.y - y ) / ( v2.y - v3.y ) ), VERTEX_ASM_MAX_VERTEX_SIZE );
                 raster_draw_scanline( v1.x + ( y - v1.y ) * dy1, v2.x + ( y - v2.y ) * dy2, y, v0, v );
             }
         }

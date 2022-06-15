@@ -56,6 +56,12 @@ mat4_t camera_projection( camera_t *spCamera ) {
         0, 0, ( spCamera->aNear ) / ( spCamera->aFar - spCamera->aNear ), ( spCamera->aNear * spCamera->aFar ) / ( spCamera->aFar - spCamera->aNear ),
         0, 0, 1, 0
     };
+    /*mat4_t projection = {
+        fov / spCamera->aAspect, 0, 0, 0,
+        0, -fov, 0, 0,
+        0, 0, spCamera->aFar / ( spCamera->aFar - spCamera->aNear ), -spCamera->aFar * spCamera->aNear / ( spCamera->aFar - spCamera->aNear ),
+        0, 0, 1, 0
+    };*/
 
     return projection;
 }

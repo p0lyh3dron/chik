@@ -15,12 +15,19 @@
 #include "libchik.h"
 
 /*
+ *    Sets the current vertex size.
+ *
+ *    @param u32           The size of the vertex data.
+ */
+void cull_set_vertex_size( u32 sSize );
+
+/*
  *    Clips a pair of vertices.
  *
  *    @param plane_t       *    The plane to clip against.
- *    @param chik_vertex_t *    The first vertex.
- *    @param chik_vertex_t *    The second vertex.
- *    @param chik_vertex_t *    The clipped vertex.
+ *    @param void          *    The first vertex.
+ *    @param void          *    The second vertex.
+ *    @param void          *    The clipped vertex.
  *    @param u32                True if this is the first vertex. 
  * 
  *    @return u32               Bitmask of the clip flags.
@@ -28,28 +35,28 @@
  *                              0x1 = modify first vertex with the clipped.
  *
  */
-u32 cull_clip_vertex( plane_t *spP, chik_vertex_t *spV0, chik_vertex_t *spV1, chik_vertex_t *spRet, u32 sFirst );
+u32 cull_clip_vertex( plane_t *spP, void *spV0, void *spV1, void *spRet, u32 sFirst );
 
 /*
  *    Inserts a vertex into a clipped vertex list.
  *
- *    @param chik_vertex_t *     The vertex to insert.
- *    @param chik_vertex_t **    The list of vertices.
+ *    @param void           *    The vertex to insert.
+ *    @param void          **    The list of vertices.
  *    @param u32                 The target index.
  *    @param u32                 The number of vertices in the list.
  *    @param u32                 The list size.
  */
-void cull_insert_vertex( chik_vertex_t *spV, chik_vertex_t *spList, u32 sIndex, u32 sCount, u32 sSize );
+void cull_insert_vertex( void *spV, void **spList, u32 sIndex, u32 sCount, u32 sSize );
 
 /*
  *    Removes a vertex from a clipped vertex list.
  *
  *    @param u32                 The index to remove.
- *    @param chik_vertex_t **    The list of vertices.
+ *    @param void          **    The list of vertices.
  *    @param u32                 The number of vertices in the list.
  *    @param u32                 The list size.
  */
-void cull_remove_vertex( u32 sIndex, chik_vertex_t *spList, u32 sCount, u32 sSize );
+void cull_remove_vertex( u32 sIndex, void **spList, u32 sCount, u32 sSize );
 
 /*
  *    Creates the view frustum.
@@ -61,13 +68,13 @@ void cull_create_frustum();
  *
  *    Reference: https://youtu.be/hxOw_p0kLfI
  *
- *    @param chik_vertex_t *     The first vertex.
- *    @param chik_vertex_t *     The second vertex.
- *    @param chik_vertex_t *     The third vertex.
- *    @param s32 *               The number of new vertices.
+ *    @param void *     The first vertex.
+ *    @param void *     The second vertex.
+ *    @param void *     The third vertex.
+ *    @param s32  *     The number of new vertices.
  *
  *    @return chik_vertex_t *    The new vertices.
  */
-chik_vertex_t *cull_clip_triangle( chik_vertex_t *spV0, chik_vertex_t *spV1, chik_vertex_t *spV2, s32 *spNumVertices );
+chik_vertex_t *cull_clip_triangle( void *spV0, void *spV1, void *spV2, s32 *spNumVertices );
 
 #endif /* CHIK_GFX_CULL_H  */
