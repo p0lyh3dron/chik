@@ -77,11 +77,14 @@ u32 cull_clip_vertex( plane_t *spP, void *spV0, void *spV1, void *spRet, u32 sFi
     *    discard them.
     */
     else {
-        if ( outside > 0.f || sFirst ) {
+        if ( outside >= 0.f ) {
             /*
              *    Keep.
              */
             return 0b00000001;
+        }
+        else if ( sFirst ) {
+            return 0b00000101;
         }
         else {
             /*
@@ -155,7 +158,7 @@ void cull_remove_vertex( u32 sIndex, void **spList, u32 sCount, u32 sSize ) {
  *    Creates the view frustum.
  */
 void cull_create_frustum() {
-    f32 n = 0.01f;
+    f32 n = 0.1f;
     f32 f = 100.f;
 
     vec2_t nsw = { -n, -n };

@@ -57,8 +57,8 @@ void raster_draw_scanline( s32 sX1, s32 sX2, s32 sY, void *spV1, void *spV2 ) {
     vec4_t p1 = vertex_get_position( spV1 );
     vec4_t p2 = vertex_get_position( spV2 );
 
-    f32 iz1 = 1.0f / p1.z;
-    f32 iz2 = 1.0f / p2.z;
+    f32 iz1 = p1.z;
+    f32 iz2 = p2.z;
 
     if ( p1.z == 0.0f || p2.z == 0.0f ) {
         return;
@@ -205,6 +205,14 @@ void raster_rasterize_triangle( void *spV1, void *spV2, void *spV3 ) {
     memcpy( pIA, vertex_scale( spV1, 1 / z1, V_POS ), VERTEX_ASM_MAX_VERTEX_SIZE );
     memcpy( pIB, vertex_scale( spV2, 1 / z2, V_POS ), VERTEX_ASM_MAX_VERTEX_SIZE );
     memcpy( pIC, vertex_scale( spV3, 1 / z3, V_POS ), VERTEX_ASM_MAX_VERTEX_SIZE );
+
+    f32 iz1 = 1 / z1;
+    f32 iz2 = 1 / z2;
+    f32 iz3 = 1 / z3;
+
+    memcpy( pIA + 2 * sizeof( f32 ), &iz1, sizeof( f32 ) );
+    memcpy( pIB + 2 * sizeof( f32 ), &iz2, sizeof( f32 ) );
+    memcpy( pIC + 2 * sizeof( f32 ), &iz3, sizeof( f32 ) );
 
     /*
      *    Check for flat top.

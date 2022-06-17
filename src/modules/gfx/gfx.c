@@ -117,6 +117,9 @@ handle_t create_camera( void ) {
     cam.aNear = 1.0f;
     cam.aFar  = 0.f;
 
+    /*cam.aNear = 0.1f;
+    cam.aFar  = 100.0f;*/
+
     cam.aFOV = 90.0f;
 
     cam.aAspect = ( float )gpBackBuffer->apTarget->aWidth / ( float )gpBackBuffer->apTarget->aHeight;

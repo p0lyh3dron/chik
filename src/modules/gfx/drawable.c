@@ -317,6 +317,11 @@ void vbuffer_draw( handle_t sBuffer ) {
         c.aPos.z = 1 / c.aPos.z;*/
 
         chik_vertex_t *pVerts = cull_clip_triangle( &a, &b, &c, &numVertices );
+        /*u8 pVerts[ 3 * VERTEX_ASM_MAX_VERTEX_SIZE ];
+        memcpy( pVerts, &a, sizeof( chik_vertex_t ) );
+        memcpy( pVerts + 1 * VERTEX_ASM_MAX_VERTEX_SIZE, &b, sizeof( chik_vertex_t ) );
+        memcpy( pVerts + VERTEX_ASM_MAX_VERTEX_SIZE * 2, &c, sizeof( chik_vertex_t ) );
+        numVertices = 3;*/
 
         /*log_note( "%f, %f, %f, %f\n%f, %f, %f, %f\n%f, %f, %f, %f\n%f, %f, %f, %f\n", view.v[ 0 ], view.v[ 1 ], view.v[ 2 ], view.v[ 3 ],
                   view.v[ 4 ], view.v[ 5 ], view.v[ 6 ], view.v[ 7 ],
@@ -356,6 +361,7 @@ void vbuffer_draw( handle_t sBuffer ) {
             c.aPos.x /= c.aPos.w;
             c.aPos.y /= c.aPos.w;
             //c.aPos.z /= c.aPos.w;
+            log_note( "a = %f, %f, %f\nb = %f, %f, %f\nc = %f, %f, %f\n", a.aPos.x, a.aPos.y, a.aPos.z, b.aPos.x, b.aPos.y, b.aPos.z, c.aPos.x, c.aPos.y, c.aPos.z );
             /*
              *    Draw the triangle.
              */
