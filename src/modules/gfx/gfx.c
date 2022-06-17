@@ -28,78 +28,6 @@ resource_t *gpVBuffer    = NULL;
 resource_t *gpGResources = NULL;
 
 /*
- *    Draws vertex color to the fragment.
- *
- *    @param fragment_t *    The fragment to draw to.
- *    @param vec_t *         The color to draw.
- */
-void draw_vertex_color( fragment_t *spFrag, vec_t *spColor, void *spData ) {
-    spFrag->aColor.r = spColor->v4.x * 255.0f;
-    spFrag->aColor.g = spColor->v4.y * 255.0f;
-    spFrag->aColor.b = spColor->v4.z * 255.0f;
-    spFrag->aColor.a = spColor->v4.w * 255.0f;
-}
-
-/*
- *    Samples a texture at the given UV coordinates.
- *
- *    @param fragment_t *    The fragment to draw to.
- *    @param vec_t *         The UV coordinates to sample.
- */
-void sample_texture( fragment_t *spFrag, vec_t *spUV, void *spData ) {
-    texture_t *pTex = ( texture_t* )spData;
-    image_t   *pImage = pTex->apImage;
-
-    if ( !spData || !pTex || !pImage ) {
-        return;
-    }
-
-    spUV->v2u.x = fmod( spUV->v2.x, 1.0f ) * pImage->aWidth;
-    spUV->v2u.y = fmod( spUV->v2.y, 1.0f ) * pImage->aHeight;
-    spFrag->aColor.r = ( ( u8* )pImage->apData )[ ( spUV->v2u.x + spUV->v2u.y * pImage->aWidth ) * 3 + 0 ];
-    spFrag->aColor.g = ( ( u8* )pImage->apData )[ ( spUV->v2u.x + spUV->v2u.y * pImage->aWidth ) * 3 + 1 ];
-    spFrag->aColor.b = ( ( u8* )pImage->apData )[ ( spUV->v2u.x + spUV->v2u.y * pImage->aWidth ) * 3 + 2 ];
-    /*spFrag->aColor.r = 255;
-    spFrag->aColor.g = 255;
-    spFrag->aColor.b = 255;*/
-    spFrag->aColor.a = 1;
-}
-
-v_layout_t gVLayout = {
-    .aAttribs = { 
-        /* Usage, Type, Stride, Offset, Fragment callback.  */
-        { V_POS, V_R32G32B32A32_F,     sizeof( vec4_t ),  0,        NULL           },
-        { 0,     V_R32G32_F,           sizeof( vec2u_t ), 16 + 16, &sample_texture }
-    },
-    .aCount   = 2,
-    .aStride  = sizeof( chik_vertex_t ),
-};
-
-/*
- *    Creates a vertex buffer.
- *
- *    @param chik_vertex_t *    The array of vertices to store in the buffer.
- *    @param u32                The number of vertices in the array.
- * 
- *    @return handle_t          The handle to the vertex buffer.
- */
-handle_t create_vertex_buffer( chik_vertex_t *spVertices, u32 sCount ) {
-    if ( !gpVBuffer )
-        gpVBuffer = resource_new( 1024 * 1024 * sizeof( chik_vertex_t ) );
-    if ( gpVBuffer == NULL ) {
-        log_error( "Failed to create vertex resource.\n" );
-        return INVALID_HANDLE;
-    }
-    handle_t handle = resource_add( gpVBuffer, spVertices, sCount * sizeof( chik_vertex_t ) );
-    if ( handle == INVALID_HANDLE ) {
-        log_error( "Failed to add vertex resource.\n" );
-        resource_destroy( gpVBuffer );
-        return INVALID_HANDLE;
-    }
-    return handle;
-}
-
-/*
  *    Creates a camera.
  *
  *    @return handle_t          The handle to the camera.
@@ -113,11 +41,8 @@ handle_t create_camera( void ) {
     cam.aDirection.x = 0.0f;
     cam.aDirection.y = 0.0f;
 
-    cam.aNear = 1.0f;
-    cam.aFar  = 0.f;
-
-    /*cam.aNear = 0.1f;
-    cam.aFar  = 100.0f;*/
+    cam.aNear = 0.1f;
+    cam.aFar  = 1000.f;
 
     cam.aFOV = 90.0f;
 
@@ -222,7 +147,6 @@ void graphics_init( void ) {
     cull_create_frustum();
     init_drawable_resources();
     raster_set_rendertarget( gpBackBuffer );
-    vertexasm_set_layout( gVLayout );
 }
 
 /*
@@ -230,8 +154,5 @@ void graphics_init( void ) {
  */
 __attribute__( ( destructor ) )
 void cleanup_graphics( void ) {
-    if ( gpVBuffer != NULL ) {
-        resource_destroy( gpVBuffer );
-        gpVBuffer = NULL;
-    }
+    
 }

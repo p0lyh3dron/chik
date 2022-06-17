@@ -34,6 +34,14 @@ void vertexasm_set_layout( v_layout_t sLayout );
 vec4_t vertex_get_position( void *spV );
 
 /*
+ *    Sets the position of a vertex.
+ *
+ *    @param void *        The raw vertex data.
+ *    @param vec4_t       The position of the vertex.
+ */
+void vertex_set_position( void *spV, vec4_t sPosition );
+
+/*
  *    Builds a new vertex given two vertices and a normalized difference.
  *
  *    @param void *        The raw vertex data of the first vertex.

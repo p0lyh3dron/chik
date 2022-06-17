@@ -9,6 +9,7 @@
  */
 #include "cull.h"
 
+#include "camera.h"
 #include "vertexasm.h"
 
 frustum_t gFrustum;
@@ -59,7 +60,9 @@ u32 cull_clip_vertex( plane_t *spP, void *spV0, void *spV1, void *spRet, u32 sFi
         if ( outside >= 0.f ) {
             return 0b00000011;
         }
-        
+        /*
+         *    Remove the first vertex.
+         */
         else if ( sFirst ) {
             return 0b00000111;
         }
@@ -81,6 +84,9 @@ u32 cull_clip_vertex( plane_t *spP, void *spV0, void *spV1, void *spRet, u32 sFi
              */
             return 0b00000001;
         }
+        /*
+         *    Discard the first vertex.
+         */
         else if ( sFirst ) {
             return 0b00000101;
         }
@@ -156,8 +162,17 @@ void cull_remove_vertex( u32 sIndex, void **spList, u32 sCount, u32 sSize ) {
  *    Creates the view frustum.
  */
 void cull_create_frustum() {
-    f32 n = 0.1f;
-    f32 f = 1000.f;
+    f32 n;
+    f32 f;
+
+    if ( !gpCamera ) {
+        n = 0.1f;
+        f = 100.f;    
+    }
+    else {
+        n = gpCamera->aNear;
+        f = gpCamera->aFar;
+    }
 
     vec2_t nsw = { -n, -n };
     vec2_t nse = {  n, -n };
@@ -169,40 +184,64 @@ void cull_create_frustum() {
     vec2_t fne = {  f,  f  };
     vec2_t fnw = { -f,  f  };
 
+    /*
+     *    Plane 0:    Near.
+     *    This plane consists of the three points:
+     *    the top-left, bottom-left, and bottom-right.
+     */
     vec3_t nearTop   = { nnw.x,  nnw.y, n };
     vec3_t nearBot   = { nsw.x,  nsw.y, n };
     vec3_t nearRight = { nne.x,  nne.y, n };
     plane_from_points( &gFrustum.aPlanes[ 0 ], &nearTop, &nearBot, &nearRight );
 
+    /*
+     *    Plane 1:    Left.
+     *    This plane consists of the three points ( when directly facing this plane from outside the frustum as if looking through the game camera ):
+     *    the bottom-right, top-right, and top-left.
+     */
     vec3_t leftCloseBottom = { nsw.x,  nsw.y, n };
     vec3_t leftCloseTop    = { nnw.x,  nnw.y,  n };
     vec3_t leftFarTop      = { fnw.x,  fnw.y,  f };
     plane_from_points( &gFrustum.aPlanes[ 1 ], &leftCloseBottom, &leftCloseTop, &leftFarTop );
 
     /*
-     *    2 Far points, close point is on the bottom.
+     *    Plane 2:    Right.
+     *    This plane consists of the three points ( same conditions as above, same for below ):
+     *    the bottom-left, bottom-right, and top-right.
      */
     vec3_t rightCloseBottom  = { nse.x,  nse.y,  n };
     vec3_t rightFarBottom    = { fse.x,  fse.y,  f };
     vec3_t rightFarTop       = { fne.x,  fne.y,  f };
     plane_from_points( &gFrustum.aPlanes[ 2 ], &rightCloseBottom, &rightFarBottom, &rightFarTop );
 
+    /*
+     *    Plane 3:    Top.
+     *    This plane consists of the three points:
+     *    the bottom-left, bottom-right, and top-left.
+     */
     vec3_t topCloseLeft  = { nnw.x, nnw.y,  n }; 
     vec3_t topCloseRight = { nne.x, nne.y,  n };
     vec3_t topFarLeft    = { fnw.x, fnw.y,  f };
     plane_from_points( &gFrustum.aPlanes[ 3 ], &topCloseLeft, &topCloseRight, &topFarLeft );
 
+    /*
+     *    Plane 4:    Bottom.
+     *    This plane consists of the three points:
+     *    the bottom-right, bottom-left, and top-left.
+     */
+    vec3_t bottomFarRight  = { fse.x,  fse.y, f };
     vec3_t bottomCloseLeft = { nsw.x,  nsw.y, n };
     vec3_t bottomFarLeft   = { fsw.x,  fsw.y, f };
-    vec3_t bottomFarRight  = { fse.x,  fse.y, f };
     plane_from_points( &gFrustum.aPlanes[ 4 ], &bottomFarRight, &bottomCloseLeft, &bottomFarLeft );
 
     /*
-     *    Explain this later.
+     *    Plane 5:    Far.
+     *    This plane consists of the three points:
+     *    the top-left, top-right, bottom-left.
      */
     vec3_t farTop   = { fnw.x, fnw.y,  f };
-    vec3_t farBot   = { fsw.x, fsw.y,  f };
     vec3_t farRight = { fne.x, fne.y,  f };
+    vec3_t farBot   = { fsw.x, fsw.y,  f };
     plane_from_points( &gFrustum.aPlanes[ 5 ], &farTop, &farRight, &farBot );
 }
 
@@ -220,7 +259,10 @@ void cull_create_frustum() {
  */
 chik_vertex_t *cull_clip_triangle( void *spV0, void *spV1, void *spV2, s32 *spNumVertices ) {
     static u8 vertices[ 8 * VERTEX_ASM_MAX_VERTEX_SIZE ];
-    u32                  numVertices   = 3;
+    u8        v       [ VERTEX_ASM_MAX_VERTEX_SIZE ];
+
+    u32       numVertices   = 3;
+    u32       removeFirst   = 0;
 
     /*
      *    Copy the vertices into the array.
@@ -230,9 +272,8 @@ chik_vertex_t *cull_clip_triangle( void *spV0, void *spV1, void *spV2, s32 *spNu
     memcpy( vertices + 2 * VERTEX_ASM_MAX_VERTEX_SIZE, spV2, gVertexSize );
 
     for ( u64 i = 0; i < ARR_LEN( gFrustum.aPlanes ); ++i ) {
-        u32 removeFirst = 0;
+        removeFirst = 0;
         for ( u64 j = 0; j < numVertices; ) {
-            u8  v[ VERTEX_ASM_MAX_VERTEX_SIZE ];
             u32 ret = cull_clip_vertex( 
                 &gFrustum.aPlanes[ i ], 
                 &vertices[ j * VERTEX_ASM_MAX_VERTEX_SIZE ], 
@@ -278,6 +319,9 @@ chik_vertex_t *cull_clip_triangle( void *spV0, void *spV1, void *spV2, s32 *spNu
                 cull_remove_vertex( j, &vertices, numVertices--, ARR_LEN( vertices ) );
             }
         }
+        /*
+         *    Since we are doing this in place, we need to remove the first vertex occasionally.
+         */
         if ( removeFirst ) {
             cull_remove_vertex( 0, &vertices, numVertices--, ARR_LEN( vertices ) );
         }

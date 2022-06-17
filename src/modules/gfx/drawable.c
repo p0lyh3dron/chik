@@ -290,60 +290,54 @@ void mesh_set_texture( handle_t sMesh, handle_t sTex ) {
  *    @param handle_t          The handle to the vertex buffer.
  */
 void vbuffer_draw( handle_t sBuffer ) {
-    if ( gpCamera == NULL ) {
+    if ( gpCamera == nullptr ) {
         log_error( "No camera.\n" );
         return;
     }
 
     vbuffer_t *pBuf = resource_get( gpResources, sBuffer );
-    if ( pBuf == NULL ) {
+    if ( pBuf == nullptr ) {
         log_error( "Failed to get vertex resource.\n" );
         return;
     }
-    mat4_t   view   = camera_view( gpCamera );
-    u32      size   = pBuf->aSize / sizeof( chik_vertex_t );
-    for ( u32 i = 0; i < size; i += 3 ) {
-        chik_vertex_t a0 = *( chik_vertex_t* )( pBuf->apData + i * sizeof( chik_vertex_t ) + 0 * pBuf->aVStride );
-        a0.aPos.w = 1.0f;
-        chik_vertex_t b0 = *( chik_vertex_t* )( pBuf->apData + i * sizeof( chik_vertex_t ) + 1 * pBuf->aVStride );
-        b0.aPos.w = 1.0f;
-        chik_vertex_t c0 = *( chik_vertex_t* )( pBuf->apData + i * sizeof( chik_vertex_t ) + 2 * pBuf->aVStride );
-        c0.aPos.w = 1.0f;
 
-        mat4_t        ma = m4_mul_v4( view, ( vec4_t ){ -a0.aPos.x, -a0.aPos.y, -a0.aPos.z, 1 } );
-        mat4_t        mb = m4_mul_v4( view, ( vec4_t ){ -b0.aPos.x, -b0.aPos.y, -b0.aPos.z, 1 } );
-        mat4_t        mc = m4_mul_v4( view, ( vec4_t ){ -c0.aPos.x, -c0.aPos.y, -c0.aPos.z, 1 } );
+    mat4_t   view       = camera_view( gpCamera );
+    u32      numVerts   = pBuf->aSize / pBuf->aVStride;
 
-        int j = 0;
-
-        chik_vertex_t a = a0;
-        a.aPos = ( vec4_t ){ ma.v[ j ], ma.v[ j + 4 ], ma.v[ j + 8 ], ma.v[ j + 12 ] };
-        
-        chik_vertex_t b = b0;
-        b.aPos = ( vec4_t ){ mb.v[ j ], mb.v[ j + 4 ], mb.v[ j + 8 ], mb.v[ j + 12 ] };
-
-        chik_vertex_t c = c0;
-        c.aPos = ( vec4_t ){ mc.v[ j ], mc.v[ j + 4 ], mc.v[ j + 8 ], mc.v[ j + 12 ] };
+    vertexasm_set_layout( pBuf->aLayout );
+    
+    for ( u32 i = 0; i < numVerts; i += 3 ) {
+        u8 a0[ VERTEX_ASM_MAX_VERTEX_SIZE ];
+        u8 b0[ VERTEX_ASM_MAX_VERTEX_SIZE ];
+        u8 c0[ VERTEX_ASM_MAX_VERTEX_SIZE ];
 
         /*
-         *    Don't draw the triangle if it is behind the camera.
-         *    if the dot product of the surface normal and the camera to the surface is greater than 0,
-         *    then the surface is in discarded.
+         *    Copy the vertex data into a buffer.
          */
-        vec3_t v0;
-        vec3_t v1;
-        vec3_sub( &v0, &a.aPos, &b.aPos );
-        vec3_sub( &v1, &a.aPos, &c.aPos );
+        memcpy( a0, pBuf->apData + ( i + 0 ) * pBuf->aVStride, pBuf->aVStride );
+        memcpy( b0, pBuf->apData + ( i + 1 ) * pBuf->aVStride, pBuf->aVStride );
+        memcpy( c0, pBuf->apData + ( i + 2 ) * pBuf->aVStride, pBuf->aVStride );
 
-        vec3_t n;
-        vec3_cross( &n, &v0, &v1 );
+        /*
+         *    Get the positions of the vertices.
+         */
+        vec4_t pa = vertex_get_position( a0 );
+        vec4_t pb = vertex_get_position( b0 );
+        vec4_t pc = vertex_get_position( c0 );
 
-        vec3_t v;
-        vec3_sub( &v, &gpCamera->aPosition, &a.aPos );
+        /*
+         *    Transform the positions.
+         */
+        mat4_t        ma = m4_mul_v4( view, pa );
+        mat4_t        mb = m4_mul_v4( view, pb );
+        mat4_t        mc = m4_mul_v4( view, pc );
 
-        /*if ( vec3_dot( &n, &v ) >= 0.0f ) {
-            continue;
-        }*/
+        /*
+         *    Update the vertex data.
+         */
+        vertex_set_position( a0, ( vec4_t ){ ma.v[ 0 ], ma.v[ 4 ], ma.v[ 8 ], ma.v[ 12 ] } );
+        vertex_set_position( b0, ( vec4_t ){ mb.v[ 0 ], mb.v[ 4 ], mb.v[ 8 ], mb.v[ 12 ] } );
+        vertex_set_position( c0, ( vec4_t ){ mc.v[ 0 ], mc.v[ 4 ], mc.v[ 8 ], mc.v[ 12 ] } );
 
         /*
          *    If the vertex is outside of the view frustum, use
@@ -351,60 +345,41 @@ void vbuffer_draw( handle_t sBuffer ) {
          *    that is inside the view frustum.
          */
         s32 numVertices = 0;
-        /*a.aPos.z = 1 / a.aPos.z;
-        b.aPos.z = 1 / b.aPos.z;
-        c.aPos.z = 1 / c.aPos.z;*/
 
-        chik_vertex_t *pVerts = cull_clip_triangle( &a, &b, &c, &numVertices );
-        /*u8 pVerts[ 3 * VERTEX_ASM_MAX_VERTEX_SIZE ];
-        memcpy( pVerts, &a, sizeof( chik_vertex_t ) );
-        memcpy( pVerts + 1 * VERTEX_ASM_MAX_VERTEX_SIZE, &b, sizeof( chik_vertex_t ) );
-        memcpy( pVerts + VERTEX_ASM_MAX_VERTEX_SIZE * 2, &c, sizeof( chik_vertex_t ) );
-        numVertices = 3;*/
-
-        /*log_note( "%f, %f, %f, %f\n%f, %f, %f, %f\n%f, %f, %f, %f\n%f, %f, %f, %f\n", view.v[ 0 ], view.v[ 1 ], view.v[ 2 ], view.v[ 3 ],
-                  view.v[ 4 ], view.v[ 5 ], view.v[ 6 ], view.v[ 7 ],
-                  view.v[ 8 ], view.v[ 9 ], view.v[ 10 ], view.v[ 11 ],
-                  view.v[ 12 ], view.v[ 13 ], view.v[ 14 ], view.v[ 15 ] );*/
-
-        
-
-        /*a.aPos.z = 1 / a.aPos.z;
-        b.aPos.z = 1 / b.aPos.z;
-        c.aPos.z = 1 / c.aPos.z;*/
-        //log_note( "a = %f, %f, %f\nb = %f, %f, %f\nc = %f, %f, %f\n", a.aPos.x, a.aPos.y, a.aPos.z, b.aPos.x, b.aPos.y, b.aPos.z, c.aPos.x, c.aPos.y, c.aPos.z );
+        u8 *pVerts = cull_clip_triangle( a0, b0, c0, &numVertices );
 
         /*
          *    Draw the clipped vertices.
          */
         for ( s64 i = 0; i < numVertices - 2; ++i ) {
-            chik_vertex_t a = *( chik_vertex_t* )( ( u8 * )pVerts + ( 0 ) * VERTEX_ASM_MAX_VERTEX_SIZE );
-            chik_vertex_t b = *( chik_vertex_t* )( ( u8 * )pVerts + ( 1 + i ) * VERTEX_ASM_MAX_VERTEX_SIZE );
-            chik_vertex_t c = *( chik_vertex_t* )( ( u8 * )pVerts + ( 2 + i ) * VERTEX_ASM_MAX_VERTEX_SIZE );
-
-            if ( a.aPos.w == 0.0f || b.aPos.w == 0.0f || c.aPos.w == 0.0f ) {
-                continue;
-            }
+            memcpy( a0, pVerts + ( 0 + 0 ) * VERTEX_ASM_MAX_VERTEX_SIZE, pBuf->aVStride );
+            memcpy( b0, pVerts + ( i + 1 ) * VERTEX_ASM_MAX_VERTEX_SIZE, pBuf->aVStride );
+            memcpy( c0, pVerts + ( i + 2 ) * VERTEX_ASM_MAX_VERTEX_SIZE, pBuf->aVStride );
 
             /*
              *    Transform the vertex to screen space.
              */
-            a.aPos.x /= a.aPos.w;
-            a.aPos.y /= a.aPos.w;
-            //a.aPos.z /= a.aPos.w;
+            pa = vertex_get_position( a0 );
+            pb = vertex_get_position( b0 );
+            pc = vertex_get_position( c0 );
 
-            b.aPos.x /= b.aPos.w;
-            b.aPos.y /= b.aPos.w;
-            //b.aPos.z /= b.aPos.w;
+            pa.x /= pa.w;
+            pa.y /= pa.w;
 
-            c.aPos.x /= c.aPos.w;
-            c.aPos.y /= c.aPos.w;
-            //c.aPos.z /= c.aPos.w;
-            //log_note( "a = %f, %f, %f\nb = %f, %f, %f\nc = %f, %f, %f\n", a.aPos.x, a.aPos.y, a.aPos.z, b.aPos.x, b.aPos.y, b.aPos.z, c.aPos.x, c.aPos.y, c.aPos.z );
+            pb.x /= pb.w;
+            pb.y /= pb.w;
+
+            pc.x /= pc.w;
+            pc.y /= pc.w;
+
+            vertex_set_position( a0, pa );
+            vertex_set_position( b0, pb );
+            vertex_set_position( c0, pc );
+            
             /*
              *    Draw the triangle.
              */
-            raster_rasterize_triangle( &a, &b, &c );
+            raster_rasterize_triangle( a0, b0, c0 );
         }
     }
 }

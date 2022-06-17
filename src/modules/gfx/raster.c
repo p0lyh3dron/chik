@@ -41,30 +41,35 @@ void raster_draw_scanline( s32 sX1, s32 sX2, s32 sY, void *spV1, void *spV2 ) {
     }
 
     if ( sX1 > sX2 ) {
-        s32 temp = sX1;
-        sX1 = sX2;
-        sX2 = temp;
+        s32 temp     = sX1;
+        sX1          = sX2;
+        sX2          = temp;
 
         vec_t *tempv = spV1;
-        spV1 = spV2;
-        spV2 = tempv;
+        spV1         = spV2;
+        spV2         = tempv;
     }
     
-    s32 x = MAX( sX1, 0 );
+    s32 x     = MAX( sX1, 0 );
 
-    s32 endX = sX2;
+    s32 endX  = sX2;
 
     vec4_t p1 = vertex_get_position( spV1 );
     vec4_t p2 = vertex_get_position( spV2 );
 
-    f32 iz1 = p1.z;
-    f32 iz2 = p2.z;
+    f32 iz1   = p1.z;
+    f32 iz2   = p2.z;
 
     if ( p1.z == 0.0f || p2.z == 0.0f ) {
         return;
     }
 
     vec_t v[ MAX_VECTOR_ATTRIBUTES ];
+
+    /*
+     *    Make a temporary because there's a coefficient that doesn't
+     *    need to be recalculated.
+     */
     f32 izs1 = iz1 / ( sX2 - sX1 );
     f32 izs2 = iz2 / ( sX2 - sX1 );
 
@@ -105,6 +110,9 @@ void raster_rasterize_triangle( void *spV1, void *spV2, void *spV3 ) {
     vec4_t p2 = vertex_get_position( spV2 );
     vec4_t p3 = vertex_get_position( spV3 );
 
+    /*
+     *    Map the normalized coordinates to screen coordinates.
+     */
     vec2u_t v1 = {
         .x = ( u32 )( ( p1.x + 1.0f ) * gpRasterTarget->apTarget->aWidth  / 2 ),
         .y = ( u32 )( ( p1.y + 1.0f ) * gpRasterTarget->apTarget->aHeight / 2 ),
@@ -126,7 +134,6 @@ void raster_rasterize_triangle( void *spV1, void *spV2, void *spV3 ) {
     f32 z2 = p2.z;
     f32 z3 = p3.z;
 
-
     /*
      *    Sort the vertices by y-coordinate.
      *
@@ -134,42 +141,42 @@ void raster_rasterize_triangle( void *spV1, void *spV2, void *spV3 ) {
      */
     if ( v1.y < v2.y ) {
         vec2u_t temp = v1;
-        v1 = v2;
-        v2 = temp;
+        v1           = v2;
+        v2           = temp;
 
-        f32 tempf = z1;
-        z1 = z2;
-        z2 = tempf;
+        f32 tempf    = z1;
+        z1           = z2;
+        z2           = tempf;
 
-        void *pTemp = spV1;
-        spV1 = spV2;
-        spV2 = pTemp;
+        void *pTemp  = spV1;
+        spV1         = spV2;
+        spV2         = pTemp;
     }
     if ( v2.y < v3.y ) {
         vec2u_t temp = v2;
-        v2 = v3;
-        v3 = temp;
+        v2           = v3;
+        v3           = temp;
 
-        f32 tempf = z2;
-        z2 = z3;
-        z3 = tempf;
+        f32 tempf    = z2;
+        z2           = z3;
+        z3           = tempf;
 
-        void *pTemp = spV2;
-        spV2 = spV3;
-        spV3 = pTemp;
+        void *pTemp  = spV2;
+        spV2         = spV3;
+        spV3         = pTemp;
     }
     if ( v1.y < v2.y ) {
         vec2u_t temp = v1;
-        v1 = v2;
-        v2 = temp;
+        v1           = v2;
+        v2           = temp;
 
-        f32 tempf = z1;
-        z1 = z2;
-        z2 = tempf;
+        f32 tempf    = z1;
+        z1           = z2;
+        z2           = tempf;
 
-        void *pTemp = spV1;
-        spV1 = spV2;
-        spV2 = pTemp;
+        void *pTemp  = spV1;
+        spV1         = spV2;
+        spV2         = pTemp;
     }
 
     /*
@@ -203,20 +210,25 @@ void raster_rasterize_triangle( void *spV1, void *spV2, void *spV3 ) {
      *    Scale vertex attributes by their inverse z-coordinates.
      *    In the drawing process, we will then divide by the inverse
      *    z-coordinate again to perform perspective correction.
-     * 
-     *    This has not been implemented yet.
      */
     memcpy( pIA, vertex_scale( spV1, 1 / z1, V_POS ), VERTEX_ASM_MAX_VERTEX_SIZE );
     memcpy( pIB, vertex_scale( spV2, 1 / z2, V_POS ), VERTEX_ASM_MAX_VERTEX_SIZE );
     memcpy( pIC, vertex_scale( spV3, 1 / z3, V_POS ), VERTEX_ASM_MAX_VERTEX_SIZE );
 
-    f32 iz1 = 1 / z1;
-    f32 iz2 = 1 / z2;
-    f32 iz3 = 1 / z3;
+    /*
+     *    We'll also interpolate the z coordinate by the inverse z-coordinates.
+     */
+    vec4_t pa = vertex_get_position( pIA );
+    vec4_t pb = vertex_get_position( pIB );
+    vec4_t pc = vertex_get_position( pIC );
 
-    memcpy( pIA + 2 * sizeof( f32 ), &iz1, sizeof( f32 ) );
-    memcpy( pIB + 2 * sizeof( f32 ), &iz2, sizeof( f32 ) );
-    memcpy( pIC + 2 * sizeof( f32 ), &iz3, sizeof( f32 ) );
+    pa.z = 1 / pa.z;
+    pb.z = 1 / pb.z;
+    pc.z = 1 / pc.z;
+
+    vertex_set_position( pIA, pa );
+    vertex_set_position( pIB, pb );
+    vertex_set_position( pIC, pc );
 
     /*
      *    Check for flat top.
@@ -228,21 +240,21 @@ void raster_rasterize_triangle( void *spV1, void *spV2, void *spV3 ) {
          */
         if ( v1.x < v2.x ) {
             vec2u_t temp = v1;
-            v1 = v2;
-            v2 = temp;
+            v1           = v2;
+            v2           = temp;
 
-            f32 tempf = z1;
-            z1 = z2;
-            z2 = tempf;
+            f32 tempf    = z1;
+            z1           = z2;
+            z2           = tempf;
+
+            tempf        = dy1;
+            dy1          = dy2;
+            dy2          = tempf;
 
             u8 pTemp[ VERTEX_ASM_MAX_VERTEX_SIZE ];
-            memcpy( pTemp, pIA, VERTEX_ASM_MAX_VERTEX_SIZE );
-            memcpy( pIA, pIB, VERTEX_ASM_MAX_VERTEX_SIZE );
-            memcpy( pIB, pTemp, VERTEX_ASM_MAX_VERTEX_SIZE );
-
-            tempf = dy1;
-            dy1 = dy2;
-            dy2 = tempf;
+            memcpy( pTemp, pIA,   VERTEX_ASM_MAX_VERTEX_SIZE );
+            memcpy( pIA,   pIB,   VERTEX_ASM_MAX_VERTEX_SIZE );
+            memcpy( pIB,   pTemp, VERTEX_ASM_MAX_VERTEX_SIZE );
         }
         while ( y >= v3.y ) {
             memcpy( v0, vertex_build_interpolated( pIB, pIC, ( f32 )( v1.y - y ) / ( v1.y - v3.y ) ), VERTEX_ASM_MAX_VERTEX_SIZE );
@@ -263,21 +275,21 @@ void raster_rasterize_triangle( void *spV1, void *spV2, void *spV3 ) {
          */
         if ( v2.x < v3.x ) {
             vec2u_t temp = v2;
-            v2 = v3;
-            v3 = temp;
+            v2           = v3;
+            v3           = temp;
 
-            f32 tempf = z2;
-            z2 = z3;
-            z3 = tempf;
+            f32 tempf    = z2;
+            z2           = z3;
+            z3           = tempf;
+
+            tempf        = dy1;
+            dy1          = dy0;
+            dy0          = tempf;
 
             u8 pTemp[ VERTEX_ASM_MAX_VERTEX_SIZE ];
-            memcpy( pTemp, pIB, VERTEX_ASM_MAX_VERTEX_SIZE );
-            memcpy( pIB, pIC, VERTEX_ASM_MAX_VERTEX_SIZE );
-            memcpy( pIC, pTemp, VERTEX_ASM_MAX_VERTEX_SIZE );
-
-            tempf = dy1;
-            dy1 = dy0;
-            dy0 = tempf;
+            memcpy( pTemp, pIB,   VERTEX_ASM_MAX_VERTEX_SIZE );
+            memcpy( pIB,   pIC,   VERTEX_ASM_MAX_VERTEX_SIZE );
+            memcpy( pIC,   pTemp, VERTEX_ASM_MAX_VERTEX_SIZE );
         }
         while ( y >= v3.y ) {
             memcpy( v0, vertex_build_interpolated( pIA, pIB, ( f32 )( v1.y - y ) / ( v1.y - v3.y ) ), VERTEX_ASM_MAX_VERTEX_SIZE );

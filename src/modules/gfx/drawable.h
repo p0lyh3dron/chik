@@ -23,10 +23,6 @@ typedef struct {
 } vbuffer_t;
 
 typedef struct {
-    image_t *apImage;
-} texture_t;
-
-typedef struct {
     handle_t aVBuf;
     /*
      *    Will be replaced with material_t *

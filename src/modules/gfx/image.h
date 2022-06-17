@@ -42,14 +42,6 @@ typedef struct {
     u32 aAlphaMask;
 } bmp_header_t;
 
-typedef struct {
-    u32          aWidth;
-    u32          aHeight;
-    u32          aFormat;
-    u32          aDataLen;
-    u32         *apData;
-} image_t;
-
 /*
  *    Creates an image.
  *

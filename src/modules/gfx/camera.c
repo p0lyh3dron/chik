@@ -44,36 +44,17 @@ mat4_t camera_projection( camera_t *spCamera ) {
     /*
      *    We'll be using the Vulkan projection matrix.
      *
-     *    Whatever the fuck this is, the z-coordinate linearly
-     *    interpolates between 0 and near as the camera moves from
-     *    far to near.
+     *    This matrix uses reverse z, so we'll hardcode the 
+     *    farz to 0, and nearz to 1.
      * 
      *    Stolen from: https://vincent-p.github.io/posts/vulkan_perspective_matrix/#infinite-perspective
      */
     mat4_t projection = {
-        fov / spCamera->aAspect, 0, 0, 0,
-        0, -fov, 0, 0,
-        0, 0, ( spCamera->aNear ) / ( spCamera->aFar - spCamera->aNear ), ( spCamera->aNear * spCamera->aFar ) / ( spCamera->aFar - spCamera->aNear ),
-        0, 0, 1, 0
+        fov / spCamera->aAspect, 0.f,   0.f, 0.f,
+        0.f,                     -fov,  0.f, 0.f,
+        0.f,                     0.f,  -1.f, 0.f,
+        0.f,                     0.f,   1.f, 0.f
     };
-    /*mat4_t projection = {
-        fov / spCamera->aAspect, 0, 0, 0,
-        0, -fov, 0, 0,
-        0, 0, spCamera->aFar / ( spCamera->aFar - spCamera->aNear ), -spCamera->aFar * spCamera->aNear / ( spCamera->aFar - spCamera->aNear ),
-        0, 0, 1, 0
-    };*/
-    /*mat4_t projection = {
-        fov / spCamera->aAspect, 0, 0, 0,
-        0, fov, 0, 0,
-        0, 0, -spCamera->aFar / ( spCamera->aFar - spCamera->aNear ), -spCamera->aFar * spCamera->aNear / ( spCamera->aFar - spCamera->aNear ),
-        0, 0, -1, 0
-    };*/
-    /*mat4_t projection = {
-        fov / spCamera->aAspect, 0, 0, 0,
-        0, fov, 0, 0,
-        0, 0, ( spCamera->aFar + spCamera->aNear ) / ( spCamera->aNear - spCamera->aFar ), 2 * spCamera->aFar * spCamera->aNear / ( spCamera->aNear - spCamera->aFar ),
-        0, 0, -1, 0
-    };*/
 
     return projection;
 }
