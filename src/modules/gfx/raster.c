@@ -65,15 +65,19 @@ void raster_draw_scanline( s32 sX1, s32 sX2, s32 sY, void *spV1, void *spV2 ) {
     }
 
     vec_t v[ MAX_VECTOR_ATTRIBUTES ];
+    f32 izs1 = iz1 / ( sX2 - sX1 );
+    f32 izs2 = iz2 / ( sX2 - sX1 );
+
+    fragment_t f = {
+        .aPos = { x, sY },
+    };
+
     while ( x < endX && x < ( s32 )gpRasterTarget->apTarget->aWidth ) {
-        fragment_t f = {
-            .aPos = { x, sY },
-        };
         /*
          *    Interpolate the vector values, and apply to the fragment.
          */
         vec_t *pV = vertex_build_interpolated( spV1, spV2, ( f32 )( x - sX1 ) / ( sX2 - sX1 ) );
-        pV        = vertex_scale( pV, 1 / ( iz1 * ( 1 - ( f32 )( x - sX1 ) / ( sX2 - sX1 ) ) + iz2 * ( f32 )( x - sX1 ) / ( sX2 - sX1 ) ), V_POS );
+        pV        = vertex_scale( pV, 1 / ( ( iz1 - izs1 * ( f32 )( x - sX1 ) ) + izs2 * ( f32 )( x - sX1 ) ), V_POS );
 
         fragment_apply( pV, &f );
 
