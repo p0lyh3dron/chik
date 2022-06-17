@@ -214,6 +214,44 @@ handle_t mesh_create( handle_t sVBuffer, handle_t sTex ) {
 }
 
 /*
+ *    Sets the vertex buffer of a mesh.
+ *
+ *    @param handle_t    The mesh.
+ *    @param handle_t    The vertex buffer.
+ */
+void mesh_set_vertex_buffer( handle_t sMesh, handle_t sVBuffer ) {
+    if ( gpResources == nullptr ) {
+        log_error( "Resources not initialized." );
+        return;
+    }
+    if ( gpMempool == nullptr ) {
+        log_error( "Memory pool not initialized." );
+        return;
+    }
+    if ( sMesh == INVALID_HANDLE ) {
+        log_error( "Mesh is null." );
+        return;
+    }
+    if ( sVBuffer == INVALID_HANDLE ) {
+        log_error( "Vertex buffer is null." );
+        return;
+    }
+
+    mesh_t *pMesh = resource_get( gpResources, sMesh );
+    if ( pMesh == nullptr ) {
+        log_error( "Mesh is null." );
+        return;
+    }
+    vbuffer_t *pVBuffer = resource_get( gpResources, sVBuffer );
+    if ( pVBuffer == nullptr ) {
+        log_error( "Vertex buffer is null." );
+        return;
+    }
+
+    pMesh->aVBuf = sVBuffer;
+}
+
+/*
  *    Sets the texture of a mesh.
  *
  *    @param handle_t    The mesh.
@@ -263,7 +301,8 @@ void vbuffer_draw( handle_t sBuffer ) {
         return;
     }
     mat4_t   view   = camera_view( gpCamera );
-    for ( u32 i = 0; i < HANDLE_GET_SIZE( sBuffer ) / sizeof( chik_vertex_t ); i += 3 ) {
+    u32      size   = pBuf->aSize / sizeof( chik_vertex_t );
+    for ( u32 i = 0; i < size; i += 3 ) {
         chik_vertex_t a0 = *( chik_vertex_t* )( pBuf->apData + i * sizeof( chik_vertex_t ) + 0 * pBuf->aVStride );
         a0.aPos.w = 1.0f;
         chik_vertex_t b0 = *( chik_vertex_t* )( pBuf->apData + i * sizeof( chik_vertex_t ) + 1 * pBuf->aVStride );
@@ -361,7 +400,7 @@ void vbuffer_draw( handle_t sBuffer ) {
             c.aPos.x /= c.aPos.w;
             c.aPos.y /= c.aPos.w;
             //c.aPos.z /= c.aPos.w;
-            log_note( "a = %f, %f, %f\nb = %f, %f, %f\nc = %f, %f, %f\n", a.aPos.x, a.aPos.y, a.aPos.z, b.aPos.x, b.aPos.y, b.aPos.z, c.aPos.x, c.aPos.y, c.aPos.z );
+            //log_note( "a = %f, %f, %f\nb = %f, %f, %f\nc = %f, %f, %f\n", a.aPos.x, a.aPos.y, a.aPos.z, b.aPos.x, b.aPos.y, b.aPos.z, c.aPos.x, c.aPos.y, c.aPos.z );
             /*
              *    Draw the triangle.
              */

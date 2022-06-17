@@ -53,13 +53,11 @@ void sample_texture( fragment_t *spFrag, vec_t *spUV, void *spData ) {
     if ( !spData || !pTex || !pImage ) {
         return;
     }
-    spUV->v2u.x = MIN( spUV->v2.x, pImage->aWidth );
-    spUV->v2u.x = MAX( spUV->v2u.x, 0 );
-    spUV->v2u.y = MIN( spUV->v2.y, pImage->aHeight );
-    spUV->v2u.y = MAX( spUV->v2u.y, 0 );
-    spFrag->aColor.r = ( ( u8* )pImage->apData )[ ( spUV->v2u.x + spUV->v2u.y * pImage->aHeight ) * 3 + 0 ];
-    spFrag->aColor.g = ( ( u8* )pImage->apData )[ ( spUV->v2u.x + spUV->v2u.y * pImage->aHeight ) * 3 + 1 ];
-    spFrag->aColor.b = ( ( u8* )pImage->apData )[ ( spUV->v2u.x + spUV->v2u.y * pImage->aHeight ) * 3 + 2 ];
+    spUV->v2u.x = fabs( fmod( fabs( spUV->v2.x ), pImage->aWidth - 1 ) );
+    spUV->v2u.y = fabs( fmod( fabs( spUV->v2.y ), pImage->aHeight - 1 ) );
+    spFrag->aColor.r = ( ( u8* )pImage->apData )[ ( spUV->v2u.x + spUV->v2u.y * pImage->aWidth ) * 3 + 0 ];
+    spFrag->aColor.g = ( ( u8* )pImage->apData )[ ( spUV->v2u.x + spUV->v2u.y * pImage->aWidth ) * 3 + 1 ];
+    spFrag->aColor.b = ( ( u8* )pImage->apData )[ ( spUV->v2u.x + spUV->v2u.y * pImage->aWidth ) * 3 + 2 ];
     /*spFrag->aColor.r = 255;
     spFrag->aColor.g = 255;
     spFrag->aColor.b = 255;*/

@@ -91,6 +91,14 @@ void texture_free( handle_t sTex );
 handle_t mesh_create( handle_t sVBuffer, handle_t sTex );
 
 /*
+ *    Sets the vertex buffer of a mesh.
+ *
+ *    @param handle_t    The mesh.
+ *    @param handle_t    The vertex buffer.
+ */
+void mesh_set_vertex_buffer( handle_t sMesh, handle_t sVBuffer );
+
+/*
  *    Sets the texture of a mesh.
  *
  *    @param handle_t    The mesh.

@@ -44,8 +44,6 @@ u32 cull_clip_vertex( plane_t *spP, void *spV0, void *spV1, void *spRet, u32 sFi
 
     f32                  outside     = plane_distance( spP, &p0 );
     f32                  nextOutside = plane_distance( spP, &p1 );
-
-    log_note( "outside = %f, next = %f\n", outside, nextOutside );
     /*
     *    Check if the triangle is outside the frustum.
     */
@@ -159,7 +157,7 @@ void cull_remove_vertex( u32 sIndex, void **spList, u32 sCount, u32 sSize ) {
  */
 void cull_create_frustum() {
     f32 n = 0.1f;
-    f32 f = 100.f;
+    f32 f = 1000.f;
 
     vec2_t nsw = { -n, -n };
     vec2_t nse = {  n, -n };
@@ -232,7 +230,6 @@ chik_vertex_t *cull_clip_triangle( void *spV0, void *spV1, void *spV2, s32 *spNu
     memcpy( vertices + 2 * VERTEX_ASM_MAX_VERTEX_SIZE, spV2, gVertexSize );
 
     for ( u64 i = 0; i < ARR_LEN( gFrustum.aPlanes ); ++i ) {
-        log_note( " plane %i\n", i );
         u32 removeFirst = 0;
         for ( u64 j = 0; j < numVertices; ) {
             u8  v[ VERTEX_ASM_MAX_VERTEX_SIZE ];
@@ -286,17 +283,6 @@ chik_vertex_t *cull_clip_triangle( void *spV0, void *spV1, void *spV2, s32 *spNu
         }
     }
     *spNumVertices = numVertices;
-
-    log_note( "Clipped %d vertices.\n", numVertices );
-
-    for ( s64 i = 0; i < numVertices; ++i ) {
-        vec3_t v = *( vec3_t* )( vertices + i * VERTEX_ASM_MAX_VERTEX_SIZE );
-        vec2u_t v1 = {
-        .x = ( u32 )( ( v.x + 1.0f ) * 640  / 2 ),
-        .y = ( u32 )( ( v.y + 1.0f ) * 480 / 2 ),
-        };
-        log_note( "  %i: %d %d\n", i, v1.x, v1.y );
-    }
 
     return vertices;
 }
