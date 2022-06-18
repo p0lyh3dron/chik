@@ -136,10 +136,5 @@ void vertexasm_bind_uniform( void *spUniform ) {
  *    @param fragment_t *    The pixel to apply the fragment to.
  */
 void fragment_apply( void *spF, fragment_t *spP ) {
-    s64 i;
-    for ( i = 0; i < gLayout.aCount; i++ ) {
-        if ( gLayout.aAttribs[ i ].apFunc ) {
-            gLayout.aAttribs[ i ].apFunc( spP, spF + gLayout.aAttribs[ i ].aOffset, gpUniform );
-        }
-    }
+    gLayout.apFunc( spP, spF, gpUniform );
 }

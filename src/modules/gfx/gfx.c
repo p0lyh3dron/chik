@@ -115,6 +115,22 @@ void set_camera( handle_t sCamera ) {
 }
 
 /*
+ *    Returns the camera's view matrix.
+ *
+ *    @param handle_t           The handle to the camera.
+ * 
+ *    @return mat4_t           The view matrix.
+ */
+mat4_t get_camera_view( handle_t sCamera ) {
+    camera_t *pCamera = resource_get( gpGResources, sCamera );
+    if ( pCamera == NULL ) {
+        log_error( "Failed to get camera resource.\n" );
+        return m4_identity();
+    }
+    return camera_view( pCamera );
+}
+
+/*
  *    Returns the width and height of the screen.
  *
  *    @return vec2_t             The width and height of the screen.
