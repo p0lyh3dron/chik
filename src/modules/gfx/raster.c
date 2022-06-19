@@ -22,6 +22,24 @@ void raster_set_rendertarget( rendertarget_t *spTarget ) {
     gpRasterTarget = spTarget;
 }
 
+#ifdef GFX_THREADED
+
+typedef struct {
+    s32   aX1;
+    s32   aX2;
+    s32   aY;
+    void *apV1;
+    void *apV2;
+} scanline_args_t;
+
+void *raster_scanline_thread( void *apArgs ) {
+    scanline_args_t *pArgs = ( scanline_args_t * )apArgs;
+    raster_scanline( pArgs->aX1, pArgs->aX2, pArgs->aY, pArgs->apV1, pArgs->apV2 );
+    return NULL;
+}
+
+#endif /* GFX_THREADED  */
+
 /*
  *    Draw a scanline.
  *
