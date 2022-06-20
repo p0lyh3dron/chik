@@ -103,6 +103,20 @@ void mesh_set_vertex_buffer( handle_t sMesh, handle_t sVBuffer );
 void mesh_set_texture( handle_t sMesh, handle_t sTex );
 
 /*
+ *    Translates a mesh.
+ *
+ *    @param vec3_t      The translation vector.
+ */
+void mesh_translate( vec3_t sTranslation );
+
+/*
+ *    Rotates a mesh.
+ *
+ *    @param vec3_t      The rotation vector.
+ */
+void mesh_rotate( vec3_t sRotation );
+
+/*
  *    Draws a vertex buffer.
  *
  *    @param handle_t          The handle to the vertex buffer.

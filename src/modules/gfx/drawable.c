@@ -259,29 +259,50 @@ void mesh_set_vertex_buffer( handle_t sMesh, handle_t sVBuffer ) {
  */
 void mesh_set_texture( handle_t sMesh, handle_t sTex ) {
     if ( gpResources == nullptr ) {
-        log_error( "Resources not initialized." );
+        log_error( "Resources not initialized.\n" );
         return;
     }
     if ( gpMempool == nullptr ) {
-        log_error( "Memory pool not initialized." );
+        log_error( "Memory pool not initialized.\n" );
         return;
     }
     if ( sMesh == INVALID_HANDLE ) {
-        log_error( "Mesh is null." );
+        log_error( "Mesh is null.\n" );
         return;
     }
     if ( sTex == INVALID_HANDLE ) {
-        log_error( "Texture is null." );
+        log_error( "Texture is null.\n" );
         return;
     }
 
     mesh_t *pMesh = resource_get( gpResources, sMesh );
     if ( pMesh == nullptr ) {
-        log_error( "Mesh is null." );
+        log_error( "Mesh is null.\n" );
         return;
     }
 
     pMesh->aTex = sTex;
+}
+
+vec3_t gMeshTranslate = { 0.f, 0.f, 0.f };
+vec3_t gMeshRotate    = { 0.f, 0.f, 0.f };
+
+/*
+ *    Translates a mesh.
+ *
+ *    @param vec3_t      The translation vector.
+ */
+void mesh_translate( vec3_t sTranslation ) {
+    gMeshTranslate = sTranslation;
+}
+
+/*
+ *    Rotates a mesh.
+ *
+ *    @param vec3_t      The rotation vector.
+ */
+void mesh_rotate( vec3_t sRotation ) {
+    gMeshRotate = sRotation;
 }
 
 /*
@@ -327,10 +348,29 @@ void vbuffer_draw( handle_t sBuffer ) {
 
         /*
          *    Transform the positions.
+         *
+         *    If we have an active translation/rotation, apply it.
          */
-        mat4_t        ma = m4_mul_v4( view, pa );
-        mat4_t        mb = m4_mul_v4( view, pb );
-        mat4_t        mc = m4_mul_v4( view, pc );
+
+        mat4_t        ta = m4_mul_v4( m4_rotate( gMeshRotate.x, ( vec3_t ){ 1.f, 0.f, 0.f } ), pa );
+                      ta = m4_mul_m4( m4_rotate( gMeshRotate.y, ( vec3_t ){ 0.f, 1.f, 0.f } ), ta );
+                      ta = m4_mul_m4( m4_rotate( gMeshRotate.z, ( vec3_t ){ 0.f, 0.f, 1.f } ), ta );
+                      ta = m4_mul_m4( m4_translate( gMeshTranslate ), ta );
+        
+        mat4_t        tb = m4_mul_v4( m4_rotate( gMeshRotate.x, ( vec3_t ){ 1.f, 0.f, 0.f } ), pb );
+                      tb = m4_mul_m4( m4_rotate( gMeshRotate.y, ( vec3_t ){ 0.f, 1.f, 0.f } ), tb );
+                      tb = m4_mul_m4( m4_rotate( gMeshRotate.z, ( vec3_t ){ 0.f, 0.f, 1.f } ), tb );
+                      tb = m4_mul_m4( m4_translate( gMeshTranslate ), tb );
+
+        mat4_t        tc = m4_mul_v4( m4_rotate( gMeshRotate.x, ( vec3_t ){ 1.f, 0.f, 0.f } ), pc );
+                      tc = m4_mul_m4( m4_rotate( gMeshRotate.y, ( vec3_t ){ 0.f, 1.f, 0.f } ), tc );
+                      tc = m4_mul_m4( m4_rotate( gMeshRotate.z, ( vec3_t ){ 0.f, 0.f, 1.f } ), tc );
+                      tc = m4_mul_m4( m4_translate( gMeshTranslate ), tc );
+        
+
+        mat4_t        ma = m4_mul_m4( view, ta );
+        mat4_t        mb = m4_mul_m4( view, tb );
+        mat4_t        mc = m4_mul_m4( view, tc );
 
         /*
          *    Update the vertex data.
@@ -399,7 +439,7 @@ void mesh_draw( handle_t sMesh ) {
         return;
     }
     if ( sMesh == INVALID_HANDLE ) {
-        log_error( "Mesh is null." );
+        log_error( "Mesh is null.\n" );
         return;
     }
 
