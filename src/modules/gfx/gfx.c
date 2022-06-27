@@ -149,6 +149,7 @@ static float theta = 0.f;
  */
 void draw_frame( void ) {
     platform_draw_frame();
+    raster_clear_depth();
 }
 
 /*
@@ -160,6 +161,7 @@ void graphics_init( void ) {
         log_error( "Failed to create graphics resource.\n" );
         return;
     }
+    raster_setup();
     cull_create_frustum();
     init_drawable_resources();
     raster_set_rendertarget( gpBackBuffer );

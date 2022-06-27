@@ -10,8 +10,8 @@
  */
 #pragma once
 
-#define DEFAULT_WIDTH  640
-#define DEFAULT_HEIGHT 480
+#define DEFAULT_WIDTH  480
+#define DEFAULT_HEIGHT 270
 
 #define WINDOW_TITLE   "Chik ( Version 1.0 )"
 

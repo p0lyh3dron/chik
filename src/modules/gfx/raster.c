@@ -9,9 +9,34 @@
  */
 #include "raster.h"
 
+#include "surface.h"
 #include "vertexasm.h"
 
 rendertarget_t *gpRasterTarget;
+
+rendertarget_t *gpZBuffer;
+
+/*
+ *    Sets up the rasterization stage.
+ */
+void raster_setup( void ) {
+    u32 width;
+    u32 height;
+    if ( args_has( "-w" ) && args_has( "-h" ) ) {
+        width  = args_get_int( "-w" );
+        height = args_get_int( "-h" );
+    } else {
+        width  = DEFAULT_WIDTH;
+        height = DEFAULT_HEIGHT;
+    }
+
+    gpZBuffer  = rendertarget_create( width, height, 32 );
+
+    if ( !gpZBuffer ) {
+        log_fatal( "Could not create Z buffer." );
+        return;
+    }
+}
 
 /*
  *    Sets the rasterization stage's bitmap.
@@ -22,23 +47,35 @@ void raster_set_rendertarget( rendertarget_t *spTarget ) {
     gpRasterTarget = spTarget;
 }
 
-#ifdef GFX_THREADED
-
-typedef struct {
-    s32   aX1;
-    s32   aX2;
-    s32   aY;
-    void *apV1;
-    void *apV2;
-} scanline_args_t;
-
-void *raster_scanline_thread( void *apArgs ) {
-    scanline_args_t *pArgs = ( scanline_args_t * )apArgs;
-    raster_scanline( pArgs->aX1, pArgs->aX2, pArgs->aY, pArgs->apV1, pArgs->apV2 );
-    return NULL;
+/*
+ *    Clears the depth buffer.
+ */
+void raster_clear_depth( void ) {
+    u64 i;
+    f32 *pDepth = gpZBuffer->apTarget->apData;
+    for ( i = 0; i < gpZBuffer->apTarget->aWidth * gpZBuffer->apTarget->aHeight; i++ ) {
+        pDepth[ i ] = 1000.f;
+    }
 }
 
-#endif /* GFX_THREADED  */
+/*
+ *    Check a pixel against the depth buffer.
+ *
+ *    @param    u32              The x coordinate of the pixel.
+ *    @param    u32              The y coordinate of the pixel.
+ *    @param    f32              The depth of the pixel.
+ * 
+ *    @return   u32              Whether the pixel should be drawn.
+ */
+u32 raster_check_depth( u32 sX, u32 sY, f32 sDepth ) {
+    f32 *pDepth = ( f32 * )gpZBuffer->apTarget->apData;
+    u32 i       = sY * gpZBuffer->apTarget->aWidth + sX;
+    if ( sDepth < pDepth[ i ] ) {
+        pDepth[ i ] = sDepth;
+        return 1;
+    }
+    return 0;
+}
 
 /*
  *    Draw a scanline.
@@ -97,10 +134,19 @@ void raster_draw_scanline( s32 sX1, s32 sX2, s32 sY, void *spV1, void *spV2 ) {
 
     while ( x < endX && x < ( s32 )gpRasterTarget->apTarget->aWidth ) {
         /*
+         *    Linearly interpolate between inverted z coordinates, and invert.
+         */
+        f32 z = 1 / ( ( iz1 - izs1 * ( f32 )( x - sX1 ) ) + izs2 * ( f32 )( x - sX1 ) );
+        if ( !raster_check_depth( x, sY, z ) ) {
+            x++;
+            continue;
+        }
+
+        /*
          *    Interpolate the vector values, and apply to the fragment.
          */
         vec_t *pV = vertex_build_interpolated( spV1, spV2, ( f32 )( x - sX1 ) / ( sX2 - sX1 ) );
-        pV        = vertex_scale( pV, 1 / ( ( iz1 - izs1 * ( f32 )( x - sX1 ) ) + izs2 * ( f32 )( x - sX1 ) ), V_POS );
+        pV        = vertex_scale( pV, z, V_POS );
 
         fragment_apply( pV, &f );
 

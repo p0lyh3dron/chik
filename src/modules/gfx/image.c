@@ -78,29 +78,12 @@ file_type_e file_type( const s8 *spFile ) {
  *                       The image should be freed with image_free().
  */
 image_t *image_load_bmp( const s8 *spFile ) {
-    FILE *pFile = fopen( spFile, "rb" );
-    if( pFile == NULL ) {
-        log_error( "Could not open file %s.", spFile );
-        return NULL;
+    u32 len;
+    u8 *pBuffer = file_read( spFile, &len );
+
+    if( pBuffer == nullptr ) {
+        return nullptr;
     }
-
-    /*
-     *   Read the file contents into a buffer.
-     */
-    fseek( pFile, 0, SEEK_END );
-    u32 len = ftell( pFile );
-    fseek( pFile, 0, SEEK_SET );
-    u8 *pBuffer = malloc( len );
-
-    if( pBuffer == NULL ) {
-        log_error( "Could not allocate memory for file %s.", spFile );
-        fclose( pFile );
-        return NULL;
-    }
-
-    fread( pBuffer, 1, len, pFile );
-    fclose( pFile );
-
     /*
      *    Read the header.
      */

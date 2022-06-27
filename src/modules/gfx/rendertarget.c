@@ -60,6 +60,7 @@ rendertarget_t *rendertarget_create( u32 sWidth, u32 sHeight, u32 sFormat ) {
         if( gpRenderTargets == NULL ) {
             log_error( "Could not reallocate memory for render target list." );
         }
+        gpRenderTargets[ i + 1 ] = NULL;
     }
 
     return pRenderTarget;

@@ -415,7 +415,7 @@ void vbuffer_draw( handle_t sBuffer ) {
             vertex_set_position( a0, pa );
             vertex_set_position( b0, pb );
             vertex_set_position( c0, pc );
-            
+
             /*
              *    Draw the triangle.
              */

@@ -20,11 +20,32 @@
 #include "rendertarget.h"
 
 /*
+ *    Sets up the rasterization stage.
+ */
+void raster_setup( void );
+
+/*
  *    Sets the rasterization stage's bitmap.
  *
  *    @param    rendertarget_t *    The rendertarget to use for rasterization.
  */
 void raster_set_rendertarget( rendertarget_t *spTarget );
+
+/*
+ *    Clears the depth buffer.
+ */
+void raster_clear_depth( void );
+
+/*
+ *    Check a pixel against the depth buffer.
+ *
+ *    @param    u32              The x coordinate of the pixel.
+ *    @param    u32              The y coordinate of the pixel.
+ *    @param    f32              The depth of the pixel.
+ * 
+ *    @return   u32              Whether the pixel should be drawn.
+ */
+u32 raster_check_depth( u32 sX, u32 sY, f32 sDepth );
 
 /*
  *    Draw a scanline.
