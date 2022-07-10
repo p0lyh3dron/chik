@@ -202,5 +202,6 @@ static float theta = 0.f;
  */
 void draw_frame( void ) {
     platform_draw_image( gpBackBuffer->apTarget );
+    image_clear( gpBackBuffer->apTarget, 0xFF000000 );
     raster_clear_depth();
 }
