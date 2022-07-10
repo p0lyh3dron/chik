@@ -9,6 +9,8 @@
  */
 #include "vertexasm.h"
 
+#include <string.h>
+
 #include "cull.h"
 
 v_layout_t  gLayout   = { .aAttribs = { 0 }, .aCount = 0 };
@@ -79,7 +81,7 @@ void *vertex_build_interpolated( void *spV1, void *spV2, f32 sDiff ) {
 
     for ( i = 0; i < gLayout.aCount; i++ ) {
         vec_interp( 
-            buf  + gLayout.aAttribs[ i ].aOffset, 
+            ( vec_t * )( buf  + gLayout.aAttribs[ i ].aOffset ), 
             spV1 + gLayout.aAttribs[ i ].aOffset, 
             spV2 + gLayout.aAttribs[ i ].aOffset, 
             sDiff, 
@@ -106,7 +108,7 @@ void *vertex_scale( void *spV, f32 sScale, u32 sFlags ) {
     for ( i = 0; i < gLayout.aCount; i++ ) {
         if ( !( gLayout.aAttribs[ i ].aUsage & sFlags ) ) {
             vec_scale( 
-                buf  + gLayout.aAttribs[ i ].aOffset, 
+                ( vec_t * )( buf  + gLayout.aAttribs[ i ].aOffset ), 
                 spV  + gLayout.aAttribs[ i ].aOffset, 
                 sScale, 
                 gLayout.aAttribs[ i ].aFormat 

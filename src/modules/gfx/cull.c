@@ -9,6 +9,8 @@
  */
 #include "cull.h"
 
+#include <string.h>
+
 #include "camera.h"
 #include "vertexasm.h"
 
@@ -43,8 +45,8 @@ u32 cull_clip_vertex( plane_t *spP, void *spV0, void *spV1, void *spRet, u32 sFi
     vec4_t p0 = vertex_get_position( spV0 );
     vec4_t p1 = vertex_get_position( spV1 );
 
-    f32                  outside     = plane_distance( spP, &p0 );
-    f32                  nextOutside = plane_distance( spP, &p1 );
+    f32                  outside     = plane_distance( spP, ( vec3_t * )&p0 );
+    f32                  nextOutside = plane_distance( spP, ( vec3_t * )&p1 );
     /*
     *    Check if the triangle is outside the frustum.
     */
@@ -255,9 +257,9 @@ void cull_create_frustum() {
  *    @param void *     The third vertex.
  *    @param s32  *     The number of new vertices.
  *
- *    @return chik_vertex_t *    The new vertices.
+ *    @return void *    The new vertices.
  */
-chik_vertex_t *cull_clip_triangle( void *spV0, void *spV1, void *spV2, s32 *spNumVertices ) {
+void *cull_clip_triangle( void *spV0, void *spV1, void *spV2, s32 *spNumVertices ) {
     static u8 vertices[ 8 * VERTEX_ASM_MAX_VERTEX_SIZE ];
     u8        v       [ VERTEX_ASM_MAX_VERTEX_SIZE ];
 
@@ -297,7 +299,7 @@ chik_vertex_t *cull_clip_triangle( void *spV0, void *spV1, void *spV2, s32 *spNu
                  *    Insert the new clipped vertex.
                  */
                 if ( ret & 0b00000010 ) {
-                    cull_insert_vertex( &v, &vertices, ++j, numVertices, ARR_LEN( vertices ) );
+                    cull_insert_vertex( &v, ( void ** )&vertices, ++j, numVertices, ARR_LEN( vertices ) );
                     numVertices++;
                 }
                 /*
@@ -316,17 +318,17 @@ chik_vertex_t *cull_clip_triangle( void *spV0, void *spV1, void *spV2, s32 *spNu
                 /*
                  *    Erase the first vertex.
                  */
-                cull_remove_vertex( j, &vertices, numVertices--, ARR_LEN( vertices ) );
+                cull_remove_vertex( j, ( void ** )&vertices, numVertices--, ARR_LEN( vertices ) );
             }
         }
         /*
          *    Since we are doing this in place, we need to remove the first vertex occasionally.
          */
         if ( removeFirst ) {
-            cull_remove_vertex( 0, &vertices, numVertices--, ARR_LEN( vertices ) );
+            cull_remove_vertex( 0, ( void ** )&vertices, numVertices--, ARR_LEN( vertices ) );
         }
     }
     *spNumVertices = numVertices;
 
-    return vertices;
+    return ( void* )vertices;
 }

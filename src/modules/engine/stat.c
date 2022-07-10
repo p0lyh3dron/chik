@@ -11,6 +11,7 @@
 #include "stat.h"
 
 #include <sys/time.h>
+#include <math.h>
 
 stat_t gStat       = { 0 };
 
@@ -28,7 +29,10 @@ void stat_start_frame() {
      *    frame count, and bounds it to not exceed
      *    the maximum number of averaging frames.
      */
-    gStat.aFrameTimes[ gStat.aFrames++ % FRAMES_AVG_COUNT ] = tv.tv_sec * 1000000 + tv.tv_usec;
+    gStat.aTimeDiff = gStat.aPrevTime;
+    gStat.aPrevTime = tv.tv_sec * 1000000 + tv.tv_usec;
+    gStat.aTimeDiff = gStat.aPrevTime - gStat.aTimeDiff;
+    gStat.aFrameTimes[ gStat.aFrames++ % FRAMES_AVG_COUNT ] = gStat.aPrevTime;
 
     /*
      *    Calculate the fps.
@@ -49,6 +53,20 @@ void stat_start_frame() {
 
     gStat.aFrameRate /= ( FRAMES_AVG_COUNT - 1 );
     gStat.aFrameRate  = 1.0f / gStat.aFrameRate;
+
+    /*
+     *    Calculate the average frame rate.
+     */
+    if ( !isinf( gStat.aFrameRate ) && !isnan( gStat.aFrameRate ) ) {
+        gStat.aAvgFrameRate = ( gStat.aFrames * gStat.aAvgFrameRate + gStat.aFrameRate ) / ( gStat.aFrames + 1 );
+
+        /*
+         *    Calculate the maximum frame rate.
+         */
+        if ( gStat.aFrameRate > gStat.aMaxFrameRate ) {
+            gStat.aMaxFrameRate = gStat.aFrameRate;
+        }
+    }
 }
 
 /*
@@ -58,6 +76,17 @@ void stat_start_frame() {
  */
 stat_t *stat_get() {
     return &gStat;
+}
+
+/*
+ *    Returns the difference between the current time and the
+ *    previous time.
+ * 
+ *    @return s64    The difference between the current time and the
+ *                   previous time in microseconds.
+ */
+s64 stat_get_time_diff() {
+    return gStat.aTimeDiff;
 }
 
 /*
@@ -85,4 +114,28 @@ s64 stat_get_frames() {
  */
 s64 stat_get_start_time() {
     return gStat.aStartTime;
+}
+
+/*
+ *    Dumps the engine statistics to a file.
+ *
+ *    @param const s8 *    The file name.
+ * 
+ *    @return u32          Returns 0 on failure, 1 on success.
+ */
+u32 stat_dump( const s8 *spFile ) {
+    FILE *fp = fopen( spFile, "w" );
+    if ( fp == nullptr ) {
+        return 0;
+    }
+
+    fprintf( fp, "Frames: %lld\n", gStat.aFrames );
+    fprintf( fp, "Frame rate: %f\n", gStat.aFrameRate );
+    fprintf( fp, "Average frame rate: %f\n", gStat.aAvgFrameRate );
+    fprintf( fp, "Maximum frame rate: %f\n", gStat.aMaxFrameRate );
+    fprintf( fp, "Start time: %lld\n", gStat.aStartTime );
+
+    fclose( fp );
+
+    return 1;
 }

@@ -19,7 +19,11 @@ typedef struct {
     s64 aFrames;
     s64 aFrameTimes[ FRAMES_AVG_COUNT ];
     f32 aFrameRate;
+    f32 aAvgFrameRate;
+    f32 aMaxFrameRate;
     s64 aStartTime;
+    s64 aPrevTime;
+    s64 aTimeDiff;
 } stat_t;
 
 /*
@@ -33,6 +37,15 @@ void stat_start_frame();
  *    @return stat_t *    The engine statistics.
  */
 stat_t *stat_get();
+
+/*
+ *    Returns the difference between the current time and the
+ *    previous time.
+ * 
+ *    @return s64    The difference between the current time and the
+ *                   previous time in microseconds.
+ */
+s64 stat_get_time_diff();
 
 /*
  *    Returns the frame rate.
@@ -54,3 +67,12 @@ s64 stat_get_frames();
  *    @return s64    The start time.
  */
 s64 stat_get_start_time();
+
+/*
+ *    Dumps the engine statistics to a file.
+ *
+ *    @param const s8 *    The file name.
+ * 
+ *    @return u32          Returns 0 on failure, 1 on success.
+ */
+u32 stat_dump( const s8 *spFile );

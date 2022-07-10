@@ -19,6 +19,8 @@
 typedef struct {
     dl_handle_t  aHandle;
     const s8    *apName;
+    u32       ( *apUpdate )( f32 sDT );
+    u32       ( *apExit )( void );
 } module_t;
 
 /*
@@ -30,6 +32,13 @@ typedef struct {
  *    @return u32          Returns 0 on failure, 1 on success.
  */
 u32 engine_init( const s8 *spModules, ... );
+
+/*
+ *    Updates the engine.
+ *
+ *    @return u32           Returns 0 on failure, 1 on success.
+ */
+u32 engine_update( void );
 
 /*
  *    Loads a function from the engine for external use.

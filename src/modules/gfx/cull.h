@@ -73,8 +73,8 @@ void cull_create_frustum();
  *    @param void *     The third vertex.
  *    @param s32  *     The number of new vertices.
  *
- *    @return chik_vertex_t *    The new vertices.
+ *    @return void *    The new vertices.
  */
-chik_vertex_t *cull_clip_triangle( void *spV0, void *spV1, void *spV2, s32 *spNumVertices );
+void *cull_clip_triangle( void *spV0, void *spV1, void *spV2, s32 *spNumVertices );
 
 #endif /* CHIK_GFX_CULL_H  */

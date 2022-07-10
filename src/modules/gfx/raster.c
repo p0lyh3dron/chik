@@ -52,7 +52,7 @@ void raster_set_rendertarget( rendertarget_t *spTarget ) {
  */
 void raster_clear_depth( void ) {
     u64 i;
-    f32 *pDepth = gpZBuffer->apTarget->apData;
+    f32 *pDepth = ( f32 * )gpZBuffer->apTarget->apData;
     for ( i = 0; i < gpZBuffer->apTarget->aWidth * gpZBuffer->apTarget->aHeight; i++ ) {
         pDepth[ i ] = 1000.f;
     }

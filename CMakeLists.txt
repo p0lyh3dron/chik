@@ -14,3 +14,4 @@ add_subdirectory( libchik )
 
 add_subdirectory( src/modules/engine )
 add_subdirectory( src/modules/gfx )
+add_subdirectory( src/modules/platform )

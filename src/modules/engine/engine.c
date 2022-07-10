@@ -53,15 +53,51 @@ u32 engine_init( const s8 *modules, ... ) {
         }
 
         u32 ( *entry )( void * ) = dl_sym( h, "chik_module_entry" );
-        if ( entry == nullptr || !entry( &engine_load_function ) ) {
+        u32 ( *update )( f32 )   = dl_sym( h, "chik_module_update" );
+        u32 ( *exit )( void )    = dl_sym( h, "chik_module_exit" );
+        if ( entry != nullptr ) {
+            if ( !entry( &engine_load_function ) ) {
+                log_fatal( "u32 engine_init( const s8 *, ... ): Unable to initialize module: %s\n", modules );
+                result = 0;
+                break;
+            }
+        }
+        else {
             log_warn( "u32 engine_init( const s8 *, ... ): Unable to load module entry: %s\n", modules );
         }
+        if ( update == nullptr ) {
+            log_warn( "u32 engine_init( const s8 *, ... ): Unable to load module update: %s\n", modules );
+        }
+        if ( exit == nullptr ) {
+            log_warn( "u32 engine_init( const s8 *, ... ): Unable to load module exit: %s\n", modules );
+        }
 
-        gpModules[ moduleIndex++ ] = ( module_t ){ h, modules };
+        log_note( "u32 engine_init( const s8 *, ... ): Module loaded: %s\n", modules );
+
+        gpModules[ moduleIndex++ ] = ( module_t ){ h, modules, update, exit };
         modules = va_arg( args, const s8 * );
     }
     
     va_end( args );
+    return result;
+}
+
+/*
+ *    Updates the engine.
+ *
+ *    @return u32           Returns 0 on failure, 1 on success.
+ */
+u32 engine_update( void ) {
+    stat_start_frame();
+    s64 timeDiff = stat_get_time_diff();
+    f32 dt       = ( f32 )timeDiff / 1000000.0f;
+
+    u32 result = 1;
+    for ( u32 i = 0; i < ENGINE_MAX_MODULES; i++ ) {
+        if ( gpModules[ i ].apUpdate != nullptr ) {
+            result &= gpModules[ i ].apUpdate( dt );
+        }
+    }
     return result;
 }
 
@@ -94,11 +130,21 @@ void *engine_load_function( const s8 *spName ) {
 /*
  *    Frees the engine.
  */
-__attribute__( ( destructor ) )
 void engine_free() {
     for ( u64 i = 0; i < ENGINE_MAX_MODULES; ++i ) {
         if ( gpModules[ i ].aHandle ) {
+            if ( gpModules[ i ].apExit != nullptr ) {
+                if ( gpModules[ i ].apExit() ) { 
+                    log_note( "u32 engine_free(): Module exited: %s\n", gpModules[ i ].apName );
+                }
+                else {
+                    log_fatal( "u32 engine_free(): Module failed to exit: %s\n", gpModules[ i ].apName );
+                }
+            }
             dl_close( gpModules[ i ].aHandle );
         }
+    }
+    if ( !stat_dump( "stats.txt" ) ) {
+        log_error( "u32 engine_free(): Unable to dump stats\n" );
     }
 }

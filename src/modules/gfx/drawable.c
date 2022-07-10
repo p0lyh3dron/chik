@@ -9,6 +9,8 @@
  */
 #include "drawable.h"
 
+#include <string.h>
+
 #include "camera.h"
 #include "vertexasm.h"
 #include "raster.h"
@@ -118,7 +120,6 @@ void vbuffer_free( handle_t sVBuffer ) {
     }
 
     mempool_free( gpMempool, pVBuffer->apData );
-    resource_remove( gpResources, sVBuffer );
 }
 
 /*
@@ -187,7 +188,6 @@ void texture_free( handle_t sTex ) {
     }
 
     image_free( pTex->apImage );
-    resource_remove( gpResources, sTex );
 }
 
 /*
@@ -483,6 +483,4 @@ void mesh_free( handle_t sMesh ) {
         log_error( "Mesh is null." );
         return;
     }
-
-    resource_remove( gpResources, sMesh );
 }

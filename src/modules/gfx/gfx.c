@@ -11,21 +11,74 @@
  */
 #include "libchik.h"
 
-CHIK_MODULE( graphics_init )
+u32 graphics_init( void );
+u32 graphics_update( f32 );
+u32 graphics_exit( void );
+
+CHIK_MODULE( graphics_init, graphics_update, graphics_exit )
 
 #include <string.h>
 
-#include "abstract.h"
 #include "rendertarget.h"
 #include "drawable.h"
 #include "raster.h"
 #include "vertexasm.h"
 #include "cull.h"
 
+u32     ( *platform_draw_image )     ( image_t * ) = 0;
+vec2u_t ( *platform_get_screen_size )( void )      = 0;
+
 extern rendertarget_t *gpBackBuffer;
 
 resource_t *gpVBuffer    = NULL;
 resource_t *gpGResources = NULL;
+
+/*
+ *    Creates the graphics context.
+ */
+u32 graphics_init( void ) {
+    gpGResources = resource_new( 1024 * 1024 );
+    if ( gpGResources == nullptr ) {
+        log_error( "u32 graphics_init( void ): Failed to create graphics resource.\n" );
+        return 0;
+    }
+    platform_draw_image = engine_load_function( "platform_draw_image" );
+    if ( platform_draw_image == nullptr ) {
+        log_error( "u32 graphics_init( void ): Failed to load platform_draw_image.\n" );
+        return 0;
+    }
+    platform_get_screen_size = engine_load_function( "platform_get_screen_size" );
+    if ( platform_get_screen_size == nullptr ) {
+        log_error( "u32 graphics_init( void ): Failed to load platform_get_screen_size.\n" );
+        return 0;
+    }
+
+    raster_setup();
+    cull_create_frustum();
+    init_drawable_resources();
+    rendertarget_create_backbuffer();
+    raster_set_rendertarget( gpBackBuffer );
+
+    return 1;
+}
+
+/*
+ *    Updates the graphics context.
+ *
+ *    @param f32    The time since the last update.
+ *
+ *    @return u32   The return code.
+ */
+u32 graphics_update( f32 sDT ) {
+    return 1;
+}
+
+/*
+ *    Cleans up the graphics subsystem.
+ */ 
+u32 graphics_exit( void ) {
+    return 1;
+}
 
 /*
  *    Creates a camera.
@@ -148,29 +201,6 @@ static float theta = 0.f;
  *    Draws the current frame.
  */
 void draw_frame( void ) {
-    platform_draw_frame();
+    platform_draw_image( gpBackBuffer->apTarget );
     raster_clear_depth();
-}
-
-/*
- *    Creates the graphics context.
- */
-void graphics_init( void ) {
-    gpGResources = resource_new( 1024 * 1024 );
-    if ( gpGResources == NULL ) {
-        log_error( "Failed to create graphics resource.\n" );
-        return;
-    }
-    raster_setup();
-    cull_create_frustum();
-    init_drawable_resources();
-    raster_set_rendertarget( gpBackBuffer );
-}
-
-/*
- *    Cleans up the graphics subsystem.
- */
-__attribute__( ( destructor ) )
-void cleanup_graphics( void ) {
-    
 }

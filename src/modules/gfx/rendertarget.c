@@ -11,6 +11,8 @@
 
 #include "surface.h"
 
+extern vec2u_t ( *platform_get_screen_size )( void );
+
 rendertarget_t **gpRenderTargets = NULL;
 
 rendertarget_t  *gpBackBuffer    = NULL;
@@ -98,11 +100,10 @@ rendertarget_t **rendertarget_get_list( void ) {
  *                                NULL if the render target could not be created.
  *                                The render target should be freed with rendertarget_free().
  */
-__attribute__( ( constructor ) )
 rendertarget_t *rendertarget_create_backbuffer( void ) {
-    chik_surface_t *pSurface      = surface_get();
+    vec2u_t res = platform_get_screen_size();
 
-    rendertarget_t *pRenderTarget = rendertarget_create( pSurface->aWidth, pSurface->aHeight, 69 );
+    rendertarget_t *pRenderTarget = rendertarget_create( res.x, res.y, 69 );
     if( pRenderTarget == NULL ) {
         log_error( "Could not create backbuffer render target." );
         return NULL;
@@ -127,7 +128,6 @@ rendertarget_t *rendertarget_get_backbuffer( void ) {
 /*
  *    Frees all render targets.
  */
-__attribute__( ( destructor ) )
 void rendertarget_free_all( void ) {
     if ( gpRenderTargets == NULL ) {
         return;
