@@ -59,4 +59,14 @@ vec2u_t platform_get_joystick_event();
  */
 u32 platform_write_sound( s8 *spData );
 
+/*
+ *    Gets the playback bits per sample, sample rate, channels, and buffer size.
+ *
+ *    @param u32 *    The bits per sample.
+ *    @param u32 *    The sample rate.
+ *    @param u32 *    The channels.
+ *    @param u32 *    The buffer size.
+ */
+void platform_get_sound_info( u32 *spBitsPerSample, u32 *spSampleRate, u32 *spChannels, u32 *spBufferSize );
+
 #endif /* CHIK_PLATFORM_H  */

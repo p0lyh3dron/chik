@@ -256,10 +256,11 @@ void cull_create_frustum() {
  *    @param void *     The second vertex.
  *    @param void *     The third vertex.
  *    @param s32  *     The number of new vertices.
+ *    @param u32        Whether or not to clip the triangle.
  *
  *    @return void *    The new vertices.
  */
-void *cull_clip_triangle( void *spV0, void *spV1, void *spV2, s32 *spNumVertices ) {
+void *cull_clip_triangle( void *spV0, void *spV1, void *spV2, s32 *spNumVertices, u32 sClip ) {
     static u8 vertices[ 8 * VERTEX_ASM_MAX_VERTEX_SIZE ];
     u8        v       [ VERTEX_ASM_MAX_VERTEX_SIZE ];
 
@@ -272,6 +273,11 @@ void *cull_clip_triangle( void *spV0, void *spV1, void *spV2, s32 *spNumVertices
     memcpy( vertices + 0 * VERTEX_ASM_MAX_VERTEX_SIZE, spV0, gVertexSize );
     memcpy( vertices + 1 * VERTEX_ASM_MAX_VERTEX_SIZE, spV1, gVertexSize );
     memcpy( vertices + 2 * VERTEX_ASM_MAX_VERTEX_SIZE, spV2, gVertexSize );
+
+    if ( !sClip ) {
+        *spNumVertices = numVertices;
+        return vertices;
+    }
 
     for ( u64 i = 0; i < ARR_LEN( gFrustum.aPlanes ); ++i ) {
         removeFirst = 0;

@@ -20,10 +20,11 @@
 #include <SDL2/SDL.h>
 #endif /* USE_SDL  */
 
-#define PCM_DEVICE      "default"
-#define PCM_CHANNELS    2
-#define PCM_SAMPLE_RATE 44100
-#define PCM_BUFFER_SIZE 8192
+#define PCM_DEVICE       "default"
+#define PCM_CHANNELS     2
+#define PCM_SAMPLE_RATE  44100
+#define PCM_BUFFER_SIZE  8192
+#define PCM_SAMPLE_WIDTH 16
 
 #define DEFAULT_WIDTH  480
 #define DEFAULT_HEIGHT 270
@@ -140,7 +141,7 @@ u32 audio_init( void ) {
  */
 void audio_quit( void ) {
 #if USE_ALSA
-	snd_pcm_drain( gpAudioDevice );
+	//snd_pcm_drain( gpAudioDevice );
 	snd_pcm_close( gpAudioDevice );
 #endif /* USE_ALSA  */
 }
@@ -324,7 +325,8 @@ u32 platform_draw_image( image_t *spImage ) {
 #if USE_SDL
 	SDL_RenderClear( gpRenderer );
     SDL_UpdateTexture( gpTexture, nullptr, spImage->apData, spImage->aWidth * sizeof( u32 ) );
-    SDL_RenderCopy( gpRenderer, gpTexture, nullptr, nullptr );
+	//SDL_RenderCopy( gpRenderer, gpTexture, nullptr, nullptr );
+    SDL_RenderCopyEx( gpRenderer, gpTexture, nullptr, nullptr, 0.0, nullptr, SDL_FLIP_VERTICAL );
     SDL_RenderPresent( gpRenderer );
 #endif /* USE_SDL  */
 	return 1;
@@ -403,6 +405,21 @@ u32 platform_write_sound( s8 *spData ) {
 	}
 	return 1;
 #endif /* USE_ALSA  */
+}
+
+/*
+ *    Gets the playback bits per sample, sample rate, channels, and buffer size.
+ *
+ *    @param u32 *    The bits per sample.
+ *    @param u32 *    The sample rate.
+ *    @param u32 *    The channels.
+ *    @param u32 *    The buffer size.
+ */
+void platform_get_sound_info( u32 *spBitsPerSample, u32 *spSampleRate, u32 *spChannels, u32 *spBufferSize ) {
+	*spBitsPerSample = PCM_SAMPLE_WIDTH;
+	*spSampleRate    = PCM_SAMPLE_RATE;
+	*spChannels      = PCM_CHANNELS;
+	*spBufferSize    = PCM_BUFFER_SIZE;
 }
 
 /*

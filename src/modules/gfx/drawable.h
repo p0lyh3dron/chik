@@ -22,12 +22,26 @@ typedef struct {
     v_layout_t aLayout;
 } vbuffer_t;
 
+typedef enum {
+    MESHFLAGS_NONE            = 0,
+    MESHFLAGS_DRAW_WIREFRAME  = 1 << 0,
+    /*
+     *    Useful for a static mesh / font / etc.
+     */
+    MESHFLAGS_SKIP_PROJECTION = 1 << 1,
+    /*
+     *    Useful for a static mesh / font / etc.
+     */
+    MESHFLAGS_SKIP_CLIPPING  = 1 << 2,
+} meshflags_e;
+
 typedef struct {
-    handle_t aVBuf;
+    meshflags_e aFlags;
+    handle_t    aVBuf;
     /*
      *    Will be replaced with material_t *
      */
-    handle_t aTex;
+    handle_t    aTex;
 } mesh_t;
 
 /*
@@ -87,6 +101,20 @@ void texture_free( handle_t sTex );
 handle_t mesh_create( handle_t sVBuffer, handle_t sTex );
 
 /*
+ *    Sets a mesh to not use the projection matrix.
+ *
+ *    @param handle_t    The mesh.
+ */
+void mesh_set_skip_projection( handle_t sMesh );
+
+/*
+ *    Sets a mesh to not be clipped.
+ *
+ *    @param handle_t    The mesh.
+ */
+void mesh_set_skip_clipping( handle_t sMesh );
+
+/*
  *    Sets the vertex buffer of a mesh.
  *
  *    @param handle_t    The mesh.
@@ -117,11 +145,19 @@ void mesh_translate( vec3_t sTranslation );
 void mesh_rotate( vec3_t sRotation );
 
 /*
+ *    Scales a mesh.
+ *
+ *    @param vec3_t      The scale vector.
+ */
+void mesh_scale( vec3_t sScale );
+
+/*
  *    Draws a vertex buffer.
  *
  *    @param handle_t          The handle to the vertex buffer.
+ *    @param meshflags_e       The flags to use for the mesh.
  */
-void vbuffer_draw( handle_t sBuffer );
+void vbuffer_draw( handle_t sBuffer, meshflags_e sFlags );
 
 /*
  *    Draws a mesh.

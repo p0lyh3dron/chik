@@ -12,6 +12,8 @@
 #include <malloc.h>
 #include <string.h>
 
+#include "gfx.h"
+
 /*
  *    Creates an image.
  *
@@ -24,7 +26,7 @@
  *                         The image should be freed with image_free().
  */
 image_t *image_create( u32 sWidth, u32 sHeight, u32 sFormat ) {
-    image_t *pImage = malloc( sizeof( image_t ) );
+    image_t *pImage = mempool_alloc( gpMempool, sizeof( image_t ) );
     if( pImage == NULL ) {
         log_error( "Could not allocate memory for image." );
     }
@@ -36,7 +38,7 @@ image_t *image_create( u32 sWidth, u32 sHeight, u32 sFormat ) {
      *    In the future, image data may not be just width * height * format.
      *    For now, we just allocate the amount of memory we need.
      */
-    pImage->apData  = malloc( sWidth * sHeight * sizeof( u32 ) );
+    pImage->apData  = mempool_alloc( gpMempool, sWidth * sHeight * sizeof( u32 ) );
     if( pImage->apData == NULL ) {
         log_error( "Could not allocate memory for image buffer." );
     }
@@ -125,11 +127,11 @@ image_t *image_load_bmp( const s8 *spFile ) {
         /*
          *    Don't touch.
          */
-        memcpy( ( u8 * )pImage->apData + ( header.aWidth * i ) * 3, pData + ( header.aWidth * i ) * 3 + i * padding, header.aWidth * 3 );
+        memcpy( ( u8 * )pImage->apData + ( header.aWidth * i ) * 4, pData + ( header.aWidth * i ) * 4 + i * padding, header.aWidth * 4 );
         /*
          *    Literal magic.
          */
-        padding += ( ( header.aWidth * 3 ) + padding ) % 4;
+        padding += ( ( header.aWidth * 4 ) + padding ) % 4;
     }
 
     /*

@@ -11,31 +11,12 @@
 
 #include <string.h>
 
+#include "gfx.h"
+
 #include "camera.h"
 #include "vertexasm.h"
 #include "raster.h"
 #include "cull.h"
-
-resource_t *gpResources = nullptr;
-mempool_t  *gpMempool   = nullptr;
-
-/*
- *    Initializes resources for below functions.
- *
- *    @return u32    Whether or not the initialization was successful.
- *                   1 = success, 0 = failure.
- */
-u32 init_drawable_resources() {
-    gpResources = resource_new( 64 * 1024 * 1000 );
-    gpMempool   = mempool_new( 64 * 1024 * 1000 );
-    if ( gpResources == nullptr ) {
-        return 0;
-    }
-    if ( gpMempool == nullptr ) {
-        return 0;
-    }
-    return 1;
-}
 
 /*
  *    Creates a vertex buffer.
@@ -188,6 +169,7 @@ void texture_free( handle_t sTex ) {
     }
 
     image_free( pTex->apImage );
+    resource_remove( gpResources, sTex );
 }
 
 /*
@@ -200,17 +182,72 @@ void texture_free( handle_t sTex ) {
  */
 handle_t mesh_create( handle_t sVBuffer, handle_t sTex ) {
     mesh_t mesh = {};
+    mesh.aFlags   = MESHFLAGS_NONE;
     mesh.aVBuf    = sVBuffer;
     mesh.aTex     = sTex;
 
     handle_t h = resource_add( gpResources, &mesh, sizeof( mesh_t ) );
 
     if ( h == INVALID_HANDLE ) {
-        log_error( "Could not add mesh to resource list." );
+        log_error( "void mesh_create( handle_t, handle_t ): Could not add mesh to resource list.\n" );
         return INVALID_HANDLE;
     }
 
     return h;
+}
+
+/*
+ *    Sets a mesh to not use the projection matrix.
+ *
+ *    @param handle_t    The mesh.
+ */
+void mesh_set_skip_projection( handle_t sMesh ) {
+    if ( gpResources == nullptr ) {
+        log_error( "void mesh_set_skip_projection( handle_t ): Resources not initialized.\n" );
+        return;
+    }
+    if ( gpMempool == nullptr ) {
+        log_error( "void mesh_set_skip_projection( handle_t ): Memory pool not initialized.\n" );
+        return;
+    }
+    if ( sMesh == INVALID_HANDLE ) {
+        log_error( "void mesh_set_skip_projection( handle_t ): Mesh is null.\n" );
+        return;
+    }
+
+    mesh_t *pMesh = resource_get( gpResources, sMesh );
+    if ( pMesh == nullptr ) {
+        log_error( "void mesh_set_skip_projection( handle_t ): Mesh is null.\n" );
+        return;
+    }
+    pMesh->aFlags |= MESHFLAGS_SKIP_PROJECTION;
+}
+
+/*
+ *    Sets a mesh to not be clipped.
+ *
+ *    @param handle_t    The mesh.
+ */
+void mesh_set_skip_clipping( handle_t sMesh ) {
+    if ( gpResources == nullptr ) {
+        log_error( "void mesh_set_skip_clipping( handle_t ): Resources not initialized.\n" );
+        return;
+    }
+    if ( gpMempool == nullptr ) {
+        log_error( "void mesh_set_skip_clipping( handle_t ): Memory pool not initialized.\n" );
+        return;
+    }
+    if ( sMesh == INVALID_HANDLE ) {
+        log_error( "void mesh_set_skip_clipping( handle_t ): Mesh is null.\n" );
+        return;
+    }
+
+    mesh_t *pMesh = resource_get( gpResources, sMesh );
+    if ( pMesh == nullptr ) {
+        log_error( "void mesh_set_skip_clipping( handle_t ): Mesh is null.\n" );
+        return;
+    }
+    pMesh->aFlags |= MESHFLAGS_SKIP_CLIPPING;
 }
 
 /*
@@ -221,30 +258,30 @@ handle_t mesh_create( handle_t sVBuffer, handle_t sTex ) {
  */
 void mesh_set_vertex_buffer( handle_t sMesh, handle_t sVBuffer ) {
     if ( gpResources == nullptr ) {
-        log_error( "Resources not initialized." );
+        log_error( "void mesh_set_vertex_buffer( handle_t, handle_t ): Resources not initialized.\n" );
         return;
     }
     if ( gpMempool == nullptr ) {
-        log_error( "Memory pool not initialized." );
+        log_error( "void mesh_set_vertex_buffer( handle_t, handle_t ): Memory pool not initialized.\n" );
         return;
     }
     if ( sMesh == INVALID_HANDLE ) {
-        log_error( "Mesh is null." );
+        log_error( "void mesh_set_vertex_buffer( handle_t, handle_t ): Mesh is null.\n" );
         return;
     }
     if ( sVBuffer == INVALID_HANDLE ) {
-        log_error( "Vertex buffer is null." );
+        log_error( "void mesh_set_vertex_buffer( handle_t, handle_t ): Vertex buffer is null.\n" );
         return;
     }
 
     mesh_t *pMesh = resource_get( gpResources, sMesh );
     if ( pMesh == nullptr ) {
-        log_error( "Mesh is null." );
+        log_error( "void mesh_set_vertex_buffer( handle_t, handle_t ): Mesh is null.\n" );
         return;
     }
     vbuffer_t *pVBuffer = resource_get( gpResources, sVBuffer );
     if ( pVBuffer == nullptr ) {
-        log_error( "Vertex buffer is null." );
+        log_error( "void mesh_set_vertex_buffer( handle_t, handle_t ): Vertex buffer is null.\n" );
         return;
     }
 
@@ -259,25 +296,25 @@ void mesh_set_vertex_buffer( handle_t sMesh, handle_t sVBuffer ) {
  */
 void mesh_set_texture( handle_t sMesh, handle_t sTex ) {
     if ( gpResources == nullptr ) {
-        log_error( "Resources not initialized.\n" );
+        log_error( "void mesh_set_texture( handle_t, handle_t ): Resources not initialized.\n" );
         return;
     }
     if ( gpMempool == nullptr ) {
-        log_error( "Memory pool not initialized.\n" );
+        log_error( "void mesh_set_texture( handle_t, handle_t ): Memory pool not initialized.\n" );
         return;
     }
     if ( sMesh == INVALID_HANDLE ) {
-        log_error( "Mesh is null.\n" );
+        log_error( "void mesh_set_texture( handle_t, handle_t ): Mesh is null.\n" );
         return;
     }
     if ( sTex == INVALID_HANDLE ) {
-        log_error( "Texture is null.\n" );
+        log_error( "void mesh_set_texture( handle_t, handle_t ): Texture is null.\n" );
         return;
     }
 
     mesh_t *pMesh = resource_get( gpResources, sMesh );
     if ( pMesh == nullptr ) {
-        log_error( "Mesh is null.\n" );
+        log_error( "void mesh_set_texture( handle_t, handle_t ): Mesh is null.\n" );
         return;
     }
 
@@ -286,6 +323,7 @@ void mesh_set_texture( handle_t sMesh, handle_t sTex ) {
 
 vec3_t gMeshTranslate = { 0.f, 0.f, 0.f };
 vec3_t gMeshRotate    = { 0.f, 0.f, 0.f };
+vec3_t gMeshScale     = { 1.f, 1.f, 1.f };
 
 /*
  *    Translates a mesh.
@@ -306,19 +344,29 @@ void mesh_rotate( vec3_t sRotation ) {
 }
 
 /*
+ *    Scales a mesh.
+ *
+ *    @param vec3_t      The scale vector.
+ */
+void mesh_scale( vec3_t sScale ) {
+    gMeshScale = sScale;
+}
+
+/*
  *    Draws a vertex buffer.
  *
  *    @param handle_t          The handle to the vertex buffer.
+ *    @param meshflags_e       The flags to use for the mesh.
  */
-void vbuffer_draw( handle_t sBuffer ) {
+void vbuffer_draw( handle_t sBuffer, meshflags_e sFlags ) {
     if ( gpCamera == nullptr ) {
-        log_error( "No camera.\n" );
+        log_error( "void vbuffer_draw( handle_t, meshflags_e ): No camera.\n" );
         return;
     }
 
     vbuffer_t *pBuf = resource_get( gpResources, sBuffer );
     if ( pBuf == nullptr ) {
-        log_error( "Failed to get vertex resource.\n" );
+        log_error( "void vbuffer_draw( handle_t, meshflags_e ): Failed to get vertex resource.\n" );
         return;
     }
 
@@ -343,8 +391,17 @@ void vbuffer_draw( handle_t sBuffer ) {
          *    Get the positions of the vertices.
          */
         vec4_t pa = vertex_get_position( a0 );
+        pa.x *= gMeshScale.x;
+        pa.y *= gMeshScale.y;
+        pa.z *= gMeshScale.z;
         vec4_t pb = vertex_get_position( b0 );
+        pb.x *= gMeshScale.x;
+        pb.y *= gMeshScale.y;
+        pb.z *= gMeshScale.z;
         vec4_t pc = vertex_get_position( c0 );
+        pc.x *= gMeshScale.x;
+        pc.y *= gMeshScale.y;
+        pc.z *= gMeshScale.z;
 
         /*
          *    Transform the positions.
@@ -366,11 +423,21 @@ void vbuffer_draw( handle_t sBuffer ) {
                       tc = m4_mul_m4( m4_rotate( gMeshRotate.y, ( vec3_t ){ 0.f, 1.f, 0.f } ), tc );
                       tc = m4_mul_m4( m4_rotate( gMeshRotate.z, ( vec3_t ){ 0.f, 0.f, 1.f } ), tc );
                       tc = m4_mul_m4( m4_translate( gMeshTranslate ), tc );
-        
 
-        mat4_t        ma = m4_mul_m4( view, ta );
-        mat4_t        mb = m4_mul_m4( view, tb );
-        mat4_t        mc = m4_mul_m4( view, tc );
+        mat4_t ma = m4_identity();
+        mat4_t mb = m4_identity();
+        mat4_t mc = m4_identity();
+        
+        if ( !( sFlags & MESHFLAGS_SKIP_PROJECTION ) ) {
+            ma = m4_mul_m4( view, ta );
+            mb = m4_mul_m4( view, tb );
+            mc = m4_mul_m4( view, tc );
+        }
+        else {
+            ma = ta;
+            mb = tb;
+            mc = tc;
+        }
 
         /*
          *    Update the vertex data.
@@ -386,7 +453,7 @@ void vbuffer_draw( handle_t sBuffer ) {
          */
         s32 numVertices = 0;
 
-        u8 *pVerts = cull_clip_triangle( a0, b0, c0, &numVertices );
+        u8 *pVerts = cull_clip_triangle( a0, b0, c0, &numVertices, !( sFlags & MESHFLAGS_SKIP_CLIPPING ) );
 
         /*
          *    Draw the clipped vertices.
@@ -396,25 +463,27 @@ void vbuffer_draw( handle_t sBuffer ) {
             memcpy( b0, pVerts + ( i + 1 ) * VERTEX_ASM_MAX_VERTEX_SIZE, pBuf->aVStride );
             memcpy( c0, pVerts + ( i + 2 ) * VERTEX_ASM_MAX_VERTEX_SIZE, pBuf->aVStride );
 
-            /*
-             *    Transform the vertex to screen space.
-             */
-            pa = vertex_get_position( a0 );
-            pb = vertex_get_position( b0 );
-            pc = vertex_get_position( c0 );
+            if ( !( sFlags & MESHFLAGS_SKIP_PROJECTION ) ) {
+                /*
+                *    Transform the vertex to screen space.
+                */
+                pa = vertex_get_position( a0 );
+                pb = vertex_get_position( b0 );
+                pc = vertex_get_position( c0 );
 
-            pa.x /= pa.w;
-            pa.y /= pa.w;
+                pa.x /= pa.w;
+                pa.y /= pa.w;
 
-            pb.x /= pb.w;
-            pb.y /= pb.w;
+                pb.x /= pb.w;
+                pb.y /= pb.w;
 
-            pc.x /= pc.w;
-            pc.y /= pc.w;
+                pc.x /= pc.w;
+                pc.y /= pc.w;
 
-            vertex_set_position( a0, pa );
-            vertex_set_position( b0, pb );
-            vertex_set_position( c0, pc );
+                vertex_set_position( a0, pa );
+                vertex_set_position( b0, pb );
+                vertex_set_position( c0, pc );
+            }
 
             /*
              *    Draw the triangle.
@@ -431,38 +500,38 @@ void vbuffer_draw( handle_t sBuffer ) {
  */
 void mesh_draw( handle_t sMesh ) {
     if ( gpResources == nullptr ) {
-        log_error( "Resources not initialized." );
+        log_error( "void mesh_draw( handle_t ): Resources not initialized.\n" );
         return;
     }
     if ( gpMempool == nullptr ) {
-        log_error( "Memory pool not initialized." );
+        log_error( "void mesh_draw( handle_t ): Memory pool not initialized.\n" );
         return;
     }
     if ( sMesh == INVALID_HANDLE ) {
-        log_error( "Mesh is null.\n" );
+        log_error( "void mesh_draw( handle_t ): Mesh is null.\n" );
         return;
     }
 
     mesh_t *pMesh = resource_get( gpResources, sMesh );
     if ( pMesh == nullptr ) {
-        log_error( "Mesh is null." );
+        log_error( "void mesh_draw( handle_t ): Mesh is null.\n" );
         return;
     }
 
     texture_t *pTex = resource_get( gpResources, pMesh->aTex );
     if ( pTex == nullptr ) {
-        log_error( "Texture is null." );
+        log_error( "void mesh_draw( handle_t ): Texture is null.\n" );
         return;
     }
 
     image_t *pImage = pTex->apImage;
     if ( pImage == nullptr ) {
-        log_error( "Image is null." );
+        log_error( "void mesh_draw( handle_t ): Image is null.\n" );
         return;
     }
 
     vertexasm_bind_uniform( pTex );
-    vbuffer_draw( pMesh->aVBuf );
+    vbuffer_draw( pMesh->aVBuf, pMesh->aFlags );
 }
 
 /*

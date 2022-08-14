@@ -9,6 +9,8 @@
  */
 #include "rendertarget.h"
 
+#include "gfx.h"
+
 #include "surface.h"
 
 extern vec2u_t ( *platform_get_screen_size )( void );

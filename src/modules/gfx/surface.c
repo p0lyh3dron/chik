@@ -10,6 +10,8 @@
  */
 #include "surface.h"
 
+#include "gfx.h"
+
 static chik_surface_t *gpSurface = NULL;
 
 /*
@@ -25,7 +27,7 @@ static chik_surface_t *gpSurface = NULL;
 chik_surface_t *surface_create( u32 sWidth, u32 sHeight, u32 sBpp ) {
     chik_surface_t *pSurface = NULL;
     
-    pSurface = ( chik_surface_t * )malloc( sizeof( chik_surface_t ) );
+    pSurface = ( chik_surface_t * )mempool_alloc( gpMempool, sizeof( chik_surface_t ) );
     if( pSurface == NULL ) {
         log_fatal( "Could not allocate memory for surface." );
         return NULL;
@@ -56,5 +58,5 @@ chik_surface_t *surface_get( void ) {
  *    @param chik_surface_t *    The surface to destroy.
  */
 void surface_destroy( chik_surface_t *spSurface ) {
-    free( spSurface );
+    mempool_free( gpMempool, spSurface );
 }

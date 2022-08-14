@@ -51,7 +51,7 @@ mat4_t camera_projection( camera_t *spCamera ) {
      */
     mat4_t projection = {
         fov / spCamera->aAspect, 0.f,   0.f, 0.f,
-        0.f,                     -fov,  0.f, 0.f,
+        0.f,                     fov,  0.f, 0.f,
         0.f,                     0.f,  -1.f, 0.f,
         0.f,                     0.f,   1.f, 0.f
     };

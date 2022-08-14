@@ -19,6 +19,8 @@ CHIK_MODULE( graphics_init, graphics_update, graphics_exit )
 
 #include <string.h>
 
+#include "gfx.h"
+
 #include "rendertarget.h"
 #include "drawable.h"
 #include "raster.h"
@@ -30,15 +32,21 @@ vec2u_t ( *platform_get_screen_size )( void )      = 0;
 
 extern rendertarget_t *gpBackBuffer;
 
-resource_t *gpVBuffer    = NULL;
-resource_t *gpGResources = NULL;
+mempool_t  *gpMempool   = nullptr;
+resource_t *gpResources = nullptr;
 
 /*
  *    Creates the graphics context.
  */
 u32 graphics_init( void ) {
-    gpGResources = resource_new( 1024 * 1024 );
-    if ( gpGResources == nullptr ) {
+    gpMempool   = mempool_new( 32 * 1024 * 1024 );
+    gpResources = resource_new( 32 * 1024 * 1024 );
+    
+    if ( gpMempool == nullptr ) {
+        log_error( "u32 graphics_init( void ): Failed to create graphics memory pool.\n" );
+        return 0;
+    }
+    if ( gpResources == nullptr ) {
         log_error( "u32 graphics_init( void ): Failed to create graphics resource.\n" );
         return 0;
     }
@@ -55,7 +63,6 @@ u32 graphics_init( void ) {
 
     raster_setup();
     cull_create_frustum();
-    init_drawable_resources();
     rendertarget_create_backbuffer();
     raster_set_rendertarget( gpBackBuffer );
 
@@ -101,7 +108,7 @@ handle_t create_camera( void ) {
 
     cam.aAspect = ( float )gpBackBuffer->apTarget->aWidth / ( float )gpBackBuffer->apTarget->aHeight;
     
-    handle_t handle = resource_add( gpGResources, &cam, sizeof( camera_t ) );
+    handle_t handle = resource_add( gpResources, &cam, sizeof( camera_t ) );
     if ( handle == INVALID_HANDLE ) {
         log_error( "Failed to add camera resource.\n" );
         return INVALID_HANDLE;
@@ -116,7 +123,7 @@ handle_t create_camera( void ) {
  *    @param vec3_t             The position of the camera.
  */
 void set_camera_position( handle_t sCamera, vec3_t sPosition ) {
-    camera_t *pCamera = resource_get( gpGResources, sCamera );
+    camera_t *pCamera = resource_get( gpResources, sCamera );
     if ( pCamera == NULL ) {
         log_error( "Failed to get camera resource.\n" );
         return;
@@ -131,7 +138,7 @@ void set_camera_position( handle_t sCamera, vec3_t sPosition ) {
  *    @param vec2_t             The direction of the camera.
  */
 void set_camera_direction( handle_t sCamera, vec2_t sDirection ) {
-    camera_t *pCamera = resource_get( gpGResources, sCamera );
+    camera_t *pCamera = resource_get( gpResources, sCamera );
     if ( pCamera == NULL ) {
         log_error( "Failed to get camera resource.\n" );
         return;
@@ -146,7 +153,7 @@ void set_camera_direction( handle_t sCamera, vec2_t sDirection ) {
  *    @param float              The FOV of the camera.
  */
 void set_camera_fov( handle_t sCamera, float sFov ) {
-    camera_t *pCamera = resource_get( gpGResources, sCamera );
+    camera_t *pCamera = resource_get( gpResources, sCamera );
     if ( pCamera == NULL ) {
         log_error( "Failed to get camera resource.\n" );
         return;
@@ -160,7 +167,7 @@ void set_camera_fov( handle_t sCamera, float sFov ) {
  *    @param handle_t           The handle to the camera.
  */
 void set_camera( handle_t sCamera ) {
-    gpCamera = resource_get( gpGResources, sCamera );
+    gpCamera = resource_get( gpResources, sCamera );
     if ( gpCamera == NULL ) {
         log_error( "Failed to get camera resource.\n" );
         return;
@@ -175,7 +182,7 @@ void set_camera( handle_t sCamera ) {
  *    @return mat4_t           The view matrix.
  */
 mat4_t get_camera_view( handle_t sCamera ) {
-    camera_t *pCamera = resource_get( gpGResources, sCamera );
+    camera_t *pCamera = resource_get( gpResources, sCamera );
     if ( pCamera == NULL ) {
         log_error( "Failed to get camera resource.\n" );
         return m4_identity();

@@ -72,9 +72,10 @@ void cull_create_frustum();
  *    @param void *     The second vertex.
  *    @param void *     The third vertex.
  *    @param s32  *     The number of new vertices.
+ *    @param u32        Whether or not to clip the triangle.
  *
  *    @return void *    The new vertices.
  */
-void *cull_clip_triangle( void *spV0, void *spV1, void *spV2, s32 *spNumVertices );
+void *cull_clip_triangle( void *spV0, void *spV1, void *spV2, s32 *spNumVertices, u32 sClip );
 
 #endif /* CHIK_GFX_CULL_H  */
