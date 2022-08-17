@@ -52,7 +52,7 @@ u32 audio_init( void ) {
         return 0;
     }
 
-    gpAudioResources = resource_new( CHIK_AUDIO_MAX_AUDIO_HANDLES * sizeof( handle_t ) );
+    gpAudioResources = resource_new( CHIK_AUDIO_MAX_AUDIO_HANDLES * sizeof( trap_t ) );
     if ( gpAudioResources == nullptr ) {
         log_error( "u32 audio_init( void ): Failed to create audio resources!\n" );
         return 0;
@@ -149,25 +149,25 @@ u8 *audio_read_wav( const s8 *spPath ) {
  *    @param const s8 *    The path to the audio file.
  *    @param u32           Whether the audio should loop.
  * 
- *    @return handle_t     The handle to the audio file.
+ *    @return trap_t     The handle to the audio file.
  */
-handle_t audio_create_from_file( const s8 *spPath, u32 sLoop ) {
+trap_t audio_create_from_file( const s8 *spPath, u32 sLoop ) {
     audio_t *pA = audio_ptr_init();
     if ( pA == nullptr ) {
         log_error( "audio_create_from_file( const s8 *, u32 ): Failed to allocate audio!\n" );
-        return 0;
+        return INVALID_TRAP;
     }
     pA->aFlags    = sLoop;
     pA->apSamples = audio_read_wav( spPath );
 
     if ( pA->apSamples == nullptr ) {
         log_error( "audio_create_from_file( const s8 *, u32 ): Failed to read audio file!\n" );
-        return 0;
+        return INVALID_TRAP;
     }
 
-    handle_t h = resource_add( gpAudioResources, &pA, sizeof( pA ) );
+    trap_t h = resource_add( gpAudioResources, &pA, sizeof( pA ) );
 
-    if ( h == INVALID_HANDLE ) {
+    if ( BAD_TRAP( h ) ) {
         log_error( "audio_create_from_file( const s8 *, u32 ): Failed to add audio to resources!\n" );
     }
 
@@ -177,14 +177,14 @@ handle_t audio_create_from_file( const s8 *spPath, u32 sLoop ) {
 /*
  *    Plays an audio handle.
  *
- *    @param handle_t     The handle to the audio file.
+ *    @param trap_t     The handle to the audio file.
  *    
  *    @return u32         Whether the audio was successfully played.
  */
-u32 audio_play( handle_t sAudio ) {
+u32 audio_play( trap_t sAudio ) {
     audio_t *pA = resource_get( gpAudioResources, sAudio );
     if ( pA == nullptr ) {
-        log_error( "audio_play( handle_t ): Failed to get audio from resources!\n" );
+        log_error( "audio_play( trap_t ): Failed to get audio from resources!\n" );
         return 0;
     }
     pA->aPlaying = 1;
@@ -194,14 +194,14 @@ u32 audio_play( handle_t sAudio ) {
 /*
  *    Stops an audio handle.
  *
- *    @param handle_t     The handle to the audio file.
+ *    @param trap_t     The handle to the audio file.
  * 
  *    @return u32         Whether the audio was successfully stopped.
  */
-u32 audio_stop( handle_t sAudio ) {
+u32 audio_stop( trap_t sAudio ) {
     audio_t *pA = resource_get( gpAudioResources, sAudio );
     if ( pA == nullptr ) {
-        log_error( "audio_stop( handle_t ): Failed to get audio from resources!\n" );
+        log_error( "audio_stop( trap_t ): Failed to get audio from resources!\n" );
         return 0;
     }
     pA->aPlaying = 0;

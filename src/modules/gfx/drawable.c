@@ -26,30 +26,30 @@
  *    @param u32            The stride of the vertex data.
  *    @param v_layout_t     The layout of the vertex data.
  * 
- *    @return handle_t      The vertex buffer.
- *                          INVALID_HANDLE if the vertex buffer could not be created.
+ *    @return trap_t      The vertex buffer.
+ *                          INVALID_TRAP if the vertex buffer could not be created.
  *                          The mesh should be freed with vbuffer_free().
  */
-handle_t vbuffer_create( void *spVerts, u32 sSize, u32 sVStride, v_layout_t sLayout ) {
+trap_t vbuffer_create( void *spVerts, u32 sSize, u32 sVStride, v_layout_t sLayout ) {
     if ( gpResources == nullptr ) {
         log_error( "Resources not initialized." );
-        return INVALID_HANDLE;
+        return INVALID_TRAP;
     }
     if ( gpMempool == nullptr ) {
         log_error( "Memory pool not initialized." );
-        return INVALID_HANDLE;
+        return INVALID_TRAP;
     }
     if ( spVerts == nullptr ) {
         log_error( "Vertex data is null." );
-        return INVALID_HANDLE;
+        return INVALID_TRAP;
     }
     if ( sSize == 0 ) {
         log_error( "Vertex data size is zero." );
-        return INVALID_HANDLE;
+        return INVALID_TRAP;
     }
     if ( sVStride == 0 ) {
         log_error( "Vertex data stride is zero." );
-        return INVALID_HANDLE;
+        return INVALID_TRAP;
     }
 
     vbuffer_t buf = {};
@@ -60,16 +60,16 @@ handle_t vbuffer_create( void *spVerts, u32 sSize, u32 sVStride, v_layout_t sLay
 
     if ( buf.apData == nullptr ) {
         log_error( "Could not allocate vertex buffer." );
-        return INVALID_HANDLE;
+        return INVALID_TRAP;
     }
 
     memcpy( buf.apData, spVerts, sSize );
 
-    handle_t h = resource_add( gpResources, &buf, sizeof( vbuffer_t ) );
+    trap_t h = resource_add( gpResources, &buf, sizeof( vbuffer_t ) );
 
-    if ( h == INVALID_HANDLE ) {
+    if ( BAD_TRAP( h ) ) {
         log_error( "Could not add vertex buffer to resource list." );
-        return INVALID_HANDLE;
+        return INVALID_TRAP;
     }
     
     return h;
@@ -78,9 +78,9 @@ handle_t vbuffer_create( void *spVerts, u32 sSize, u32 sVStride, v_layout_t sLay
 /*
  *    Frees a vertex buffer.
  *
- *    @param handle_t    The vertex buffer to free.
+ *    @param trap_t    The vertex buffer to free.
  */
-void vbuffer_free( handle_t sVBuffer ) {
+void vbuffer_free( trap_t sVBuffer ) {
     if ( gpResources == nullptr ) {
         log_error( "Resources not initialized." );
         return;
@@ -89,7 +89,7 @@ void vbuffer_free( handle_t sVBuffer ) {
         log_error( "Memory pool not initialized." );
         return;
     }
-    if ( sVBuffer == INVALID_HANDLE ) {
+    if ( BAD_TRAP( sVBuffer ) ) {
         log_error( "Vertex buffer is null." );
         return;
     }
@@ -109,20 +109,20 @@ void vbuffer_free( handle_t sVBuffer ) {
  *    @param s8 *          The path to the texture file.
  *    @param u32           The format of the texture.
  * 
- *    @return handle_t     The texture.
+ *    @return trap_t     The texture.
  */
-handle_t texture_create_from_file( s8 *spPath, u32 sFormat ) {
+trap_t texture_create_from_file( s8 *spPath, u32 sFormat ) {
     if ( gpResources == nullptr ) {
         log_error( "Resources not initialized." );
-        return INVALID_HANDLE;
+        return INVALID_TRAP;
     }
     if ( gpMempool == nullptr ) {
         log_error( "Memory pool not initialized." );
-        return INVALID_HANDLE;
+        return INVALID_TRAP;
     }
     if ( spPath == nullptr ) {
         log_error( "Texture path is null." );
-        return INVALID_HANDLE;
+        return INVALID_TRAP;
     }
 
     texture_t tex = {};
@@ -130,14 +130,14 @@ handle_t texture_create_from_file( s8 *spPath, u32 sFormat ) {
 
     if ( tex.apImage == nullptr ) {
         log_error( "Could not create texture from file." );
-        return INVALID_HANDLE;
+        return INVALID_TRAP;
     }
 
-    handle_t h = resource_add( gpResources, &tex, sizeof( texture_t ) );
+    trap_t h = resource_add( gpResources, &tex, sizeof( texture_t ) );
 
-    if ( h == INVALID_HANDLE ) {
+    if ( BAD_TRAP( h ) ) {
         log_error( "Could not add texture to resource list." );
-        return INVALID_HANDLE;
+        return INVALID_TRAP;
     }
 
     return h;
@@ -146,9 +146,9 @@ handle_t texture_create_from_file( s8 *spPath, u32 sFormat ) {
 /*
  *    Frees a texture.
  *
- *    @param handle_t    The texture to free.
+ *    @param trap_t    The texture to free.
  */
-void texture_free( handle_t sTex ) {
+void texture_free( trap_t sTex ) {
     if ( gpResources == nullptr ) {
         log_error( "Resources not initialized." );
         return;
@@ -157,7 +157,7 @@ void texture_free( handle_t sTex ) {
         log_error( "Memory pool not initialized." );
         return;
     }
-    if ( sTex == INVALID_HANDLE ) {
+    if ( BAD_TRAP( sTex ) ) {
         log_error( "Texture is null." );
         return;
     }
@@ -175,22 +175,22 @@ void texture_free( handle_t sTex ) {
 /*
  *    Creates a mesh.
  *
- *    @param handle_t    The vertex buffer.
- *    @param handle_t    The texture.
+ *    @param trap_t    The vertex buffer.
+ *    @param trap_t    The texture.
  *
- *    @return handle_t      The mesh.
+ *    @return trap_t      The mesh.
  */
-handle_t mesh_create( handle_t sVBuffer, handle_t sTex ) {
+trap_t mesh_create( trap_t sVBuffer, trap_t sTex ) {
     mesh_t mesh = {};
     mesh.aFlags   = MESHFLAGS_NONE;
     mesh.aVBuf    = sVBuffer;
     mesh.aTex     = sTex;
 
-    handle_t h = resource_add( gpResources, &mesh, sizeof( mesh_t ) );
+    trap_t h = resource_add( gpResources, &mesh, sizeof( mesh_t ) );
 
-    if ( h == INVALID_HANDLE ) {
-        log_error( "void mesh_create( handle_t, handle_t ): Could not add mesh to resource list.\n" );
-        return INVALID_HANDLE;
+    if ( BAD_TRAP( h ) ) {
+        log_error( "void mesh_create( trap_t, trap_t ): Could not add mesh to resource list.\n" );
+        return INVALID_TRAP;
     }
 
     return h;
@@ -199,25 +199,25 @@ handle_t mesh_create( handle_t sVBuffer, handle_t sTex ) {
 /*
  *    Sets a mesh to not use the projection matrix.
  *
- *    @param handle_t    The mesh.
+ *    @param trap_t    The mesh.
  */
-void mesh_set_skip_projection( handle_t sMesh ) {
+void mesh_set_skip_projection( trap_t sMesh ) {
     if ( gpResources == nullptr ) {
-        log_error( "void mesh_set_skip_projection( handle_t ): Resources not initialized.\n" );
+        log_error( "void mesh_set_skip_projection( trap_t ): Resources not initialized.\n" );
         return;
     }
     if ( gpMempool == nullptr ) {
-        log_error( "void mesh_set_skip_projection( handle_t ): Memory pool not initialized.\n" );
+        log_error( "void mesh_set_skip_projection( trap_t ): Memory pool not initialized.\n" );
         return;
     }
-    if ( sMesh == INVALID_HANDLE ) {
-        log_error( "void mesh_set_skip_projection( handle_t ): Mesh is null.\n" );
+    if ( BAD_TRAP( sMesh ) ) {
+        log_error( "void mesh_set_skip_projection( trap_t ): Mesh is null.\n" );
         return;
     }
 
     mesh_t *pMesh = resource_get( gpResources, sMesh );
     if ( pMesh == nullptr ) {
-        log_error( "void mesh_set_skip_projection( handle_t ): Mesh is null.\n" );
+        log_error( "void mesh_set_skip_projection( trap_t ): Mesh is null.\n" );
         return;
     }
     pMesh->aFlags |= MESHFLAGS_SKIP_PROJECTION;
@@ -226,25 +226,25 @@ void mesh_set_skip_projection( handle_t sMesh ) {
 /*
  *    Sets a mesh to not be clipped.
  *
- *    @param handle_t    The mesh.
+ *    @param trap_t    The mesh.
  */
-void mesh_set_skip_clipping( handle_t sMesh ) {
+void mesh_set_skip_clipping( trap_t sMesh ) {
     if ( gpResources == nullptr ) {
-        log_error( "void mesh_set_skip_clipping( handle_t ): Resources not initialized.\n" );
+        log_error( "void mesh_set_skip_clipping( trap_t ): Resources not initialized.\n" );
         return;
     }
     if ( gpMempool == nullptr ) {
-        log_error( "void mesh_set_skip_clipping( handle_t ): Memory pool not initialized.\n" );
+        log_error( "void mesh_set_skip_clipping( trap_t ): Memory pool not initialized.\n" );
         return;
     }
-    if ( sMesh == INVALID_HANDLE ) {
-        log_error( "void mesh_set_skip_clipping( handle_t ): Mesh is null.\n" );
+    if ( BAD_TRAP( sMesh ) ) {
+        log_error( "void mesh_set_skip_clipping( trap_t ): Mesh is null.\n" );
         return;
     }
 
     mesh_t *pMesh = resource_get( gpResources, sMesh );
     if ( pMesh == nullptr ) {
-        log_error( "void mesh_set_skip_clipping( handle_t ): Mesh is null.\n" );
+        log_error( "void mesh_set_skip_clipping( trap_t ): Mesh is null.\n" );
         return;
     }
     pMesh->aFlags |= MESHFLAGS_SKIP_CLIPPING;
@@ -253,35 +253,35 @@ void mesh_set_skip_clipping( handle_t sMesh ) {
 /*
  *    Sets the vertex buffer of a mesh.
  *
- *    @param handle_t    The mesh.
- *    @param handle_t    The vertex buffer.
+ *    @param trap_t    The mesh.
+ *    @param trap_t    The vertex buffer.
  */
-void mesh_set_vertex_buffer( handle_t sMesh, handle_t sVBuffer ) {
+void mesh_set_vertex_buffer( trap_t sMesh, trap_t sVBuffer ) {
     if ( gpResources == nullptr ) {
-        log_error( "void mesh_set_vertex_buffer( handle_t, handle_t ): Resources not initialized.\n" );
+        log_error( "void mesh_set_vertex_buffer( trap_t, trap_t ): Resources not initialized.\n" );
         return;
     }
     if ( gpMempool == nullptr ) {
-        log_error( "void mesh_set_vertex_buffer( handle_t, handle_t ): Memory pool not initialized.\n" );
+        log_error( "void mesh_set_vertex_buffer( trap_t, trap_t ): Memory pool not initialized.\n" );
         return;
     }
-    if ( sMesh == INVALID_HANDLE ) {
-        log_error( "void mesh_set_vertex_buffer( handle_t, handle_t ): Mesh is null.\n" );
+    if ( BAD_TRAP( sMesh ) ) {
+        log_error( "void mesh_set_vertex_buffer( trap_t, trap_t ): Mesh is null.\n" );
         return;
     }
-    if ( sVBuffer == INVALID_HANDLE ) {
-        log_error( "void mesh_set_vertex_buffer( handle_t, handle_t ): Vertex buffer is null.\n" );
+    if ( BAD_TRAP( sVBuffer ) ) {
+        log_error( "void mesh_set_vertex_buffer( trap_t, trap_t ): Vertex buffer is null.\n" );
         return;
     }
 
     mesh_t *pMesh = resource_get( gpResources, sMesh );
     if ( pMesh == nullptr ) {
-        log_error( "void mesh_set_vertex_buffer( handle_t, handle_t ): Mesh is null.\n" );
+        log_error( "void mesh_set_vertex_buffer( trap_t, trap_t ): Mesh is null.\n" );
         return;
     }
     vbuffer_t *pVBuffer = resource_get( gpResources, sVBuffer );
     if ( pVBuffer == nullptr ) {
-        log_error( "void mesh_set_vertex_buffer( handle_t, handle_t ): Vertex buffer is null.\n" );
+        log_error( "void mesh_set_vertex_buffer( trap_t, trap_t ): Vertex buffer is null.\n" );
         return;
     }
 
@@ -291,30 +291,30 @@ void mesh_set_vertex_buffer( handle_t sMesh, handle_t sVBuffer ) {
 /*
  *    Sets the texture of a mesh.
  *
- *    @param handle_t    The mesh.
- *    @param handle_t    The texture.
+ *    @param trap_t    The mesh.
+ *    @param trap_t    The texture.
  */
-void mesh_set_texture( handle_t sMesh, handle_t sTex ) {
+void mesh_set_texture( trap_t sMesh, trap_t sTex ) {
     if ( gpResources == nullptr ) {
-        log_error( "void mesh_set_texture( handle_t, handle_t ): Resources not initialized.\n" );
+        log_error( "void mesh_set_texture( trap_t, trap_t ): Resources not initialized.\n" );
         return;
     }
     if ( gpMempool == nullptr ) {
-        log_error( "void mesh_set_texture( handle_t, handle_t ): Memory pool not initialized.\n" );
+        log_error( "void mesh_set_texture( trap_t, trap_t ): Memory pool not initialized.\n" );
         return;
     }
-    if ( sMesh == INVALID_HANDLE ) {
-        log_error( "void mesh_set_texture( handle_t, handle_t ): Mesh is null.\n" );
+    if ( BAD_TRAP( sMesh ) ) {
+        log_error( "void mesh_set_texture( trap_t, trap_t ): Mesh is null.\n" );
         return;
     }
-    if ( sTex == INVALID_HANDLE ) {
-        log_error( "void mesh_set_texture( handle_t, handle_t ): Texture is null.\n" );
+    if ( BAD_TRAP( sTex ) ) {
+        log_error( "void mesh_set_texture( trap_t, trap_t ): Texture is null.\n" );
         return;
     }
 
     mesh_t *pMesh = resource_get( gpResources, sMesh );
     if ( pMesh == nullptr ) {
-        log_error( "void mesh_set_texture( handle_t, handle_t ): Mesh is null.\n" );
+        log_error( "void mesh_set_texture( trap_t, trap_t ): Mesh is null.\n" );
         return;
     }
 
@@ -355,18 +355,18 @@ void mesh_scale( vec3_t sScale ) {
 /*
  *    Draws a vertex buffer.
  *
- *    @param handle_t          The handle to the vertex buffer.
+ *    @param trap_t          The handle to the vertex buffer.
  *    @param meshflags_e       The flags to use for the mesh.
  */
-void vbuffer_draw( handle_t sBuffer, meshflags_e sFlags ) {
+void vbuffer_draw( trap_t sBuffer, meshflags_e sFlags ) {
     if ( gpCamera == nullptr ) {
-        log_error( "void vbuffer_draw( handle_t, meshflags_e ): No camera.\n" );
+        log_error( "void vbuffer_draw( trap_t, meshflags_e ): No camera.\n" );
         return;
     }
 
     vbuffer_t *pBuf = resource_get( gpResources, sBuffer );
     if ( pBuf == nullptr ) {
-        log_error( "void vbuffer_draw( handle_t, meshflags_e ): Failed to get vertex resource.\n" );
+        log_error( "void vbuffer_draw( trap_t, meshflags_e ): Failed to get vertex resource.\n" );
         return;
     }
 
@@ -496,37 +496,37 @@ void vbuffer_draw( handle_t sBuffer, meshflags_e sFlags ) {
 /*
  *    Draws a mesh.
  *
- *    @param handle_t    The mesh.
+ *    @param trap_t    The mesh.
  */
-void mesh_draw( handle_t sMesh ) {
+void mesh_draw( trap_t sMesh ) {
     if ( gpResources == nullptr ) {
-        log_error( "void mesh_draw( handle_t ): Resources not initialized.\n" );
+        log_error( "void mesh_draw( trap_t ): Resources not initialized.\n" );
         return;
     }
     if ( gpMempool == nullptr ) {
-        log_error( "void mesh_draw( handle_t ): Memory pool not initialized.\n" );
+        log_error( "void mesh_draw( trap_t ): Memory pool not initialized.\n" );
         return;
     }
-    if ( sMesh == INVALID_HANDLE ) {
-        log_error( "void mesh_draw( handle_t ): Mesh is null.\n" );
+    if ( BAD_TRAP( sMesh ) ) {
+        log_error( "void mesh_draw( trap_t ): Mesh is null.\n" );
         return;
     }
 
     mesh_t *pMesh = resource_get( gpResources, sMesh );
     if ( pMesh == nullptr ) {
-        log_error( "void mesh_draw( handle_t ): Mesh is null.\n" );
+        log_error( "void mesh_draw( trap_t ): Mesh is null.\n" );
         return;
     }
 
     texture_t *pTex = resource_get( gpResources, pMesh->aTex );
     if ( pTex == nullptr ) {
-        log_error( "void mesh_draw( handle_t ): Texture is null.\n" );
+        log_error( "void mesh_draw( trap_t ): Texture is null.\n" );
         return;
     }
 
     image_t *pImage = pTex->apImage;
     if ( pImage == nullptr ) {
-        log_error( "void mesh_draw( handle_t ): Image is null.\n" );
+        log_error( "void mesh_draw( trap_t ): Image is null.\n" );
         return;
     }
 
@@ -537,9 +537,9 @@ void mesh_draw( handle_t sMesh ) {
 /*
  *    Frees a mesh.
  *
- *    @param handle_t      The mesh to free.
+ *    @param trap_t      The mesh to free.
  */
-void mesh_free( handle_t sMesh ) {
+void mesh_free( trap_t sMesh ) {
     if ( gpResources == nullptr ) {
         log_error( "Resources not initialized." );
         return;
@@ -548,7 +548,7 @@ void mesh_free( handle_t sMesh ) {
         log_error( "Memory pool not initialized." );
         return;
     }
-    if ( sMesh == INVALID_HANDLE ) {
+    if ( BAD_TRAP( sMesh ) ) {
         log_error( "Mesh is null." );
         return;
     }

@@ -127,20 +127,20 @@ u8 gFont[ 95 ][ 13 ] = {
  *
  *    @param  const s8 *    The text to render.
  *    
- *    @return handle_t      The handle of the text texture.
+ *    @return trap_t      The handle of the text texture.
  */
-handle_t text_create( const s8 *spText ) {
+trap_t text_create( const s8 *spText ) {
     if( spText == nullptr ) {
-        log_error( "handle_t text_create( const s8 * ): Invalid text.\n" );
-        return INVALID_HANDLE;
+        log_error( "trap_t text_create( const s8 * ): Invalid text.\n" );
+        return INVALID_TRAP;
     }
 
     u32 len = strlen( spText );
     
     image_t *pFont = image_create( 8 * len, 13, 69 );
     if( pFont == nullptr ) {
-        log_error( "handle_t text_create( const s8 * ): Failed to create font image.\n" );
-        return INVALID_HANDLE;
+        log_error( "trap_t text_create( const s8 * ): Failed to create font image.\n" );
+        return INVALID_TRAP;
     }
 
     u64 i;
@@ -168,15 +168,15 @@ handle_t text_create( const s8 *spText ) {
 
     texture_t *pTexture = mempool_alloc( gpMempool, sizeof( texture_t ) );
     if ( pTexture == nullptr ) {
-        log_error( "handle_t text_create( const s8 * ): Failed to allocate texture.\n" );
-        return INVALID_HANDLE;
+        log_error( "trap_t text_create( const s8 * ): Failed to allocate texture.\n" );
+        return INVALID_TRAP;
     }
     pTexture->apImage = pFont;
 
-    handle_t tex = resource_add( gpResources, pTexture, sizeof( texture_t ) );
-    if( tex == INVALID_HANDLE ) {
-        log_error( "handle_t text_create( const s8 * ): Could not create text texture.\n" );
-        return INVALID_HANDLE;
+    trap_t tex = resource_add( gpResources, pTexture, sizeof( texture_t ) );
+    if( BAD_TRAP( tex ) ) {
+        log_error( "trap_t text_create( const s8 * ): Could not create text texture.\n" );
+        return INVALID_TRAP;
     }
     
     return tex;

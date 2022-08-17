@@ -49,27 +49,27 @@ u8 *audio_read_wav( const s8 *spPath );
  *    @param const s8 *    The path to the audio file.
  *    @param u32           Whether the audio should loop.
  * 
- *    @return handle_t     The handle to the audio file.
+ *    @return trap_t     The handle to the audio file.
  */
-handle_t audio_create_from_file( const s8 *spPath, u32 sLoop );
+trap_t audio_create_from_file( const s8 *spPath, u32 sLoop );
 
 /*
  *    Plays an audio handle.
  *
- *    @param handle_t     The handle to the audio file.
+ *    @param trap_t     The handle to the audio file.
  *    
  *    @return u32         Whether the audio was successfully played.
  */
-u32 audio_play( handle_t sAudio );
+u32 audio_play( trap_t sAudio );
 
 /*
  *    Stops an audio handle.
  *
- *    @param handle_t     The handle to the audio file.
+ *    @param trap_t     The handle to the audio file.
  * 
  *    @return u32         Whether the audio was successfully stopped.
  */
-u32 audio_stop( handle_t sAudio );
+u32 audio_stop( trap_t sAudio );
 
 /*
  *    Sets the listener position for HRTF audio.

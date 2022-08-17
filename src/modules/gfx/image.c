@@ -26,7 +26,7 @@
  *                         The image should be freed with image_free().
  */
 image_t *image_create( u32 sWidth, u32 sHeight, u32 sFormat ) {
-    image_t *pImage = mempool_alloc( gpMempool, sizeof( image_t ) );
+    image_t *pImage = ( image_t * )mempool_alloc( gpMempool, sizeof( image_t ) );
     if( pImage == NULL ) {
         log_error( "Could not allocate memory for image." );
     }
@@ -38,7 +38,7 @@ image_t *image_create( u32 sWidth, u32 sHeight, u32 sFormat ) {
      *    In the future, image data may not be just width * height * format.
      *    For now, we just allocate the amount of memory we need.
      */
-    pImage->apData  = mempool_alloc( gpMempool, sWidth * sHeight * sizeof( u32 ) );
+    pImage->apData  = ( u32 * )mempool_alloc( gpMempool, sWidth * sHeight * sizeof( u32 ) );
     if( pImage->apData == NULL ) {
         log_error( "Could not allocate memory for image buffer." );
     }
@@ -66,7 +66,7 @@ file_type_e file_type( const s8 *spFile ) {
     } else if( strstr( spFile, ".jpg" ) != NULL ) {
         return FILE_TYPE_JPG;
     } else {
-        return FILE_TYPE_UNKNOWN;
+        return FILE_TYPE_UNSUPPORTED;
     }
 }
 
@@ -154,7 +154,7 @@ image_t *image_load_bmp( const s8 *spFile ) {
  */
 image_t *image_create_from_file( s8 *spPath, u32 sFormat ) {
     file_type_e type = file_type( spPath );
-    if( type == FILE_TYPE_UNKNOWN ) {
+    if( type == FILE_TYPE_UNSUPPORTED ) {
         log_error( "Could not determine file type of image file." );
         return NULL;
     }

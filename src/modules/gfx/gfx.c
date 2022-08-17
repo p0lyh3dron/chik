@@ -90,9 +90,9 @@ u32 graphics_exit( void ) {
 /*
  *    Creates a camera.
  *
- *    @return handle_t          The handle to the camera.
+ *    @return trap_t          The handle to the camera.
  */
-handle_t create_camera( void ) {
+trap_t create_camera( void ) {
     camera_t cam;
     cam.aPosition.x = 0.0f;
     cam.aPosition.y = 0.0f;
@@ -108,10 +108,10 @@ handle_t create_camera( void ) {
 
     cam.aAspect = ( float )gpBackBuffer->apTarget->aWidth / ( float )gpBackBuffer->apTarget->aHeight;
     
-    handle_t handle = resource_add( gpResources, &cam, sizeof( camera_t ) );
-    if ( handle == INVALID_HANDLE ) {
+    trap_t handle = resource_add( gpResources, &cam, sizeof( camera_t ) );
+    if ( BAD_TRAP( handle ) ) {
         log_error( "Failed to add camera resource.\n" );
-        return INVALID_HANDLE;
+        return INVALID_TRAP;
     }
     return handle;
 }
@@ -119,10 +119,10 @@ handle_t create_camera( void ) {
 /*
  *    Sets camera position.
  *
- *    @param handle_t           The handle to the camera.
+ *    @param trap_t           The handle to the camera.
  *    @param vec3_t             The position of the camera.
  */
-void set_camera_position( handle_t sCamera, vec3_t sPosition ) {
+void set_camera_position( trap_t sCamera, vec3_t sPosition ) {
     camera_t *pCamera = resource_get( gpResources, sCamera );
     if ( pCamera == NULL ) {
         log_error( "Failed to get camera resource.\n" );
@@ -134,10 +134,10 @@ void set_camera_position( handle_t sCamera, vec3_t sPosition ) {
 /*
  *    Sets camera direction.
  *
- *    @param handle_t           The handle to the camera.
+ *    @param trap_t           The handle to the camera.
  *    @param vec2_t             The direction of the camera.
  */
-void set_camera_direction( handle_t sCamera, vec2_t sDirection ) {
+void set_camera_direction( trap_t sCamera, vec2_t sDirection ) {
     camera_t *pCamera = resource_get( gpResources, sCamera );
     if ( pCamera == NULL ) {
         log_error( "Failed to get camera resource.\n" );
@@ -149,10 +149,10 @@ void set_camera_direction( handle_t sCamera, vec2_t sDirection ) {
 /*
  *    Sets camera FOV.
  *
- *    @param handle_t           The handle to the camera.
+ *    @param trap_t           The handle to the camera.
  *    @param float              The FOV of the camera.
  */
-void set_camera_fov( handle_t sCamera, float sFov ) {
+void set_camera_fov( trap_t sCamera, float sFov ) {
     camera_t *pCamera = resource_get( gpResources, sCamera );
     if ( pCamera == NULL ) {
         log_error( "Failed to get camera resource.\n" );
@@ -164,9 +164,9 @@ void set_camera_fov( handle_t sCamera, float sFov ) {
 /*
  *    Sets the global camera.
  *
- *    @param handle_t           The handle to the camera.
+ *    @param trap_t           The handle to the camera.
  */
-void set_camera( handle_t sCamera ) {
+void set_camera( trap_t sCamera ) {
     gpCamera = resource_get( gpResources, sCamera );
     if ( gpCamera == NULL ) {
         log_error( "Failed to get camera resource.\n" );
@@ -177,11 +177,11 @@ void set_camera( handle_t sCamera ) {
 /*
  *    Returns the camera's view matrix.
  *
- *    @param handle_t           The handle to the camera.
+ *    @param trap_t           The handle to the camera.
  * 
  *    @return mat4_t           The view matrix.
  */
-mat4_t get_camera_view( handle_t sCamera ) {
+mat4_t get_camera_view( trap_t sCamera ) {
     camera_t *pCamera = resource_get( gpResources, sCamera );
     if ( pCamera == NULL ) {
         log_error( "Failed to get camera resource.\n" );

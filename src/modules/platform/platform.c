@@ -134,6 +134,7 @@ u32 audio_init( void ) {
 
 	return 1;
 #endif /* USE_ALSA  */
+return 1;
 }
 
 /*

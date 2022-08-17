@@ -12,7 +12,7 @@
 #include "libchik.h"
 
 typedef enum {
-    FILE_TYPE_UNKNOWN = 0,
+    FILE_TYPE_UNSUPPORTED = 0,
     FILE_TYPE_BMP,
     FILE_TYPE_PNG,
     FILE_TYPE_JPG,
