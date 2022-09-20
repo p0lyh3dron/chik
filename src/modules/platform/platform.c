@@ -12,6 +12,10 @@
  */
 #include "platform.h"
 
+#if __unix__
+#include <fcntl.h>
+#endif /* __unix__  */
+
 #if USE_ALSA
 #include <alsa/asoundlib.h>
 #endif /* USE_ALSA  */
@@ -32,6 +36,8 @@
 
 #define MAX_INPUT_TYPES 256
 #define MAX_ALIAS_LENGTH 32
+
+#define MAX_STDIN_READ 256
 
 mempool_t *gpPlatformResources                                 = nullptr;
 u32        gKeys[ MAX_INPUT_TYPES ]                            = { 0 };
@@ -424,6 +430,22 @@ void platform_get_sound_info( u32 *spBitsPerSample, u32 *spSampleRate, u32 *spCh
 }
 
 /*
+ *    Reads from stdin.
+ *
+ *    @return s8 *    The string read from stdin.
+ */
+s8 *platform_read_stdin() {
+#if __unix__
+	static s8 buf[ MAX_STDIN_READ ] = { 0 };
+	if ( read( 0, &buf, 1 ) > 0 ) {
+		return buf;
+	}
+	return nullptr;
+#elif _WIN32
+#endif /* __unix__  */
+}
+
+/*
  *    Initializes the platform.
  *
  *    @return u32    1 if successful, 0 otherwise.
@@ -443,6 +465,10 @@ u32 platform_init( void ) {
 		return 0;
 	}
 	input_parse( "./aliases_sdl.txt" );
+
+#if __unix__
+	fcntl( 0, F_SETFL, O_NONBLOCK );
+#endif /* __unix__  */
     
     return 1;
 }

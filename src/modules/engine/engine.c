@@ -15,9 +15,42 @@
 
 #include "stat.h"
 
+#define CHIK_ENGINE_SHELL_MAX_COMMAND_LENGTH 256
+
 mempool_t *gpEnginePool                    = nullptr;
 
 module_t   gpModules[ ENGINE_MAX_MODULES ] = { 0 };
+
+s8     *( *plat_read_stdin )()         = nullptr;
+
+s8         gEngineShellCommand[ CHIK_ENGINE_SHELL_MAX_COMMAND_LENGTH ] = { 0 };
+s32        gShellCommandIndex = 0;
+
+/*
+ *    Loads a function from the engine for external use.
+ *
+ *    @param const s8 *    The name of the function to load.
+ * 
+ *    @return void *       Returns a pointer to the function.
+ */
+void *engine_load_function( const s8 *spName ) {
+    void *pFunc = nullptr;
+
+    for ( u64 i = 0; i < ENGINE_MAX_MODULES; i++ ) {
+        /*
+         *    If the module isn't null, we'll try to load the function.
+         */
+        if ( gpModules[ i ].apName && gpModules[ i ].aHandle ) {
+            pFunc = dl_sym( gpModules[ i ].aHandle, spName );
+
+            if ( pFunc ) {
+                break;
+            }
+        }
+    }
+
+    return pFunc;
+}
 
 /*
  *    Initializes the engine with the specified modules.
@@ -79,7 +112,36 @@ u32 engine_init( const s8 *modules, ... ) {
     }
     
     va_end( args );
+
+    *( void** )( &plat_read_stdin ) = engine_load_function( "platform_read_stdin" );
+
+    if ( !plat_read_stdin ) {
+        log_fatal( "u32 engine_init( const s8 *, ... ): Unable to load function platform_read_stdin\n" );
+        result = 0;
+    }
+    
     return result;
+}
+
+/*
+ *    Updates the shell.
+ *
+ *    @return u32           Returns 0 on failure, 1 on success.
+ */
+u32 engine_update_shell( void ) {
+    s8 *pBuf = plat_read_stdin();
+    
+    if ( pBuf != nullptr ) {
+        memcpy( gEngineShellCommand + gShellCommandIndex, pBuf, 1 );
+        ++gShellCommandIndex;
+    }
+
+    if ( gEngineShellCommand[ gShellCommandIndex - 1 ] == '\n' ) {
+        gEngineShellCommand[ gShellCommandIndex - 1 ] = '\0';
+        shell_execute( gEngineShellCommand );
+        gShellCommandIndex = 0;
+    }
+    return 1;
 }
 
 /*
@@ -89,6 +151,7 @@ u32 engine_init( const s8 *modules, ... ) {
  */
 u32 engine_update( void ) {
     stat_start_frame();
+    engine_update_shell();
     s64 timeDiff = stat_get_time_diff();
     f32 dt       = ( f32 )timeDiff / 1000000.0f;
 
@@ -99,32 +162,6 @@ u32 engine_update( void ) {
         }
     }
     return result;
-}
-
-/*
- *    Loads a function from the engine for external use.
- *
- *    @param const s8 *    The name of the function to load.
- * 
- *    @return void *       Returns a pointer to the function.
- */
-void *engine_load_function( const s8 *spName ) {
-    void *pFunc = nullptr;
-
-    for ( u64 i = 0; i < ENGINE_MAX_MODULES; i++ ) {
-        /*
-         *    If the module isn't null, we'll try to load the function.
-         */
-        if ( gpModules[ i ].apName && gpModules[ i ].aHandle ) {
-            pFunc = dl_sym( gpModules[ i ].aHandle, spName );
-
-            if ( pFunc ) {
-                break;
-            }
-        }
-    }
-
-    return pFunc;
 }
 
 /*

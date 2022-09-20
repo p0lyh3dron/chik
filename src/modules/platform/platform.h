@@ -69,4 +69,11 @@ u32 platform_write_sound( s8 *spData );
  */
 void platform_get_sound_info( u32 *spBitsPerSample, u32 *spSampleRate, u32 *spChannels, u32 *spBufferSize );
 
+/*
+ *    Reads from stdin.
+ *
+ *    @return s8 *    The string read from stdin.
+ */
+s8 *platform_read_stdin();
+
 #endif /* CHIK_PLATFORM_H  */
