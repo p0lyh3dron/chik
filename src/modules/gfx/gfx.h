@@ -2,9 +2,9 @@
  *    gfx.h    --    header for synchronizing graphics sources
  *
  *    Authored by Karl "p0lyh3dron" Kreuze on August 13, 2022
- * 
+ *
  *    This file is part of the Chik Engine.
- * 
+ *
  *    This file declares the memory pool and resource system
  *    for the graphics module.
  */
@@ -13,7 +13,6 @@
 
 #include "libchik.h"
 
-extern mempool_t  *gpMempool;
-extern resource_t *gpResources;
+extern resource_t *_handles;
 
 #endif /* CHIK_GFX_H  */

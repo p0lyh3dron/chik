@@ -2,124 +2,134 @@
  *    engine.c    --    source for engine module
  *
  *    Authored by Karl "p0lyh3dron" Kreuze on April 16, 2022.
- * 
+ *
  *    This file is part of the Chik engine.
- * 
+ *
  *    The brain of Chik Engine resides in this module. This
  *    file will define how the engine will do module handling.
  */
 #include "engine.h"
 
-#include <time.h>
 #include <stdarg.h>
+#include <time.h>
+#include <memory.h>
 
 #include "stat.h"
 
 #define CHIK_ENGINE_SHELL_MAX_COMMAND_LENGTH 256
 
-mempool_t *gpEnginePool                    = nullptr;
+module_t _modules[ENGINE_MAX_MODULES] = {0};
 
-module_t   gpModules[ ENGINE_MAX_MODULES ] = { 0 };
+s8 *(*plat_read_stdin)() = nullptr;
 
-s8     *( *plat_read_stdin )()         = nullptr;
-
-s8         gEngineShellCommand[ CHIK_ENGINE_SHELL_MAX_COMMAND_LENGTH ] = { 0 };
-s32        gShellCommandIndex = 0;
+s8 _shl_cmds[CHIK_ENGINE_SHELL_MAX_COMMAND_LENGTH] = {0};
+s32 _shl_cmd_indx = 0;
 
 /*
  *    Loads a function from the engine for external use.
  *
- *    @param const s8 *    The name of the function to load.
- * 
+ *    @param const s8 *name    The name of the function to load.
+ *
  *    @return void *       Returns a pointer to the function.
  */
-void *engine_load_function( const s8 *spName ) {
-    void *pFunc = nullptr;
+void *engine_load_function(const s8 *name) {
+    unsigned long i;
+    void *fun;
 
-    for ( u64 i = 0; i < ENGINE_MAX_MODULES; i++ ) {
+    for (i = 0; i < ENGINE_MAX_MODULES; i++) {
         /*
          *    If the module isn't null, we'll try to load the function.
          */
-        if ( gpModules[ i ].apName && gpModules[ i ].aHandle ) {
-            pFunc = dl_sym( gpModules[ i ].aHandle, spName );
+        if (_modules[i].name && _modules[i].handle) {
+            fun = dl_sym(_modules[i].handle, name);
 
-            if ( pFunc ) {
-                break;
-            }
+            if (fun) break;
         }
     }
 
-    return pFunc;
+    return fun;
 }
 
 /*
  *    Initializes the engine with the specified modules.
  *
- *    @param const s8 *    The name of the modules to initialize.
- *    @param ...           The other modules to initialize.
+ *    @param const s8 *modules    The name of the modules to initialize.
+ *    @param ...                  The other modules to initialize.
  *
  *    @return u32          Returns 0 on failure, 1 on success.
  */
-u32 engine_init( const s8 *modules, ... ) {
+u32 engine_init(const s8 *modules, ...) {
+    va_list args;
+    dl_handle_t h;
+    u32 result = 1;
+    u32 module_indx = 0;
+    stat_t *stat = stat_get();
+    u32 (*entry)(void *);
+    u32 (*update)(f32);
+    u32 (*exit)(void);
+
     /*
      *    Set the start time.
      */
-    stat_t *pStat     = stat_get();
-    pStat->aStartTime = time( nullptr );
+    stat->start_time = time(nullptr);
 
     /*
      *    Initialize the engine modules.
      */
-    va_list args;
-    u32     result      = 1;
-    u32     moduleIndex = 0;
+    va_start(args, modules);
 
-    va_start( args, modules );
+    while (modules) {
+        h = dl_open(modules);
 
-    while ( modules ) {
-        dl_handle_t h = dl_open( modules );
-
-        if ( h == nullptr ) {
-            log_fatal( "u32 engine_init( const s8 *, ... ): Unable to open module: %s\n", modules );
+        if (h == nullptr) {
+            VLOGF_FAT("Unable to open "
+                      "module: %s\n",
+                      modules);
             result = 0;
             break;
         }
 
-        u32 ( *entry )( void * ) = dl_sym( h, "chik_module_entry" );
-        u32 ( *update )( f32 )   = dl_sym( h, "chik_module_update" );
-        u32 ( *exit )( void )    = dl_sym( h, "chik_module_exit" );
-        if ( entry != nullptr ) {
-            if ( !entry( &engine_load_function ) ) {
-                log_fatal( "u32 engine_init( const s8 *, ... ): Unable to initialize module: %s\n", modules );
+        entry = dl_sym(h, "chik_module_entry");
+        update = dl_sym(h, "chik_module_update");
+        exit = dl_sym(h, "chik_module_exit");
+
+        if (entry != nullptr) {
+            if (!entry(&engine_load_function)) {
+                VLOGF_FAT("Unable to "
+                          "initialize module: %s\n",
+                          modules);
                 result = 0;
                 break;
             }
-        }
-        else {
-            log_warn( "u32 engine_init( const s8 *, ... ): Unable to load module entry: %s\n", modules );
-        }
-        if ( update == nullptr ) {
-            log_warn( "u32 engine_init( const s8 *, ... ): Unable to load module update: %s\n", modules );
-        }
-        if ( exit == nullptr ) {
-            log_warn( "u32 engine_init( const s8 *, ... ): Unable to load module exit: %s\n", modules );
+        } else {
+            VLOGF_WARN("Unable to load "
+                     "module entry: %s\n",
+                     modules);
         }
 
-        log_note( "u32 engine_init( const s8 *, ... ): Module loaded: %s\n", modules );
+        if (update == nullptr)
+            VLOGF_WARN("Unable to load " "module update: %s\n", modules);
 
-        gpModules[ moduleIndex++ ] = ( module_t ){ h, modules, update, exit };
-        modules = va_arg( args, const s8 * );
+        if (exit == nullptr)
+            VLOGF_WARN("Unable to load " "module exit: %s\n", modules);
+
+        VLOGF_NOTE("Module loaded: %s\n", modules);
+
+        _modules[module_indx++] = (module_t){h, modules, update, exit};
+
+        modules = va_arg(args, const s8 *);
     }
-    
-    va_end( args );
 
-    *( void** )( &plat_read_stdin ) = engine_load_function( "platform_read_stdin" );
+    va_end(args);
 
-    if ( !plat_read_stdin ) {
-        log_fatal( "u32 engine_init( const s8 *, ... ): Unable to load function platform_read_stdin\n" );
+    *(void **)(&plat_read_stdin) = engine_load_function("platform_read_stdin");
+
+    if (!plat_read_stdin) {
+        LOGF_FAT("Unable to load function "
+                  "platform_read_stdin\n");
         result = 0;
     }
-    
+
     return result;
 }
 
@@ -128,19 +138,17 @@ u32 engine_init( const s8 *modules, ... ) {
  *
  *    @return u32           Returns 0 on failure, 1 on success.
  */
-u32 engine_update_shell( void ) {
+u32 engine_update_shell(void) {
     s8 *pBuf = plat_read_stdin();
-    
-    if ( pBuf != nullptr ) {
-        memcpy( gEngineShellCommand + gShellCommandIndex, pBuf, 1 );
-        ++gShellCommandIndex;
+
+    if (pBuf != nullptr) memcpy(_shl_cmds + _shl_cmd_indx++, pBuf, 1);
+
+    if (_shl_cmds[_shl_cmd_indx - 1] == '\n') {
+        _shl_cmds[_shl_cmd_indx - 1] = '\0';
+        shell_execute(_shl_cmds);
+        _shl_cmd_indx = 0;
     }
 
-    if ( gEngineShellCommand[ gShellCommandIndex - 1 ] == '\n' ) {
-        gEngineShellCommand[ gShellCommandIndex - 1 ] = '\0';
-        shell_execute( gEngineShellCommand );
-        gShellCommandIndex = 0;
-    }
     return 1;
 }
 
@@ -149,18 +157,18 @@ u32 engine_update_shell( void ) {
  *
  *    @return u32           Returns 0 on failure, 1 on success.
  */
-u32 engine_update( void ) {
+u32 engine_update(void) {
+    u32 i;
+    u32 result = 1;
+    f32 dt = (f32)stat_get_time_diff() / 1000000.0f;
+
     stat_start_frame();
     engine_update_shell();
-    s64 timeDiff = stat_get_time_diff();
-    f32 dt       = ( f32 )timeDiff / 1000000.0f;
 
-    u32 result = 1;
-    for ( u32 i = 0; i < ENGINE_MAX_MODULES; i++ ) {
-        if ( gpModules[ i ].apUpdate != nullptr ) {
-            result &= gpModules[ i ].apUpdate( dt );
-        }
-    }
+    for (i = 0; i < ENGINE_MAX_MODULES; i++)
+        if (_modules[i].update != nullptr)
+            result &= _modules[i].update(dt);
+
     return result;
 }
 
@@ -168,20 +176,23 @@ u32 engine_update( void ) {
  *    Frees the engine.
  */
 void engine_free() {
-    for ( u64 i = 0; i < ENGINE_MAX_MODULES; ++i ) {
-        if ( gpModules[ i ].aHandle ) {
-            if ( gpModules[ i ].apExit != nullptr ) {
-                if ( gpModules[ i ].apExit() ) { 
-                    log_note( "u32 engine_free(): Module exited: %s\n", gpModules[ i ].apName );
-                }
-                else {
-                    log_fatal( "u32 engine_free(): Module failed to exit: %s\n", gpModules[ i ].apName );
+    unsigned long i;
+
+    for (i = 0; i < ENGINE_MAX_MODULES; ++i) {
+        if (_modules[i].handle) {
+            if (_modules[i].exit != nullptr) {
+                if (_modules[i].exit()) {
+                    VLOGF_NOTE("Module exited: %s\n",
+                             _modules[i].name);
+                } else {
+                    VLOGF_FATAL("Module failed to exit: %s\n",
+                              _modules[i].name);
                 }
             }
-            dl_close( gpModules[ i ].aHandle );
+            dl_close(_modules[i].handle);
         }
     }
-    if ( !stat_dump( "stats.txt" ) ) {
-        log_error( "u32 engine_free(): Unable to dump stats\n" );
-    }
+
+    if (!stat_dump("stats.txt"))
+        LOGF_ERR("u32 engine_free(): Unable to dump stats\n");
 }

@@ -2,9 +2,9 @@
  *    vertexasm.h    --    header for the vertex assembler
  *
  *    Authored by Karl "p0lyh3dron" Kreuze on June 12, 2022.
- * 
+ *
  *    This file is part of the Chik engine.
- * 
+ *
  *    The declarations in this file are for the vertex assembler.
  *    The vertex assembler is used to manage raw vertex data, such as
  *    position for rasterization. It will also create new vertex data for
@@ -15,67 +15,66 @@
 
 #include "libchik.h"
 
-#define VERTEX_ASM_MAX_VERTEX_SIZE    ( 1024 )
+#define VERTEX_ASM_MAX_VERTEX_SIZE (1024)
 
 /*
  *    Sets the vertex assembler's vertex layout.
  *
- *    @param v_layout_t    The layout of the vertex data.
+ *    @param v_layout_t layout   The layout of the vertex data.
  */
-void vertexasm_set_layout( v_layout_t sLayout );
+void vertexasm_set_layout(v_layout_t layout);
 
 /*
  *    Extracts the position from a vertex.
  *
- *    @param void *        The raw vertex data.
- * 
+ *    @param void *v        The raw vertex data.
+ *
  *    @return vec4_t       The position of the vertex.
  */
-vec4_t vertex_get_position( void *spV );
+vec4_t vertex_get_position(void *v);
 
 /*
  *    Sets the position of a vertex.
  *
- *    @param void *        The raw vertex data.
- *    @param vec4_t       The position of the vertex.
+ *    @param void *v          The raw vertex data.
+ *    @param vec4_t pos       The position of the vertex.
  */
-void vertex_set_position( void *spV, vec4_t sPosition );
-
+void vertex_set_position(void *v, vec4_t pos);
 /*
  *    Builds a new vertex given two vertices and a normalized difference.
  *
- *    @param void *        The raw vertex data of the first vertex.
- *    @param void *        The raw vertex data of the second vertex.
- *    @param f32           The normalized difference between the two vertices.
- * 
+ *    @param void *v0          The raw vertex data of the first vertex.
+ *    @param void *v1          The raw vertex data of the second vertex.
+ *    @param f32   diff        The normalized difference between the two vertices.
+ *
  *    @return void *       The raw vertex data of the new vertex.
  */
-void *vertex_build_interpolated( void *spV1, void *spV2, f32 sDiff );
+void *vertex_build_interpolated(void *v0, void *v1, f32 diff);
 
 /*
  *    Scales a vertex by a scalar.
  *
- *    @param void *        The raw vertex data.
- *    @param f32           The scalar to scale the vertex by.
- *    @param u32           A usage flag that determines how to scale the vertex.
- * 
+ *    @param void *v            The raw vertex data.
+ *    @param f32   scale        The scalar to scale the vertex by.
+ *    @param u32   flags        A usage flag that determines how to scale the vertex.
+ *
  *    @return void *       The raw vertex data of the scaled vertex.
  */
-void *vertex_scale( void *spV, f32 sScale, u32 sFlags );
+void *vertex_scale(void *v, f32 scale, u32 flags);
 
 /*
  *    Binds the fragment shader's uniform data to the vertex assembler.
  *
- *    @param void *        The raw uniform data.
+ *    @param void *uniform        The raw uniform data.
  */
-void vertexasm_bind_uniform( void *spUniform );
+void vertexasm_bind_uniform(void *uniform);
 
 /*
  *    Applies the fragments of a fragment shader to a pixel.
  *
- *    @param void *          The raw fragment data.
- *    @param fragment_t *    The pixel to apply the fragment to.
+ *    @param void *f          The raw fragment data.
+ *    @param fragment_t *p    The pixel to apply the fragment to.
  */
-void fragment_apply( void *spF, fragment_t *spP );
+void fragment_apply(void *f, fragment_t *p);
 
 #endif /* CHIK_GFX_VERTEXASM_H  */

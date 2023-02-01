@@ -2,9 +2,9 @@
  *    stat.h    --    header file for engine statistics
  *
  *    Authored by Karl "p0lyh3dron" Kreuze on April 16, 2022.
- * 
+ *
  *    This file is part of the Chik engine.
- * 
+ *
  *    The following declares the types and functions used
  *    for taking engine statistics, such as the number of
  *    frames rendered, the start time, etc.
@@ -16,14 +16,14 @@
 #include "libchik.h"
 
 typedef struct {
-    s64 aFrames;
-    s64 aFrameTimes[ FRAMES_AVG_COUNT ];
-    f32 aFrameRate;
-    f32 aAvgFrameRate;
-    f32 aMaxFrameRate;
-    s64 aStartTime;
-    s64 aPrevTime;
-    s64 aTimeDiff;
+    s64 frames;
+    s64 frame_times[FRAMES_AVG_COUNT];
+    f32 frame_rate;
+    f32 frame_rate_avg;
+    f32 frame_rate_max;
+    s64 start_time;
+    s64 prev_time;
+    s64 time_diff;
 } stat_t;
 
 /*
@@ -41,7 +41,7 @@ stat_t *stat_get();
 /*
  *    Returns the difference between the current time and the
  *    previous time.
- * 
+ *
  *    @return s64    The difference between the current time and the
  *                   previous time in microseconds.
  */
@@ -71,8 +71,8 @@ s64 stat_get_start_time();
 /*
  *    Dumps the engine statistics to a file.
  *
- *    @param const s8 *    The file name.
- * 
+ *    @param const s8 *file    The file name.
+ *
  *    @return u32          Returns 0 on failure, 1 on success.
  */
-u32 stat_dump( const s8 *spFile );
+u32 stat_dump(const s8 *file);
