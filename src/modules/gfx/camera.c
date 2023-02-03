@@ -24,10 +24,8 @@ mat4_t camera_view(camera_t *camera) {
     mat4_t view = m4_identity();
 
     view = m4_mul_m4(view, camera_projection(camera));
-    view =
-        m4_mul_m4(view, m4_rotate(camera->ang.x, (vec3_t){1, 0, 0}));
-    view =
-        m4_mul_m4(view, m4_rotate(camera->ang.y, (vec3_t){0, 1, 0}));
+    view = m4_mul_m4(view, m4_rotate(camera->ang.x, (vec3_t){1, 0, 0}));
+    view = m4_mul_m4(view, m4_rotate(camera->ang.y, (vec3_t){0, 1, 0}));
     view = m4_mul_m4(view, m4_translate(camera->pos));
 
     return view;

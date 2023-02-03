@@ -47,8 +47,7 @@ u32 cull_clip_vertex(plane_t *plane, void *v0, void *v1, void *ret, u32 first);
  *    @param u32             count    The number of vertices in the list.
  *    @param u32             len      The list size.
  */
-void cull_insert_vertex(void *v, void **list, u32 idx, u32 count,
-                        u32 len);
+void cull_insert_vertex(void *v, void **list, u32 idx, u32 count, u32 len);
 
 /*
  *    Removes a vertex from a clipped vertex list.

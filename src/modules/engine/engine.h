@@ -18,7 +18,7 @@
 
 typedef struct {
     dl_handle_t handle;
-    const s8 *name;
+    const s8   *name;
     u32 (*update)(f32 sDT);
     u32 (*exit)(void);
 } module_t;

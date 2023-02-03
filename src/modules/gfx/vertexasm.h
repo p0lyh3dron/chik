@@ -45,7 +45,8 @@ void vertex_set_position(void *v, vec4_t pos);
  *
  *    @param void *v0          The raw vertex data of the first vertex.
  *    @param void *v1          The raw vertex data of the second vertex.
- *    @param f32   diff        The normalized difference between the two vertices.
+ *    @param f32   diff        The normalized difference between the two
+ * vertices.
  *
  *    @return void *       The raw vertex data of the new vertex.
  */
@@ -56,7 +57,8 @@ void *vertex_build_interpolated(void *v0, void *v1, f32 diff);
  *
  *    @param void *v            The raw vertex data.
  *    @param f32   scale        The scalar to scale the vertex by.
- *    @param u32   flags        A usage flag that determines how to scale the vertex.
+ *    @param u32   flags        A usage flag that determines how to scale the
+ * vertex.
  *
  *    @return void *       The raw vertex data of the scaled vertex.
  */

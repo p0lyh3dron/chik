@@ -77,7 +77,6 @@ u32 audio_stop(trap_t audio);
  *
  *    @return u32         Whether the listener position was successfully set.
  */
-u32 audio_set_listener_position(vec3_t listen_pos,
-                                vec3_t source_pos);
+u32 audio_set_listener_position(vec3_t listen_pos, vec3_t source_pos);
 
 #endif /* CHIK_AUDIO_H  */

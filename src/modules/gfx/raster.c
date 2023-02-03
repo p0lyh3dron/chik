@@ -23,10 +23,10 @@ void raster_setup(void) {
     u32 height;
 
     if (args_has("-w") && args_has("-h")) {
-        width = args_get_int("-w");
+        width  = args_get_int("-w");
         height = args_get_int("-h");
     } else {
-        width = 1152;
+        width  = 1152;
         height = 764;
     }
 
@@ -41,7 +41,8 @@ void raster_setup(void) {
 /*
  *    Sets the rasterization stage's bitmap.
  *
- *    @param    rendertarget_t *target    The rendertarget to use for rasterization.
+ *    @param    rendertarget_t *target    The rendertarget to use for
+ * rasterization.
  */
 void raster_set_rendertarget(rendertarget_t *target) {
     _raster_target = target;
@@ -51,11 +52,10 @@ void raster_set_rendertarget(rendertarget_t *target) {
  *    Clears the depth buffer.
  */
 void raster_clear_depth(void) {
-    u64 i;
+    u64  i;
     f32 *pDepth = (f32 *)_z_buffer->target->buf;
 
-    for (i = 0; i < _z_buffer->target->width * _z_buffer->target->height;
-         i++) {
+    for (i = 0; i < _z_buffer->target->width * _z_buffer->target->height; i++) {
         pDepth[i] = 1000.f;
     }
 }
@@ -71,7 +71,7 @@ void raster_clear_depth(void) {
  */
 u32 raster_check_depth(u32 x, u32 y, f32 d) {
     f32 *pDepth = (f32 *)_z_buffer->target->buf;
-    u32 i = y * _z_buffer->target->width + x;
+    u32  i      = y * _z_buffer->target->width + x;
 
     if (d < pDepth[i]) {
         pDepth[i] = d;
@@ -84,46 +84,46 @@ u32 raster_check_depth(u32 x, u32 y, f32 d) {
 /*
  *    Draw a scanline.
  *
- *    @param s32 x1          The screen x coordinate of the start of the scanline.
+ *    @param s32 x1          The screen x coordinate of the start of the
+ * scanline.
  *    @param s32 x2          The screen x coordinate of the end of the scanline.
  *    @param s32 y           The screen y coordinate of the scanline.
  *    @param void *v1        The first vertex of the scanline.
  *    @param void *v2        The second vertex of the scanline.
  */
 void raster_draw_scanline(s32 x1, s32 x2, s32 y, void *v1, void *v2) {
-    s32 x;
-    s32 end_x;
-    s32 temp;
-    f32 z;
-    f32 iz1;
-    f32 iz2;
-    vec_t *tempv;
-    vec4_t p1;
-    vec4_t p2;
-    vec_t v[MAX_VECTOR_ATTRIBUTES];
-    vec_t *new_v;
+    s32        x;
+    s32        end_x;
+    s32        temp;
+    f32        z;
+    f32        iz1;
+    f32        iz2;
+    vec_t     *tempv;
+    vec4_t     p1;
+    vec4_t     p2;
+    vec_t      v[MAX_VECTOR_ATTRIBUTES];
+    vec_t     *new_v;
     fragment_t f;
 
     /*
      *    Early out if the scanline is outside the render target,
      *    or if the line is a degenerate.
      */
-    if (y < 0 || y >= _raster_target->target->height ||
-        (x1 < 0 && x2 < 0)) {
+    if (y < 0 || y >= _raster_target->target->height || (x1 < 0 && x2 < 0)) {
         return;
     }
 
     if (x1 > x2) {
         temp = x1;
-        x1 = x2;
-        x2 = temp;
+        x1   = x2;
+        x2   = temp;
 
         tempv = v1;
-        v1 = v2;
-        v2 = tempv;
+        v1    = v2;
+        v2    = tempv;
     }
 
-    x = MAX(x1, 0);
+    x     = MAX(x1, 0);
     end_x = x2;
 
     p1 = vertex_get_position(v1);
@@ -225,8 +225,8 @@ void raster_rasterize_triangle(void *r0, void *r1, void *r2) {
     f32 z3 = p3.z;
 
     vec2u_t temp;
-    f32 tempf;
-    void *pTemp;
+    f32     tempf;
+    void   *pTemp;
 
     /*
      *    Sort the vertices by y-coordinate.
@@ -235,42 +235,42 @@ void raster_rasterize_triangle(void *r0, void *r1, void *r2) {
      */
     if (v1.y < v2.y) {
         temp = v1;
-        v1 = v2;
-        v2 = temp;
+        v1   = v2;
+        v2   = temp;
 
         tempf = z1;
-        z1 = z2;
-        z2 = tempf;
+        z1    = z2;
+        z2    = tempf;
 
         pTemp = r0;
-        r0 = r1;
-        r1 = pTemp;
+        r0    = r1;
+        r1    = pTemp;
     }
     if (v2.y < v3.y) {
         temp = v2;
-        v2 = v3;
-        v3 = temp;
+        v2   = v3;
+        v3   = temp;
 
         tempf = z2;
-        z2 = z3;
-        z3 = tempf;
+        z2    = z3;
+        z3    = tempf;
 
         pTemp = r1;
-        r1 = r2;
-        r2 = pTemp;
+        r1    = r2;
+        r2    = pTemp;
     }
     if (v1.y < v2.y) {
         temp = v1;
-        v1 = v2;
-        v2 = temp;
+        v1   = v2;
+        v2   = temp;
 
         tempf = z1;
-        z1 = z2;
-        z2 = tempf;
+        z1    = z2;
+        z2    = tempf;
 
         pTemp = r0;
-        r0 = r1;
-        r1 = pTemp;
+        r0    = r1;
+        r1    = pTemp;
     }
 
     /*
@@ -284,7 +284,7 @@ void raster_rasterize_triangle(void *r0, void *r1, void *r2) {
      *    Rasterize the starting y position.
      */
     int y = MAX(v1.y, 0);
-    y = MIN(y, _raster_target->target->height);
+    y     = MIN(y, _raster_target->target->height);
 
     /*
      *    Calculate the slopes of the lines.
@@ -327,16 +327,16 @@ void raster_rasterize_triangle(void *r0, void *r1, void *r2) {
          */
         if (v1.x < v2.x) {
             temp = v1;
-            v1 = v2;
-            v2 = temp;
+            v1   = v2;
+            v2   = temp;
 
             tempf = z1;
-            z1 = z2;
-            z2 = tempf;
+            z1    = z2;
+            z2    = tempf;
 
             tempf = dy1;
-            dy1 = dy2;
-            dy2 = tempf;
+            dy1   = dy2;
+            dy2   = tempf;
 
             memcpy(swap, pIA, VERTEX_ASM_MAX_VERTEX_SIZE);
             memcpy(pIA, pIB, VERTEX_ASM_MAX_VERTEX_SIZE);
@@ -368,16 +368,16 @@ void raster_rasterize_triangle(void *r0, void *r1, void *r2) {
          */
         if (v2.x < v3.x) {
             temp = v2;
-            v2 = v3;
-            v3 = temp;
+            v2   = v3;
+            v3   = temp;
 
             tempf = z2;
-            z2 = z3;
-            z3 = tempf;
+            z2    = z3;
+            z3    = tempf;
 
             tempf = dy1;
-            dy1 = dy0;
-            dy0 = tempf;
+            dy1   = dy0;
+            dy0   = tempf;
 
             memcpy(swap, pIB, VERTEX_ASM_MAX_VERTEX_SIZE);
             memcpy(pIB, pIC, VERTEX_ASM_MAX_VERTEX_SIZE);

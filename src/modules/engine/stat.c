@@ -19,7 +19,7 @@ stat_t _stat = {0};
  *    Starts a new frame.
  */
 void stat_start_frame() {
-    unsigned long i;
+    unsigned long  i;
     struct timeval tv;
 
     gettimeofday(&tv, NULL);

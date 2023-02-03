@@ -15,10 +15,10 @@
 typedef struct {
     vec3_t pos;
     vec2_t ang;
-    float fov;
-    float near;
-    float far;
-    float aspect;
+    float  fov;
+    float  near;
+    float  far;
+    float  aspect;
 } camera_t;
 
 extern camera_t *_camera;

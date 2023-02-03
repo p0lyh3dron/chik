@@ -224,26 +224,25 @@ u8 _font[95][13] = {
  *    @return trap_t      The handle of the text texture.
  */
 trap_t text_create(const s8 *text) {
-    char c;
+    char          c;
     unsigned long i;
     unsigned long j;
     unsigned long k;
     unsigned long len;
-    image_t *font;
-    texture_t *texture;
-    trap_t trap;
+    image_t      *font;
+    texture_t    *texture;
+    trap_t        trap;
 
     if (text == nullptr) {
         LOGF_ERR("Invalid text.\n");
         return INVALID_TRAP;
     }
 
-    len = strlen(text);
+    len  = strlen(text);
     font = image_create(8 * len, 13, 69);
 
     if (font == nullptr) {
-        LOGF_ERR(
-            "Failed to create font image.\n");
+        LOGF_ERR("Failed to create font image.\n");
         return INVALID_TRAP;
     }
 
@@ -269,17 +268,16 @@ trap_t text_create(const s8 *text) {
     texture = malloc(sizeof(texture_t));
 
     if (texture == nullptr) {
-        LOGF_ERR(
-            "Failed to allocate texture.\n");
+        LOGF_ERR("Failed to allocate texture.\n");
         return INVALID_TRAP;
     }
 
     texture->image = font;
-    trap = resource_add(_handles, texture, sizeof(texture_t));
+    trap           = resource_add(_handles, texture, sizeof(texture_t));
 
     if (BAD_TRAP(trap)) {
-       LOGF_ERR("Could not create text "
-                  "texture.\n");
+        LOGF_ERR("Could not create text "
+                 "texture.\n");
         return INVALID_TRAP;
     }
 

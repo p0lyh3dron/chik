@@ -33,9 +33,9 @@ image_t *image_create(u32 width, u32 height, u32 format) {
         return 0;
     }
 
-    pImage->width = width;
+    pImage->width  = width;
     pImage->height = height;
-    pImage->fmt = format;
+    pImage->fmt    = format;
     /*
      *    In the future, image data may not be just width * height * format.
      *    For now, we just allocate the amount of memory we need.
@@ -84,12 +84,12 @@ file_type_e file_type(const s8 *file) {
  *                       The image should be freed with image_free().
  */
 image_t *image_load_bmp(const s8 *file) {
-    u32 len;
-    u32 padding = 0;
-    u64 i;
+    u32          len;
+    u32          padding = 0;
+    u64          i;
     bmp_header_t header;
-    image_t *pImage;
-    u8 *pData;
+    image_t     *pImage;
+    u8          *pData;
 
     u8 *pBuffer = file_read(file, &len);
 
@@ -97,13 +97,13 @@ image_t *image_load_bmp(const s8 *file) {
         VLOGF_ERR("Could not read file %s.\n", file);
         return nullptr;
     }
-    
+
     /*
      *    Read the header.
      */
     header = *(bmp_header_t *)pBuffer;
 
-    header.width = *(u32 *)(pBuffer + 0x12);
+    header.width  = *(u32 *)(pBuffer + 0x12);
     header.height = *(u32 *)(pBuffer + 0x16);
 
     header.offset = *(u32 *)(pBuffer + 0x0A);
@@ -138,8 +138,7 @@ image_t *image_load_bmp(const s8 *file) {
          *    Don't touch.
          */
         memcpy((u8 *)pImage->buf + (header.width * i) * 4,
-               pData + (header.width * i) * 4 + i * padding,
-               header.width * 4);
+               pData + (header.width * i) * 4 + i * padding, header.width * 4);
         /*
          *    Literal magic.
          */
@@ -214,8 +213,7 @@ u32 image_clear(image_t *image, u32 color) {
     /*
      *    Fastest way to clear is to memset the entire buffer.
      */
-    memset(image->buf, color,
-           image->width * image->height * sizeof(u32));
+    memset(image->buf, color, image->width * image->height * sizeof(u32));
 
     return 1;
 }

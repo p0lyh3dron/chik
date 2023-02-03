@@ -11,9 +11,9 @@
 #include "audio.h"
 
 u32 _sample_width = 0;
-u32 _sample_rate = 0;
+u32 _sample_rate  = 0;
 u32 _num_channels = 0;
-u32 _num_samples = 0;
+u32 _num_samples  = 0;
 
 resource_t *_audio_resources = nullptr;
 
@@ -29,33 +29,31 @@ u32 audio_shutdown(void);
 
 CHIK_MODULE(audio_init, audio_update, audio_shutdown)
 
-u32 (*platform_write_sound)(s8*) = 0;
-void (*platform_get_sound_info)(u32*, u32*,
-                                u32*, u32*) = 0;
+u32 (*platform_write_sound)(s8 *)                           = 0;
+void (*platform_get_sound_info)(u32 *, u32 *, u32 *, u32 *) = 0;
 
 u32 audio_init(void) {
     *(void **)(&platform_write_sound) =
         engine_load_function("platform_write_sound");
     *(void **)(&platform_get_sound_info) =
         engine_load_function("platform_get_sound_info");
-        
+
     if (platform_write_sound == nullptr) {
         LOGF_ERR("Failed to find platform function "
-                  "for writing audio samples!\n");
+                 "for writing audio samples!\n");
         return 0;
     }
 
     if (platform_get_sound_info == nullptr) {
         LOGF_ERR("Failed to find platform function "
-                  "for getting sound info!\n");
+                 "for getting sound info!\n");
         return 0;
     }
 
     _audio_resources =
         resource_new(CHIK_AUDIO_MAX_AUDIO_HANDLES * sizeof(trap_t));
     if (_audio_resources == nullptr) {
-        LOGF_ERR(
-            "Failed to create audio resources!\n");
+        LOGF_ERR("Failed to create audio resources!\n");
         return 0;
     }
 
@@ -71,7 +69,7 @@ u32 audio_init(void) {
 }
 
 u32 audio_update(f32 dt) {
-    u64 i;
+    u64      i;
     audio_t *audio;
 
     /*
@@ -101,17 +99,17 @@ u32 audio_shutdown(void) {
  *    @return audio_t *    The audio pointer.
  */
 audio_t *audio_ptr_init(void) {
-    u64 i;
+    u64      i;
     audio_t *pAudio = (audio_t *)malloc(sizeof(audio_t));
 
     if (pAudio == nullptr) {
         LOGF_ERR("Failed to allocate audio!\n");
         return nullptr;
     }
-    pAudio->flags = 0;
-    pAudio->data = nullptr;
+    pAudio->flags   = 0;
+    pAudio->data    = nullptr;
     pAudio->playing = 0;
-    pAudio->pos = 0;
+    pAudio->pos     = 0;
 
     for (i = 0; i < CHIK_AUDIO_MAX_AUDIO_HANDLES; i++) {
         if (_audio[i] == nullptr) {
@@ -132,7 +130,7 @@ audio_t *audio_ptr_init(void) {
  *    @return u8 *         The buffer.
  */
 u8 *audio_read_wav(const s8 *path) {
-    u32 len = 0;
+    u32 len  = 0;
     u8 *data = file_read(path, &len);
 
     if (data == nullptr) {
@@ -156,21 +154,21 @@ u8 *audio_read_wav(const s8 *path) {
  *    @return trap_t     The handle to the audio file.
  */
 trap_t audio_create_from_file(const s8 *path, u32 loop) {
-    trap_t h;
+    trap_t   h;
     audio_t *a = audio_ptr_init();
 
     if (a == nullptr) {
         LOGF_ERR("Failed to "
-                  "allocate audio!\n");
+                 "allocate audio!\n");
         return INVALID_TRAP;
     }
 
     a->flags = loop;
-    a->data = audio_read_wav(path);
+    a->data  = audio_read_wav(path);
 
     if (a->data == nullptr) {
         LOGF_ERR("Failed to read "
-                  "audio file!\n");
+                 "audio file!\n");
         return INVALID_TRAP;
     }
 
@@ -178,7 +176,7 @@ trap_t audio_create_from_file(const s8 *path, u32 loop) {
 
     if (BAD_TRAP(h)) {
         LOGF_ERR("Failed to add "
-                  "audio to resources!\n");
+                 "audio to resources!\n");
     }
 
     return h;
@@ -193,10 +191,9 @@ trap_t audio_create_from_file(const s8 *path, u32 loop) {
  */
 u32 audio_play(trap_t audio) {
     audio_t *a = resource_get(_audio_resources, audio);
-    
+
     if (a == nullptr) {
-        LOGF_ERR(
-            "Failed to get audio from resources!\n");
+        LOGF_ERR("Failed to get audio from resources!\n");
         return 0;
     }
 
@@ -215,8 +212,7 @@ u32 audio_stop(trap_t audio) {
     audio_t *a = resource_get(_audio_resources, audio);
 
     if (a == nullptr) {
-        LOGF_ERR(
-            "Failed to get audio from resources!\n");
+        LOGF_ERR("Failed to get audio from resources!\n");
         return 0;
     }
 
@@ -232,5 +228,4 @@ u32 audio_stop(trap_t audio) {
  *
  *    @return u32         Whether the listener position was successfully set.
  */
-u32 audio_set_listener_position(vec3_t listen_pos,
-                                vec3_t source_pos) {}
+u32 audio_set_listener_position(vec3_t listen_pos, vec3_t source_pos) {}

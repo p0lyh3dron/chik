@@ -13,8 +13,8 @@
 
 #include "cull.h"
 
-v_layout_t _layout = {.attributes = {0}, .count = 0};
-void *_uniform = nullptr;
+v_layout_t _layout  = {.attributes = {0}, .count = 0};
+void      *_uniform = nullptr;
 
 /*
  *    Sets the vertex assembler's vertex layout.
@@ -36,7 +36,7 @@ void vertexasm_set_layout(v_layout_t layout) {
  */
 vec4_t vertex_get_position(void *v) {
     unsigned long i;
-    
+
     for (i = 0; i < _layout.count; i++) {
         if (_layout.attributes[i].usage == V_POS)
             break;
@@ -64,7 +64,7 @@ void vertex_set_position(void *v, vec4_t pos) {
 
     if (i == _layout.count)
         return;
-    
+
     *(vec4_t *)((u8 *)v + _layout.attributes[i].offset) = pos;
 }
 
@@ -73,12 +73,13 @@ void vertex_set_position(void *v, vec4_t pos) {
  *
  *    @param void *v0          The raw vertex data of the first vertex.
  *    @param void *v1          The raw vertex data of the second vertex.
- *    @param f32   diff        The normalized difference between the two vertices.
+ *    @param f32   diff        The normalized difference between the two
+ * vertices.
  *
  *    @return void *       The raw vertex data of the new vertex.
  */
 void *vertex_build_interpolated(void *v0, void *v1, f32 diff) {
-    unsigned long i;
+    unsigned long      i;
     static __thread u8 buf[VERTEX_ASM_MAX_VERTEX_SIZE];
 
     for (i = 0; i < _layout.count; i++) {
@@ -96,12 +97,13 @@ void *vertex_build_interpolated(void *v0, void *v1, f32 diff) {
  *
  *    @param void *v            The raw vertex data.
  *    @param f32   scale        The scalar to scale the vertex by.
- *    @param u32   flags        A usage flag that determines how to scale the vertex.
+ *    @param u32   flags        A usage flag that determines how to scale the
+ * vertex.
  *
  *    @return void *       The raw vertex data of the scaled vertex.
  */
 void *vertex_scale(void *v, f32 scale, u32 flags) {
-    unsigned long i;
+    unsigned long      i;
     static __thread u8 buf[VERTEX_ASM_MAX_VERTEX_SIZE];
 
     for (i = 0; i < _layout.count; i++) {
@@ -132,6 +134,4 @@ void vertexasm_bind_uniform(void *uniform) { _uniform = uniform; }
  *    @param void *f          The raw fragment data.
  *    @param fragment_t *p    The pixel to apply the fragment to.
  */
-void fragment_apply(void *f, fragment_t *p) {
-    _layout.fun(p, f, _uniform);
-}
+void fragment_apply(void *f, fragment_t *p) { _layout.fun(p, f, _uniform); }

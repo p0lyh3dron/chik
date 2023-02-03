@@ -30,10 +30,9 @@
  *                          INVALID_TRAP if the vertex buffer could not be
  * created. The mesh should be freed with vbuffer_free().
  */
-trap_t vbuffer_create(void *v, u32 size, u32 stride,
-                      v_layout_t layout) {
-                        vbuffer_t buf;
-                        trap_t h;
+trap_t vbuffer_create(void *v, u32 size, u32 stride, v_layout_t layout) {
+    vbuffer_t buf;
+    trap_t    h;
     if (v == nullptr) {
         LOGF_ERR("Vertex data is null.");
         return INVALID_TRAP;
@@ -47,8 +46,8 @@ trap_t vbuffer_create(void *v, u32 size, u32 stride,
         return INVALID_TRAP;
     }
 
-    buf.buf = malloc(size);
-    buf.size = size;
+    buf.buf    = malloc(size);
+    buf.size   = size;
     buf.stride = stride;
     buf.layout = layout;
 
@@ -112,7 +111,7 @@ trap_t texture_create_from_file(s8 *spPath, u32 sFormat) {
     }
 
     texture_t tex = {};
-    tex.image = image_create_from_file(spPath, sFormat);
+    tex.image     = image_create_from_file(spPath, sFormat);
 
     if (tex.image == nullptr) {
         log_error("Could not create texture from file.");
@@ -151,7 +150,7 @@ trap_t texture_create_raw(void *spData, u32 sWidth, u32 sHeight) {
     }
 
     texture_t tex = {};
-    tex.image = malloc(sizeof(image_t));
+    tex.image     = malloc(sizeof(image_t));
 
     if (tex.image == nullptr) {
         log_error("trap_t texture_create_raw( void*, u32, u32 ): Could not "
@@ -216,8 +215,8 @@ void texture_free(trap_t sTex) {
 trap_t mesh_create(trap_t sVBuffer, trap_t sTex) {
     mesh_t mesh = {};
     mesh.aFlags = MESHFLAGS_NONE;
-    mesh.aVBuf = sVBuffer;
-    mesh.aTex = sTex;
+    mesh.aVBuf  = sVBuffer;
+    mesh.aTex   = sTex;
 
     trap_t h = resource_add(_handles, &mesh, sizeof(mesh_t));
 
@@ -349,8 +348,8 @@ void mesh_set_texture(trap_t sMesh, trap_t sTex) {
 }
 
 vec3_t gMeshTranslate = {0.f, 0.f, 0.f};
-vec3_t gMeshRotate = {0.f, 0.f, 0.f};
-vec3_t gMeshScale = {1.f, 1.f, 1.f};
+vec3_t gMeshRotate    = {0.f, 0.f, 0.f};
+vec3_t gMeshScale     = {1.f, 1.f, 1.f};
 
 /*
  *    Translates a mesh.
@@ -392,12 +391,12 @@ void vbuffer_draw(trap_t sBuffer, meshflags_e sFlags) {
         return;
     }
 
-    mat4_t view = camera_view(_camera);
-    u32 numVerts = pBuf->size / pBuf->stride;
+    mat4_t view     = camera_view(_camera);
+    u32    numVerts = pBuf->size / pBuf->stride;
 
     vertexasm_set_layout(pBuf->layout);
 
-    for (unsigned long i = 0; i < numVerts; i += 3) {
+    for (u32 i = 0; i < numVerts; i += 3) {
         u8 a0[VERTEX_ASM_MAX_VERTEX_SIZE];
         u8 b0[VERTEX_ASM_MAX_VERTEX_SIZE];
         u8 c0[VERTEX_ASM_MAX_VERTEX_SIZE];
@@ -517,9 +516,9 @@ void vbuffer_draw(trap_t sBuffer, meshflags_e sFlags) {
              *    Draw the triangle.
              */
             triangle_t *pTri = (triangle_t *)malloc(sizeof(triangle_t));
-            pTri->v0 = malloc(VERTEX_ASM_MAX_VERTEX_SIZE);
-            pTri->v1 = malloc(VERTEX_ASM_MAX_VERTEX_SIZE);
-            pTri->v2 = malloc(VERTEX_ASM_MAX_VERTEX_SIZE);
+            pTri->v0         = malloc(VERTEX_ASM_MAX_VERTEX_SIZE);
+            pTri->v1         = malloc(VERTEX_ASM_MAX_VERTEX_SIZE);
+            pTri->v2         = malloc(VERTEX_ASM_MAX_VERTEX_SIZE);
 
             memcpy(pTri->v0, a0, VERTEX_ASM_MAX_VERTEX_SIZE);
             memcpy(pTri->v1, b0, VERTEX_ASM_MAX_VERTEX_SIZE);

@@ -16,14 +16,14 @@
 #include "image.h"
 
 typedef struct {
-    void *buf;
-    u32 stride;
-    u32 size;
+    void      *buf;
+    u32        stride;
+    u32        size;
     v_layout_t layout;
 } vbuffer_t;
 
 typedef enum {
-    MESHFLAGS_NONE = 0,
+    MESHFLAGS_NONE           = 0,
     MESHFLAGS_DRAW_WIREFRAME = 1 << 0,
     /*
      *    Useful for a static mesh / font / etc.
@@ -37,7 +37,7 @@ typedef enum {
 
 typedef struct {
     meshflags_e aFlags;
-    trap_t aVBuf;
+    trap_t      aVBuf;
     /*
      *    Will be replaced with material_t *
      */

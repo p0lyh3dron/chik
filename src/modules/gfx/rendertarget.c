@@ -29,8 +29,8 @@ rendertarget_t *_back_buffer = NULL;
  * created. The render target should be freed with rendertarget_free().
  */
 rendertarget_t *rendertarget_create(u32 width, u32 height, u32 fmt) {
-    unsigned long i;
-    image_t *image;
+    unsigned long   i;
+    image_t        *image;
     rendertarget_t *render_target = malloc(sizeof(rendertarget_t));
 
     if (render_target == NULL) {
@@ -66,7 +66,8 @@ rendertarget_t *rendertarget_create(u32 width, u32 height, u32 fmt) {
             i++;
 
         _render_targets[i] = render_target;
-        _render_targets = realloc(_render_targets, sizeof(rendertarget_t *) * (i + 1));
+        _render_targets =
+            realloc(_render_targets, sizeof(rendertarget_t *) * (i + 1));
 
         if (_render_targets == NULL) {
             LOGF_ERR("Could not reallocate memory for render target list.");
@@ -110,7 +111,7 @@ rendertarget_t **rendertarget_get_list(void) { return _render_targets; }
  * created. The render target should be freed with rendertarget_free().
  */
 rendertarget_t *rendertarget_create_backbuffer(void) {
-    vec2u_t res = platform_get_screen_size();
+    vec2u_t         res           = platform_get_screen_size();
     rendertarget_t *render_target = rendertarget_create(res.x, res.y, 69);
 
     if (render_target == NULL) {

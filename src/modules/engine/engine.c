@@ -10,9 +10,9 @@
  */
 #include "engine.h"
 
+#include <memory.h>
 #include <stdarg.h>
 #include <time.h>
-#include <memory.h>
 
 #include "stat.h"
 
@@ -22,8 +22,8 @@ module_t _modules[ENGINE_MAX_MODULES] = {0};
 
 s8 *(*plat_read_stdin)() = nullptr;
 
-s8 _shl_cmds[CHIK_ENGINE_SHELL_MAX_COMMAND_LENGTH] = {0};
-s32 _shl_cmd_indx = 0;
+s8  _shl_cmds[CHIK_ENGINE_SHELL_MAX_COMMAND_LENGTH] = {0};
+s32 _shl_cmd_indx                                   = 0;
 
 /*
  *    Loads a function from the engine for external use.
@@ -34,7 +34,7 @@ s32 _shl_cmd_indx = 0;
  */
 void *engine_load_function(const s8 *name) {
     unsigned long i;
-    void *fun;
+    void         *fun;
 
     for (i = 0; i < ENGINE_MAX_MODULES; i++) {
         /*
@@ -43,7 +43,8 @@ void *engine_load_function(const s8 *name) {
         if (_modules[i].name && _modules[i].handle) {
             fun = dl_sym(_modules[i].handle, name);
 
-            if (fun) break;
+            if (fun)
+                break;
         }
     }
 
@@ -59,11 +60,11 @@ void *engine_load_function(const s8 *name) {
  *    @return u32          Returns 0 on failure, 1 on success.
  */
 u32 engine_init(const s8 *modules, ...) {
-    va_list args;
+    va_list     args;
     dl_handle_t h;
-    u32 result = 1;
-    u32 module_indx = 0;
-    stat_t *stat = stat_get();
+    u32         result      = 1;
+    u32         module_indx = 0;
+    stat_t     *stat        = stat_get();
     u32 (*entry)(void *);
     u32 (*update)(f32);
     u32 (*exit)(void);
@@ -89,9 +90,9 @@ u32 engine_init(const s8 *modules, ...) {
             break;
         }
 
-        entry = dl_sym(h, "chik_module_entry");
+        entry  = dl_sym(h, "chik_module_entry");
         update = dl_sym(h, "chik_module_update");
-        exit = dl_sym(h, "chik_module_exit");
+        exit   = dl_sym(h, "chik_module_exit");
 
         if (entry != nullptr) {
             if (!entry(&engine_load_function)) {
@@ -103,15 +104,19 @@ u32 engine_init(const s8 *modules, ...) {
             }
         } else {
             VLOGF_WARN("Unable to load "
-                     "module entry: %s\n",
-                     modules);
+                       "module entry: %s\n",
+                       modules);
         }
 
         if (update == nullptr)
-            VLOGF_WARN("Unable to load " "module update: %s\n", modules);
+            VLOGF_WARN("Unable to load "
+                       "module update: %s\n",
+                       modules);
 
         if (exit == nullptr)
-            VLOGF_WARN("Unable to load " "module exit: %s\n", modules);
+            VLOGF_WARN("Unable to load "
+                       "module exit: %s\n",
+                       modules);
 
         VLOGF_NOTE("Module loaded: %s\n", modules);
 
@@ -126,7 +131,7 @@ u32 engine_init(const s8 *modules, ...) {
 
     if (!plat_read_stdin) {
         LOGF_FAT("Unable to load function "
-                  "platform_read_stdin\n");
+                 "platform_read_stdin\n");
         result = 0;
     }
 
@@ -141,7 +146,8 @@ u32 engine_init(const s8 *modules, ...) {
 u32 engine_update_shell(void) {
     s8 *pBuf = plat_read_stdin();
 
-    if (pBuf != nullptr) memcpy(_shl_cmds + _shl_cmd_indx++, pBuf, 1);
+    if (pBuf != nullptr)
+        memcpy(_shl_cmds + _shl_cmd_indx++, pBuf, 1);
 
     if (_shl_cmds[_shl_cmd_indx - 1] == '\n') {
         _shl_cmds[_shl_cmd_indx - 1] = '\0';
@@ -160,7 +166,7 @@ u32 engine_update_shell(void) {
 u32 engine_update(void) {
     u32 i;
     u32 result = 1;
-    f32 dt = (f32)stat_get_time_diff() / 1000000.0f;
+    f32 dt     = (f32)stat_get_time_diff() / 1000000.0f;
 
     stat_start_frame();
     engine_update_shell();
@@ -182,11 +188,10 @@ void engine_free() {
         if (_modules[i].handle) {
             if (_modules[i].exit != nullptr) {
                 if (_modules[i].exit()) {
-                    VLOGF_NOTE("Module exited: %s\n",
-                             _modules[i].name);
+                    VLOGF_NOTE("Module exited: %s\n", _modules[i].name);
                 } else {
                     VLOGF_FATAL("Module failed to exit: %s\n",
-                              _modules[i].name);
+                                _modules[i].name);
                 }
             }
             dl_close(_modules[i].handle);

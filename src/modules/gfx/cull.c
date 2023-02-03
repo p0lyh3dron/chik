@@ -15,7 +15,7 @@
 #include "vertexasm.h"
 
 frustum_t _frustum;
-u32 _vert_size = 0;
+u32       _vert_size = 0;
 
 /*
  *    Sets the current vertex size.
@@ -39,14 +39,13 @@ void cull_set_vertex_size(u32 size) { _vert_size = size; }
  *                              0x2 = modify the first vertex of the array.
  *
  */
-u32 cull_clip_vertex(plane_t *plane, void *v0, void *v1, void *ret,
-                     u32 first) {
-                        f32 t;
+u32 cull_clip_vertex(plane_t *plane, void *v0, void *v1, void *ret, u32 first) {
+    f32 t;
 
     vec4_t p0 = vertex_get_position(v0);
     vec4_t p1 = vertex_get_position(v1);
 
-    f32 outside = plane_distance(plane, (vec3_t *)&p0);
+    f32 outside      = plane_distance(plane, (vec3_t *)&p0);
     f32 next_outside = plane_distance(plane, (vec3_t *)&p1);
     /*
      *    Check if the triangle is outside the frustum.
@@ -110,9 +109,8 @@ u32 cull_clip_vertex(plane_t *plane, void *v0, void *v1, void *ret,
  *    @param u32             count    The number of vertices in the list.
  *    @param u32             len      The list size.
  */
-void cull_insert_vertex(void *v, void **list, u32 idx, u32 count,
-                        u32 len) {
-                            unsigned long i;
+void cull_insert_vertex(void *v, void **list, u32 idx, u32 count, u32 len) {
+    unsigned long i;
 
     if (idx >= len) {
         LOGF_ERR("Index out of bounds.\n");
@@ -128,15 +126,13 @@ void cull_insert_vertex(void *v, void **list, u32 idx, u32 count,
      */
     for (i = count; i > idx; i--) {
         memcpy((u8 *)list + i * VERTEX_ASM_MAX_VERTEX_SIZE,
-               (u8 *)list + (i - 1) * VERTEX_ASM_MAX_VERTEX_SIZE,
-               _vert_size);
+               (u8 *)list + (i - 1) * VERTEX_ASM_MAX_VERTEX_SIZE, _vert_size);
     }
 
     /*
      *    Insert the vertex.
      */
-    memcpy((u8 *)list + idx * VERTEX_ASM_MAX_VERTEX_SIZE, v,
-           _vert_size);
+    memcpy((u8 *)list + idx * VERTEX_ASM_MAX_VERTEX_SIZE, v, _vert_size);
 }
 
 /*
@@ -167,8 +163,7 @@ void cull_remove_vertex(u32 idx, void **list, u32 len, u32 sSize) {
          * we'll use direct memory access. I hope this works on other platforms.
          */
         memcpy((u8 *)list + i * VERTEX_ASM_MAX_VERTEX_SIZE,
-               (u8 *)list + (i + 1) * VERTEX_ASM_MAX_VERTEX_SIZE,
-               _vert_size);
+               (u8 *)list + (i + 1) * VERTEX_ASM_MAX_VERTEX_SIZE, _vert_size);
     }
 }
 
@@ -189,29 +184,29 @@ void cull_create_frustum() {
     vec2_t fne = {f, f};
     vec2_t fnw = {-f, f};
 
-    vec3_t nearTop = {nnw.x, nnw.y, n};
-    vec3_t nearBot = {nsw.x, nsw.y, n};
+    vec3_t nearTop   = {nnw.x, nnw.y, n};
+    vec3_t nearBot   = {nsw.x, nsw.y, n};
     vec3_t nearRight = {nne.x, nne.y, n};
 
     vec3_t leftCloseBottom = {nsw.x, nsw.y, n};
-    vec3_t leftCloseTop = {nnw.x, nnw.y, n};
-    vec3_t leftFarTop = {fnw.x, fnw.y, f};
+    vec3_t leftCloseTop    = {nnw.x, nnw.y, n};
+    vec3_t leftFarTop      = {fnw.x, fnw.y, f};
 
     vec3_t rightCloseBottom = {nse.x, nse.y, n};
-    vec3_t rightFarBottom = {fse.x, fse.y, f};
-    vec3_t rightFarTop = {fne.x, fne.y, f};
+    vec3_t rightFarBottom   = {fse.x, fse.y, f};
+    vec3_t rightFarTop      = {fne.x, fne.y, f};
 
-    vec3_t topCloseLeft = {nnw.x, nnw.y, n};
+    vec3_t topCloseLeft  = {nnw.x, nnw.y, n};
     vec3_t topCloseRight = {nne.x, nne.y, n};
-    vec3_t topFarLeft = {fnw.x, fnw.y, f};
+    vec3_t topFarLeft    = {fnw.x, fnw.y, f};
 
-    vec3_t bottomFarRight = {fse.x, fse.y, f};
+    vec3_t bottomFarRight  = {fse.x, fse.y, f};
     vec3_t bottomCloseLeft = {nsw.x, nsw.y, n};
-    vec3_t bottomFarLeft = {fsw.x, fsw.y, f};
+    vec3_t bottomFarLeft   = {fsw.x, fsw.y, f};
 
-    vec3_t farTop = {fnw.x, fnw.y, f};
+    vec3_t farTop   = {fnw.x, fnw.y, f};
     vec3_t farRight = {fne.x, fne.y, f};
-    vec3_t farBot = {fsw.x, fsw.y, f};
+    vec3_t farBot   = {fsw.x, fsw.y, f};
 
     if (!_camera) {
         n = 0.1f;
@@ -286,11 +281,11 @@ void *cull_clip_triangle(void *v0, void *v1, void *v2, s32 *num_verts,
                          u32 is_clipped) {
     unsigned long i;
     unsigned long j;
-    u32 remove_first;
-    u32 ret;
+    u32           remove_first;
+    u32           ret;
 
     static u8 vertices[8 * VERTEX_ASM_MAX_VERTEX_SIZE];
-    u8 v[VERTEX_ASM_MAX_VERTEX_SIZE];
+    u8        v[VERTEX_ASM_MAX_VERTEX_SIZE];
 
     *num_verts = 3;
 

@@ -27,7 +27,7 @@ CHIK_MODULE(graphics_init, graphics_update, graphics_exit)
 #include "rendertarget.h"
 #include "vertexasm.h"
 
-u32 (*platform_draw_image)(image_t *) = 0;
+u32 (*platform_draw_image)(image_t *)     = 0;
 vec2u_t (*platform_get_screen_size)(void) = 0;
 
 extern rendertarget_t *_back_buffer;
@@ -38,25 +38,23 @@ resource_t *_handles;
  *    Creates the graphics context.
  */
 u32 graphics_init(void) {
-    _handles = resource_new(64 * 1024 * 1024);
-    platform_draw_image = engine_load_function("platform_draw_image");
+    _handles                 = resource_new(64 * 1024 * 1024);
+    platform_draw_image      = engine_load_function("platform_draw_image");
     platform_get_screen_size = engine_load_function("platform_get_screen_size");
 
     if (_handles == nullptr) {
-        LOGF_ERR(
-            "Failed to create graphics resource.\n");
+        LOGF_ERR("Failed to create graphics resource.\n");
         return 0;
     }
 
     if (platform_draw_image == nullptr) {
-        LOGF_ERR(
-            "Failed to load platform_draw_image.\n");
+        LOGF_ERR("Failed to load platform_draw_image.\n");
         return 0;
     }
 
     if (platform_get_screen_size == nullptr) {
         LOGF_ERR("Failed to load "
-                  "platform_get_screen_size.\n");
+                 "platform_get_screen_size.\n");
         return 0;
     }
 
@@ -89,7 +87,7 @@ u32 graphics_exit(void) { return 1; }
  */
 trap_t create_camera(void) {
     camera_t cam;
-    trap_t handle;
+    trap_t   handle;
 
     cam.pos.x = 0.0f;
     cam.pos.y = 0.0f;
@@ -99,12 +97,12 @@ trap_t create_camera(void) {
     cam.ang.y = 0.0f;
 
     cam.near = 0.1f;
-    cam.far = 1000.f;
+    cam.far  = 1000.f;
 
     cam.fov = 90.0f;
 
     cam.aspect = (float)_back_buffer->target->width /
-                  (float)_back_buffer->target->height;
+                 (float)_back_buffer->target->height;
 
     handle = resource_add(_handles, &cam, sizeof(camera_t));
 
@@ -174,7 +172,7 @@ void set_camera_fov(trap_t fov, float sFov) {
  */
 void set_camera(trap_t cam) {
     _camera = resource_get(_handles, cam);
-    
+
     if (_camera == NULL)
         LOGF_ERR("Failed to get camera resource.\n");
 }
