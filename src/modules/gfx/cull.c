@@ -284,7 +284,12 @@ void *cull_clip_triangle(void *v0, void *v1, void *v2, s32 *num_verts,
     u32           remove_first;
     u32           ret;
 
-    static u8 vertices[8 * VERTEX_ASM_MAX_VERTEX_SIZE];
+    /*
+     *    TODO:    This used to be eight, but I changed it to sixteen
+     *             because for some reason, eleven clipped vertices
+     *             were being returned, overwriting platform_draw_image
+     */
+    static u8 vertices[16 * VERTEX_ASM_MAX_VERTEX_SIZE];
     u8        v[VERTEX_ASM_MAX_VERTEX_SIZE];
 
     *num_verts = 3;

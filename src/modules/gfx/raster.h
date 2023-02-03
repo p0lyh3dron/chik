@@ -23,6 +23,7 @@ typedef struct {
     void *v0;
     void *v1;
     void *v2;
+    void *assets;
 } triangle_t;
 
 /*
@@ -62,7 +63,7 @@ u32 raster_check_depth(u32 sX, u32 sY, f32 sDepth);
  *    @param void *        The first vertex of the scanline.
  *    @param void *        The second vertex of the scanline.
  */
-void raster_draw_scanline(s32 sX1, s32 sX2, s32 sY, void *spV1, void *spV2);
+void raster_draw_scanline(s32 sX1, s32 sX2, s32 sY, void *spV1, void *spV2, void *assets);
 
 /*
  *    Rasterizes a single triangle.
@@ -71,7 +72,7 @@ void raster_draw_scanline(s32 sX1, s32 sX2, s32 sY, void *spV1, void *spV2);
  *    @param void *        The raw vertex data for the second vertex.
  *    @param void *        The raw vertex data for the third vertex.
  */
-void raster_rasterize_triangle(void *spV1, void *spV2, void *spV3);
+void raster_rasterize_triangle(void *spV1, void *spV2, void *spV3, void *assets);
 
 /*
  *    Uses threads to rasterize a triangle.

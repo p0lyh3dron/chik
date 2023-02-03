@@ -26,28 +26,28 @@
  *                         The image should be freed with image_free().
  */
 image_t *image_create(u32 width, u32 height, u32 format) {
-    image_t *pImage = (image_t *)malloc(sizeof(image_t));
+    image_t *image = (image_t *)malloc(sizeof(image_t));
 
-    if (pImage == NULL) {
+    if (image == NULL) {
         LOGF_ERR("Could not allocate memory for image.");
         return 0;
     }
 
-    pImage->width  = width;
-    pImage->height = height;
-    pImage->fmt    = format;
+    image->width  = width;
+    image->height = height;
+    image->fmt    = format;
     /*
      *    In the future, image data may not be just width * height * format.
      *    For now, we just allocate the amount of memory we need.
      */
-    pImage->buf = (u32 *)malloc(width * height * sizeof(u32));
+    image->buf = (u32 *)malloc(width * height * sizeof(u32));
 
-    if (pImage->buf == NULL) {
+    if (image->buf == NULL) {
         LOGF_ERR("Could not allocate memory for image buffer.");
         return 0;
     }
 
-    return pImage;
+    return image;
 }
 
 /*
@@ -88,7 +88,7 @@ image_t *image_load_bmp(const s8 *file) {
     u32          padding = 0;
     u64          i;
     bmp_header_t header;
-    image_t     *pImage;
+    image_t     *image;
     u8          *pData;
 
     u8 *pBuffer = file_read(file, &len);
@@ -122,9 +122,9 @@ image_t *image_load_bmp(const s8 *file) {
     /*
      *    Create the image.
      */
-    pImage = image_create(header.width, header.height, 32);
+    image = image_create(header.width, header.height, 32);
 
-    if (pImage == NULL) {
+    if (image == NULL) {
         LOGF_ERR("Could not create image.");
         free(pBuffer);
         return NULL;
@@ -137,7 +137,7 @@ image_t *image_load_bmp(const s8 *file) {
         /*
          *    Don't touch.
          */
-        memcpy((u8 *)pImage->buf + (header.width * i) * 4,
+        memcpy((u8 *)image->buf + (header.width * i) * 4,
                pData + (header.width * i) * 4 + i * padding, header.width * 4);
         /*
          *    Literal magic.
@@ -150,7 +150,7 @@ image_t *image_load_bmp(const s8 *file) {
      */
     free(pBuffer);
 
-    return pImage;
+    return image;
 }
 
 /*

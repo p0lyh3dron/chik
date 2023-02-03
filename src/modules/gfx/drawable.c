@@ -26,491 +26,207 @@
  *    @param u32 stride           The stride of the vertex data.
  *    @param v_layout_t layout    The layout of the vertex data.
  *
- *    @return trap_t      The vertex buffer.
- *                          INVALID_TRAP if the vertex buffer could not be
- * created. The mesh should be freed with vbuffer_free().
+ *    @return void *              The vertex buffer.
  */
-trap_t vbuffer_create(void *v, u32 size, u32 stride, v_layout_t layout) {
-    vbuffer_t buf;
-    trap_t    h;
+void *vbuffer_create(void *v, u32 size, u32 stride, v_layout_t layout) {
+    vbuffer_t *buf;
+
     if (v == nullptr) {
-        LOGF_ERR("Vertex data is null.");
-        return INVALID_TRAP;
+        LOGF_ERR("Vertex data is null.\n");
+        return (void *)0x0;
     }
     if (size == 0) {
-        LOGF_ERR("Vertex data size is zero.");
-        return INVALID_TRAP;
+        LOGF_ERR("Vertex data size is zero.\n");
+        return (void *)0x0;
     }
     if (stride == 0) {
-        LOGF_ERR("Vertex data stride is zero.");
-        return INVALID_TRAP;
+        LOGF_ERR("Vertex data stride is zero.\n");
+        return (void *)0x0;
     }
 
-    buf.buf    = malloc(size);
-    buf.size   = size;
-    buf.stride = stride;
-    buf.layout = layout;
+    buf = (vbuffer_t *)malloc(sizeof(vbuffer_t));
 
-    if (buf.buf == nullptr) {
-        log_error("Could not allocate vertex buffer.");
-        return INVALID_TRAP;
+    if (buf == (vbuffer_t *)0x0) {
+        LOGF_ERR("Could not allocate vertex buffer.\n");
+        return (void *)0x0;
     }
 
-    memcpy(buf.buf, v, size);
+    buf->buf    = malloc(size);
+    buf->size   = size;
+    buf->stride = stride;
+    buf->layout = layout;
 
-    h = resource_add(_handles, &buf, sizeof(vbuffer_t));
-
-    if (BAD_TRAP(h)) {
-        log_error("Could not add vertex buffer to resource list.");
-        return INVALID_TRAP;
+    if (buf->buf == (void *)0x0) {
+        log_error("Could not allocate vertex buffer.\n");
+        return (void *)0x0;
     }
 
-    return h;
+    memcpy(buf->buf, v, size);
+
+    return (void *)buf;
 }
 
 /*
  *    Frees a vertex buffer.
  *
- *    @param trap_t    The vertex buffer to free.
+ *    @param void *buf   The vertex buffer to free.
  */
-void vbuffer_free(trap_t sVBuffer) {
-    if (_handles == nullptr) {
-        log_error("Resources not initialized.");
-        return;
-    }
-    if (BAD_TRAP(sVBuffer)) {
-        log_error("Vertex buffer is null.");
+void vbuffer_free(void *buf) {
+    if (buf == (void*)0x0) {
+        LOGF_ERR("Vertex buffer pointer is null.\n");
         return;
     }
 
-    vbuffer_t *pVBuffer = resource_get(_handles, sVBuffer);
-    if (pVBuffer == nullptr) {
-        log_error("Vertex buffer is null.");
+    vbuffer_t *vbuf = (vbuffer_t *)buf;
+
+    if (vbuf->buf == nullptr) {
+        LOGF_ERR("Vertex buffer is null.\n");
         return;
     }
 
-    free(pVBuffer->buf);
-}
-
-/*
- *    Creates a texture from a file.
- *
- *    @param s8 *          The path to the texture file.
- *    @param u32           The format of the texture.
- *
- *    @return trap_t     The texture.
- */
-trap_t texture_create_from_file(s8 *spPath, u32 sFormat) {
-    if (_handles == nullptr) {
-        log_error("Resources not initialized.");
-        return INVALID_TRAP;
-    }
-    if (spPath == nullptr) {
-        log_error("Texture path is null.");
-        return INVALID_TRAP;
-    }
-
-    texture_t tex = {};
-    tex.image     = image_create_from_file(spPath, sFormat);
-
-    if (tex.image == nullptr) {
-        log_error("Could not create texture from file.");
-        return INVALID_TRAP;
-    }
-
-    trap_t h = resource_add(_handles, &tex, sizeof(texture_t));
-
-    if (BAD_TRAP(h)) {
-        log_error("Could not add texture to resource list.");
-        return INVALID_TRAP;
-    }
-
-    return h;
-}
-
-/*
- *    Creates a texture from raw data ( must be in BRGA ).
- *
- *    @param void *        The raw data.
- *    @param u32           The width of the texture.
- *    @param u32           The height of the texture.
- *
- *    @return trap_t     The texture.
- */
-trap_t texture_create_raw(void *spData, u32 sWidth, u32 sHeight) {
-    if (_handles == nullptr) {
-        log_error("trap_t texture_create_raw( void*, u32, u32 ): Resources not "
-                  "initialized.\n");
-        return INVALID_TRAP;
-    }
-    if (spData == nullptr) {
-        log_error("trap_t texture_create_raw( void*, u32, u32 ): Texture data "
-                  "is null.\n");
-        return INVALID_TRAP;
-    }
-
-    texture_t tex = {};
-    tex.image     = malloc(sizeof(image_t));
-
-    if (tex.image == nullptr) {
-        log_error("trap_t texture_create_raw( void*, u32, u32 ): Could not "
-                  "create texture from raw data.\n");
-        return INVALID_TRAP;
-    }
-
-    tex.image->buf = malloc(sWidth * sHeight * 4);
-
-    if (tex.image->buf == nullptr) {
-        log_error("trap_t texture_create_raw( void*, u32, u32 ): Could not "
-                  "create texture from raw data.\n");
-        return INVALID_TRAP;
-    }
-
-    memcpy(tex.image->buf, spData, sWidth * sHeight * 4);
-
-    trap_t h = resource_add(_handles, &tex, sizeof(texture_t));
-
-    if (BAD_TRAP(h)) {
-        log_error("trap_t texture_create_raw( void*, u32, u32 ): Could not add "
-                  "texture to resource list.\n");
-        return INVALID_TRAP;
-    }
-
-    return h;
-}
-
-/*
- *    Frees a texture.
- *
- *    @param trap_t    The texture to free.
- */
-void texture_free(trap_t sTex) {
-    if (_handles == nullptr) {
-        log_error("Resources not initialized.");
-        return;
-    }
-    if (BAD_TRAP(sTex)) {
-        log_error("Texture is null.");
-        return;
-    }
-
-    texture_t *pTex = resource_get(_handles, sTex);
-    if (pTex == nullptr) {
-        log_error("Texture is null.");
-        return;
-    }
-
-    image_free(pTex->image);
-    resource_remove(_handles, sTex);
+    free(vbuf->buf);
+    free(buf);
 }
 
 /*
  *    Creates a mesh.
  *
- *    @param trap_t    The vertex buffer.
- *    @param trap_t    The texture.
+ *    @param void *v    The vertex buffer.
  *
- *    @return trap_t      The mesh.
+ *    @return void *    The mesh.
  */
-trap_t mesh_create(trap_t sVBuffer, trap_t sTex) {
-    mesh_t mesh = {};
-    mesh.aFlags = MESHFLAGS_NONE;
-    mesh.aVBuf  = sVBuffer;
-    mesh.aTex   = sTex;
+void *mesh_create(void *v) {
+    mesh_t *mesh = (mesh_t *)malloc(sizeof(mesh_t));
 
-    trap_t h = resource_add(_handles, &mesh, sizeof(mesh_t));
-
-    if (BAD_TRAP(h)) {
-        log_error("void mesh_create( trap_t, trap_t ): Could not add mesh to "
-                  "resource list.\n");
-        return INVALID_TRAP;
+    if (mesh == (mesh_t *)0x0) {
+        LOGF_ERR("Could not allocate mesh.\n");
+        return (void *)0x0;
     }
 
-    return h;
-}
+    mesh->vbuf        = (vbuffer_t *)v;
+    mesh->assets      = (void *)0x0;
+    mesh->assets_size = 0;
 
-/*
- *    Sets a mesh to not use the projection matrix.
- *
- *    @param trap_t    The mesh.
- */
-void mesh_set_skip_projection(trap_t sMesh) {
-    if (_handles == nullptr) {
-        log_error("void mesh_set_skip_projection( trap_t ): Resources not "
-                  "initialized.\n");
-        return;
-    }
-    if (BAD_TRAP(sMesh)) {
-        log_error("void mesh_set_skip_projection( trap_t ): Mesh is null.\n");
-        return;
-    }
-
-    mesh_t *pMesh = resource_get(_handles, sMesh);
-    if (pMesh == nullptr) {
-        log_error("void mesh_set_skip_projection( trap_t ): Mesh is null.\n");
-        return;
-    }
-    pMesh->aFlags |= MESHFLAGS_SKIP_PROJECTION;
-}
-
-/*
- *    Sets a mesh to not be clipped.
- *
- *    @param trap_t    The mesh.
- */
-void mesh_set_skip_clipping(trap_t sMesh) {
-    if (_handles == nullptr) {
-        log_error("void mesh_set_skip_clipping( trap_t ): Resources not "
-                  "initialized.\n");
-        return;
-    }
-    if (BAD_TRAP(sMesh)) {
-        log_error("void mesh_set_skip_clipping( trap_t ): Mesh is null.\n");
-        return;
-    }
-
-    mesh_t *pMesh = resource_get(_handles, sMesh);
-    if (pMesh == nullptr) {
-        log_error("void mesh_set_skip_clipping( trap_t ): Mesh is null.\n");
-        return;
-    }
-    pMesh->aFlags |= MESHFLAGS_SKIP_CLIPPING;
+    return (void *)mesh;
 }
 
 /*
  *    Sets the vertex buffer of a mesh.
  *
- *    @param trap_t    The mesh.
- *    @param trap_t    The vertex buffer.
+ *    @param void *m    The mesh.
+ *    @param void *v    The vertex buffer.
  */
-void mesh_set_vertex_buffer(trap_t sMesh, trap_t sVBuffer) {
-    if (_handles == nullptr) {
-        log_error("void mesh_set_vertex_buffer( trap_t, trap_t ): Resources "
-                  "not initialized.\n");
+void mesh_set_vbuffer(void *m, void *v) {
+    if (m == (void *)0x0) {
+        LOGF_ERR("Mesh is null.\n");
         return;
     }
-    if (BAD_TRAP(sMesh)) {
-        log_error(
-            "void mesh_set_vertex_buffer( trap_t, trap_t ): Mesh is null.\n");
-        return;
-    }
-    if (BAD_TRAP(sVBuffer)) {
-        log_error("void mesh_set_vertex_buffer( trap_t, trap_t ): Vertex "
-                  "buffer is null.\n");
+    if (v == (void *)0x0) {
+        LOGF_ERR("Vertex buffer is null.\n");
         return;
     }
 
-    mesh_t *pMesh = resource_get(_handles, sMesh);
-    if (pMesh == nullptr) {
-        log_error(
-            "void mesh_set_vertex_buffer( trap_t, trap_t ): Mesh is null.\n");
-        return;
-    }
-    vbuffer_t *pVBuffer = resource_get(_handles, sVBuffer);
-    if (pVBuffer == nullptr) {
-        log_error("void mesh_set_vertex_buffer( trap_t, trap_t ): Vertex "
-                  "buffer is null.\n");
-        return;
-    }
-
-    pMesh->aVBuf = sVBuffer;
+    mesh_t *mesh = (mesh_t *)m;
+    mesh->vbuf   = (vbuffer_t* )v;
 }
 
 /*
- *    Sets the texture of a mesh.
+ *    Appends an asset to a mesh.
  *
- *    @param trap_t    The mesh.
- *    @param trap_t    The texture.
+ *    @param void *m              The mesh.
+ *    @param void *a              The asset.
+ *    @param unsigned long size   The size of the asset.
  */
-void mesh_set_texture(trap_t sMesh, trap_t sTex) {
-    if (_handles == nullptr) {
-        log_error("void mesh_set_texture( trap_t, trap_t ): Resources not "
-                  "initialized.\n");
+void mesh_append_asset(void *m, void *a, unsigned long size) {
+    if (m == (void *)0x0) {
+        LOGF_ERR("Mesh is null.\n");
         return;
     }
-    if (BAD_TRAP(sMesh)) {
-        log_error("void mesh_set_texture( trap_t, trap_t ): Mesh is null.\n");
-        return;
-    }
-    if (BAD_TRAP(sTex)) {
-        log_error(
-            "void mesh_set_texture( trap_t, trap_t ): Texture is null.\n");
+    if (a == (void *)0x0) {
+        LOGF_ERR("Asset is null.\n");
         return;
     }
 
-    mesh_t *pMesh = resource_get(_handles, sMesh);
-    if (pMesh == nullptr) {
-        log_error("void mesh_set_texture( trap_t, trap_t ): Mesh is null.\n");
+    mesh_t *mesh = (mesh_t *)m;
+    mesh->assets = realloc(mesh->assets, mesh->assets_size + size);
+
+    if (mesh->assets == (void *)0x0) {
+        LOGF_ERR("Could not allocate mesh asset.\n");
         return;
     }
 
-    pMesh->aTex = sTex;
+    memcpy((void *)((unsigned long)mesh->assets + mesh->assets_size), a, size);
+    mesh->assets_size += size;
 }
 
-vec3_t gMeshTranslate = {0.f, 0.f, 0.f};
-vec3_t gMeshRotate    = {0.f, 0.f, 0.f};
-vec3_t gMeshScale     = {1.f, 1.f, 1.f};
-
 /*
- *    Translates a mesh.
+ *    Draws a mesh.
  *
- *    @param vec3_t      The translation vector.
+ *    @param void *m    The mesh.
  */
-void mesh_translate(vec3_t sTranslation) { gMeshTranslate = sTranslation; }
+void mesh_draw(void *m) {
+    mesh_t *mesh = (mesh_t *)m;
 
-/*
- *    Rotates a mesh.
- *
- *    @param vec3_t      The rotation vector.
- */
-void mesh_rotate(vec3_t sRotation) { gMeshRotate = sRotation; }
-
-/*
- *    Scales a mesh.
- *
- *    @param vec3_t      The scale vector.
- */
-void mesh_scale(vec3_t sScale) { gMeshScale = sScale; }
-
-/*
- *    Draws a vertex buffer.
- *
- *    @param trap_t          The handle to the vertex buffer.
- *    @param meshflags_e       The flags to use for the mesh.
- */
-void vbuffer_draw(trap_t sBuffer, meshflags_e sFlags) {
-    if (_camera == nullptr) {
-        log_error("void vbuffer_draw( trap_t, meshflags_e ): No camera.\n");
+    if (mesh == (mesh_t *)0x0) {
+        LOGF_ERR("Mesh is null.\n");
         return;
     }
 
-    vbuffer_t *pBuf = resource_get(_handles, sBuffer);
-    if (pBuf == nullptr) {
-        log_error("void vbuffer_draw( trap_t, meshflags_e ): Failed to get "
-                  "vertex resource.\n");
+    vbuffer_t *buf = mesh->vbuf;
+
+    if (buf == (vbuffer_t *)0x0) {
+        LOGF_ERR("Vertex buffer is null.\n");
         return;
     }
 
-    mat4_t view     = camera_view(_camera);
-    u32    numVerts = pBuf->size / pBuf->stride;
+    u32    num_verts = buf->size / buf->stride;
 
-    vertexasm_set_layout(pBuf->layout);
+    vertexasm_set_layout(buf->layout);
 
-    for (u32 i = 0; i < numVerts; i += 3) {
+    for (u32 i = 0; i < num_verts; i += 3) {
         u8 a0[VERTEX_ASM_MAX_VERTEX_SIZE];
         u8 b0[VERTEX_ASM_MAX_VERTEX_SIZE];
         u8 c0[VERTEX_ASM_MAX_VERTEX_SIZE];
 
+        void *a = buf->buf + (i + 0) * buf->stride;
+        void *b = buf->buf + (i + 1) * buf->stride;
+        void *c = buf->buf + (i + 2) * buf->stride;
+
         /*
          *    Copy the vertex data into a buffer.
          */
-        memcpy(a0, pBuf->buf + (i + 0) * pBuf->stride, pBuf->stride);
-        memcpy(b0, pBuf->buf + (i + 1) * pBuf->stride, pBuf->stride);
-        memcpy(c0, pBuf->buf + (i + 2) * pBuf->stride, pBuf->stride);
+        memcpy(a0, a, buf->stride);
+        memcpy(b0, b, buf->stride);
+        memcpy(c0, c, buf->stride);
 
         /*
-         *    Get the positions of the vertices.
+         *    Apply the vertex shader.
          */
-        vec4_t pa = vertex_get_position(a0);
-        pa.x *= gMeshScale.x;
-        pa.y *= gMeshScale.y;
-        pa.z *= gMeshScale.z;
-        vec4_t pb = vertex_get_position(b0);
-        pb.x *= gMeshScale.x;
-        pb.y *= gMeshScale.y;
-        pb.z *= gMeshScale.z;
-        vec4_t pc = vertex_get_position(c0);
-        pc.x *= gMeshScale.x;
-        pc.y *= gMeshScale.y;
-        pc.z *= gMeshScale.z;
-
-        /*
-         *    Transform the positions.
-         *
-         *    If we have an active translation/rotation, apply it.
-         */
-
-        mat4_t ta =
-            m4_mul_v4(m4_rotate(gMeshRotate.x, (vec3_t){1.f, 0.f, 0.f}), pa);
-        ta = m4_mul_m4(m4_rotate(gMeshRotate.y, (vec3_t){0.f, 1.f, 0.f}), ta);
-        ta = m4_mul_m4(m4_rotate(gMeshRotate.z, (vec3_t){0.f, 0.f, 1.f}), ta);
-        ta = m4_mul_m4(m4_translate(gMeshTranslate), ta);
-
-        mat4_t tb =
-            m4_mul_v4(m4_rotate(gMeshRotate.x, (vec3_t){1.f, 0.f, 0.f}), pb);
-        tb = m4_mul_m4(m4_rotate(gMeshRotate.y, (vec3_t){0.f, 1.f, 0.f}), tb);
-        tb = m4_mul_m4(m4_rotate(gMeshRotate.z, (vec3_t){0.f, 0.f, 1.f}), tb);
-        tb = m4_mul_m4(m4_translate(gMeshTranslate), tb);
-
-        mat4_t tc =
-            m4_mul_v4(m4_rotate(gMeshRotate.x, (vec3_t){1.f, 0.f, 0.f}), pc);
-        tc = m4_mul_m4(m4_rotate(gMeshRotate.y, (vec3_t){0.f, 1.f, 0.f}), tc);
-        tc = m4_mul_m4(m4_rotate(gMeshRotate.z, (vec3_t){0.f, 0.f, 1.f}), tc);
-        tc = m4_mul_m4(m4_translate(gMeshTranslate), tc);
-
-        mat4_t ma = m4_identity();
-        mat4_t mb = m4_identity();
-        mat4_t mc = m4_identity();
-
-        if (!(sFlags & MESHFLAGS_SKIP_PROJECTION)) {
-            ma = m4_mul_m4(view, ta);
-            mb = m4_mul_m4(view, tb);
-            mc = m4_mul_m4(view, tc);
-        } else {
-            ma = ta;
-            mb = tb;
-            mc = tc;
+        if (buf->layout.v_fun != (void *)0x0) {
+            buf->layout.v_fun(a0, a, mesh->assets);
+            buf->layout.v_fun(b0, b, mesh->assets);
+            buf->layout.v_fun(c0, c, mesh->assets);
         }
-
-        /*
-         *    Update the vertex data.
-         */
-        vertex_set_position(a0, (vec4_t){ma.v[0], ma.v[4], ma.v[8], ma.v[12]});
-        vertex_set_position(b0, (vec4_t){mb.v[0], mb.v[4], mb.v[8], mb.v[12]});
-        vertex_set_position(c0, (vec4_t){mc.v[0], mc.v[4], mc.v[8], mc.v[12]});
 
         /*
          *    If the vertex is outside of the view frustum, use
          *    linear interpolation to find the point on the triangle
          *    that is inside the view frustum.
          */
-        s32 numVertices = 0;
+        s32 clipped_vertices = 0;
 
-        u8 *pVerts = cull_clip_triangle(a0, b0, c0, &numVertices,
-                                        !(sFlags & MESHFLAGS_SKIP_CLIPPING));
+        u8 *new_verts = cull_clip_triangle(a0, b0, c0, &clipped_vertices, 1);
 
         /*
          *    Draw the clipped vertices.
          */
-        for (s64 i = 0; i < numVertices - 2; ++i) {
-            memcpy(a0, pVerts + (0 + 0) * VERTEX_ASM_MAX_VERTEX_SIZE,
-                   pBuf->stride);
-            memcpy(b0, pVerts + (i + 1) * VERTEX_ASM_MAX_VERTEX_SIZE,
-                   pBuf->stride);
-            memcpy(c0, pVerts + (i + 2) * VERTEX_ASM_MAX_VERTEX_SIZE,
-                   pBuf->stride);
-
-            if (!(sFlags & MESHFLAGS_SKIP_PROJECTION)) {
-                /*
-                 *    Transform the vertex to screen space.
-                 */
-                pa = vertex_get_position(a0);
-                pb = vertex_get_position(b0);
-                pc = vertex_get_position(c0);
-
-                pa.x /= pa.w;
-                pa.y /= pa.w;
-
-                pb.x /= pb.w;
-                pb.y /= pb.w;
-
-                pc.x /= pc.w;
-                pc.y /= pc.w;
-
-                vertex_set_position(a0, pa);
-                vertex_set_position(b0, pb);
-                vertex_set_position(c0, pc);
-            }
+        for (s64 j = 0; j < clipped_vertices - 2; ++j) {
+            memcpy(a0, new_verts + (0 + 0) * VERTEX_ASM_MAX_VERTEX_SIZE,
+                   buf->stride);
+            memcpy(b0, new_verts + (j + 1) * VERTEX_ASM_MAX_VERTEX_SIZE,
+                   buf->stride);
+            memcpy(c0, new_verts + (j + 2) * VERTEX_ASM_MAX_VERTEX_SIZE,
+                   buf->stride);
 
             /*
              *    Draw the triangle.
@@ -519,6 +235,7 @@ void vbuffer_draw(trap_t sBuffer, meshflags_e sFlags) {
             pTri->v0         = malloc(VERTEX_ASM_MAX_VERTEX_SIZE);
             pTri->v1         = malloc(VERTEX_ASM_MAX_VERTEX_SIZE);
             pTri->v2         = malloc(VERTEX_ASM_MAX_VERTEX_SIZE);
+            pTri->assets     = mesh->assets;
 
             memcpy(pTri->v0, a0, VERTEX_ASM_MAX_VERTEX_SIZE);
             memcpy(pTri->v1, b0, VERTEX_ASM_MAX_VERTEX_SIZE);
@@ -530,54 +247,20 @@ void vbuffer_draw(trap_t sBuffer, meshflags_e sFlags) {
 }
 
 /*
- *    Draws a mesh.
- *
- *    @param trap_t    The mesh.
- */
-void mesh_draw(trap_t sMesh) {
-    if (_handles == nullptr) {
-        log_error("void mesh_draw( trap_t ): Resources not initialized.\n");
-        return;
-    }
-    if (BAD_TRAP(sMesh)) {
-        log_error("void mesh_draw( trap_t ): Mesh is null.\n");
-        return;
-    }
-
-    mesh_t *pMesh = resource_get(_handles, sMesh);
-    if (pMesh == nullptr) {
-        log_error("void mesh_draw( trap_t ): Mesh is null.\n");
-        return;
-    }
-
-    texture_t *pTex = resource_get(_handles, pMesh->aTex);
-    if (pTex == nullptr) {
-        log_error("void mesh_draw( trap_t ): Texture is null.\n");
-        return;
-    }
-
-    image_t *pImage = pTex->image;
-    if (pImage == nullptr) {
-        log_error("void mesh_draw( trap_t ): Image is null.\n");
-        return;
-    }
-
-    vertexasm_bind_uniform(pTex);
-    vbuffer_draw(pMesh->aVBuf, pMesh->aFlags);
-}
-
-/*
  *    Frees a mesh.
  *
- *    @param trap_t      The mesh to free.
+ *    @param void *m    The mesh.
  */
-void mesh_free(trap_t sMesh) {
-    if (_handles == nullptr) {
-        log_error("Resources not initialized.");
+void mesh_free(void *m) {
+    if (m == (void *)0x0) {
+        LOGF_ERR("Mesh is null.\n");
         return;
     }
-    if (BAD_TRAP(sMesh)) {
-        log_error("Mesh is null.");
-        return;
-    }
+
+    mesh_t *mesh = (mesh_t *)m;
+
+    if (mesh->assets != (void *)0x0)
+        free(mesh->assets);
+
+    free(mesh);
 }

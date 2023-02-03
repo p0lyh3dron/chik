@@ -134,4 +134,4 @@ void vertexasm_bind_uniform(void *uniform) { _uniform = uniform; }
  *    @param void *f          The raw fragment data.
  *    @param fragment_t *p    The pixel to apply the fragment to.
  */
-void fragment_apply(void *f, fragment_t *p) { _layout.fun(p, f, _uniform); }
+void fragment_apply(void *f, fragment_t *p, void *assets) { _layout.f_fun(p, f, assets); }
