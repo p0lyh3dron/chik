@@ -27,7 +27,7 @@ CHIK_MODULE(graphics_init, graphics_update, graphics_exit)
 #include "rendertarget.h"
 #include "vertexasm.h"
 
-u32 (*platform_boobs)(image_t *)     = 0;
+u32 (*platform_draw_image)(image_t *)     = 0;
 vec2u_t (*platform_get_screen_size)(void) = 0;
 
 extern rendertarget_t *_back_buffer;
@@ -39,7 +39,7 @@ resource_t *_handles;
  */
 u32 graphics_init(void) {
     _handles                 = resource_new(64 * 1024 * 1024);
-    platform_boobs      = engine_load_function("platform_draw_image");
+    platform_draw_image      = engine_load_function("platform_draw_image");
     platform_get_screen_size = engine_load_function("platform_get_screen_size");
 
     if (_handles == nullptr) {
@@ -47,7 +47,7 @@ u32 graphics_init(void) {
         return 0;
     }
 
-    if (platform_boobs == nullptr) {
+    if (platform_draw_image == nullptr) {
         LOGF_ERR("Failed to load platform_draw_image.\n");
         return 0;
     }
@@ -213,7 +213,7 @@ vec2_t get_screen_size(void) {
  *    Draws the current frame.
  */
 void draw_frame(void) {
-    platform_boobs(_back_buffer->target);
+    platform_draw_image(_back_buffer->target);
     image_clear(_back_buffer->target, 0xFF000000);
     raster_clear_depth();
 }
