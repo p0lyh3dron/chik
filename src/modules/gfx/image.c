@@ -89,11 +89,11 @@ image_t *image_load_bmp(const s8 *file) {
     u64          i;
     bmp_header_t header;
     image_t     *image;
-    u8          *pData;
+    u8          *data;
 
-    u8 *pBuffer = file_read(file, &len);
+    u8 *buf = file_read(file, &len);
 
-    if (pBuffer == nullptr) {
+    if (buf == nullptr) {
         VLOGF_ERR("Could not read file %s.\n", file);
         return nullptr;
     }
@@ -101,23 +101,23 @@ image_t *image_load_bmp(const s8 *file) {
     /*
      *    Read the header.
      */
-    header = *(bmp_header_t *)pBuffer;
+    header = *(bmp_header_t *)buf;
 
-    header.width  = *(u32 *)(pBuffer + 0x12);
-    header.height = *(u32 *)(pBuffer + 0x16);
+    header.width  = *(u32 *)(buf + 0x12);
+    header.height = *(u32 *)(buf + 0x16);
 
-    header.offset = *(u32 *)(pBuffer + 0x0A);
+    header.offset = *(u32 *)(buf + 0x0A);
 
     if (*(u16 *)header.magic != 0x4D42) {
         VLOGF_ERR("File %s is not a bmp file.", file);
-        free(pBuffer);
+        free(buf);
         return NULL;
     }
 
     /*
      *    Read the image data.
      */
-    pData = (u8 *)(pBuffer + header.offset);
+    data = (u8 *)(buf + header.offset);
 
     /*
      *    Create the image.
@@ -126,7 +126,7 @@ image_t *image_load_bmp(const s8 *file) {
 
     if (image == NULL) {
         LOGF_ERR("Could not create image.");
-        free(pBuffer);
+        free(buf);
         return NULL;
     }
 
@@ -138,7 +138,7 @@ image_t *image_load_bmp(const s8 *file) {
          *    Don't touch.
          */
         memcpy((u8 *)image->buf + (header.width * i) * 4,
-               pData + (header.width * i) * 4 + i * padding, header.width * 4);
+               data + (header.width * i) * 4 + i * padding, header.width * 4);
         /*
          *    Literal magic.
          */
@@ -148,7 +148,7 @@ image_t *image_load_bmp(const s8 *file) {
     /*
      *    Free the buffer.
      */
-    free(pBuffer);
+    free(buf);
 
     return image;
 }
