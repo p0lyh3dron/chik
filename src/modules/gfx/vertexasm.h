@@ -40,6 +40,14 @@ vec4_t vertex_get_position(void *v);
  *    @param vec4_t pos       The position of the vertex.
  */
 void vertex_set_position(void *v, vec4_t pos);
+
+/*
+ *    Performs a perspective divide on a vertex.
+ *
+ *    @param void *v          The raw vertex data.
+ */
+void vertex_perspective_divide(void *v);
+
 /*
  *    Builds a new vertex given two vertices and a normalized difference.
  *

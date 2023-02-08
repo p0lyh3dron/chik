@@ -228,6 +228,10 @@ void mesh_draw(void *m) {
             memcpy(c0, new_verts + (j + 2) * VERTEX_ASM_MAX_VERTEX_SIZE,
                    buf->stride);
 
+            vertex_perspective_divide(a0);
+            vertex_perspective_divide(b0);
+            vertex_perspective_divide(c0);
+
             /*
              *    Draw the triangle.
              */
