@@ -11,6 +11,8 @@
  */
 #pragma once
 
+#define CHIK_GFX_DRAWABLE_MESH_MAX_ASSETS 16
+
 #include "libchik.h"
 
 #include "image.h"
@@ -26,6 +28,7 @@ typedef struct {
     vbuffer_t    *vbuf;
     void         *assets;
     unsigned long assets_size;
+    unsigned long assets_count;
 } mesh_t;
 
 /*
@@ -72,6 +75,26 @@ void mesh_set_vbuffer(void *m, void *v);
  *    @param unsigned long size   The size of the asset.
  */
 void mesh_append_asset(void *m, void *a, unsigned long size);
+
+/*
+ *    Sets the assets of a mesh.
+ *
+ *    @param void *m              The mesh.
+ *    @param void *a              The asset.
+ *    @param unsigned long size   The size of the asset.
+ *    @param unsigned long i      The index of the asset.
+ */
+void mesh_set_asset(void *m, void *a, unsigned long size, unsigned long i);
+
+/*
+ *    Returns the data of an asset.
+ *
+ *    @param void *a            The assets.
+ *    @param unsigned long i    The index of the asset.
+ * 
+ *    @return void *            The asset data.
+ */
+void *mesh_get_asset(void *a, unsigned long i);
 
 /*
  *    Draws a mesh.

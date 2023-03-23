@@ -96,6 +96,7 @@ void vbuffer_free(void *buf) {
  *    @return void *    The mesh.
  */
 void *mesh_create(void *v) {
+    unsigned long i;
     mesh_t *mesh = (mesh_t *)malloc(sizeof(mesh_t));
 
     if (mesh == (mesh_t *)0x0) {
@@ -103,9 +104,10 @@ void *mesh_create(void *v) {
         return (void *)0x0;
     }
 
-    mesh->vbuf        = (vbuffer_t *)v;
-    mesh->assets      = (void *)0x0;
-    mesh->assets_size = 0;
+    mesh->vbuf         = (vbuffer_t *)v;
+    mesh->assets       = (void *)0x0;
+    mesh->assets_size  = CHIK_GFX_DRAWABLE_MESH_MAX_ASSETS * sizeof(unsigned long);
+    mesh->assets_count = 0;
 
     return (void *)mesh;
 }
@@ -138,6 +140,10 @@ void mesh_set_vbuffer(void *m, void *v) {
  *    @param unsigned long size   The size of the asset.
  */
 void mesh_append_asset(void *m, void *a, unsigned long size) {
+    unsigned long j;
+    unsigned long index;
+    unsigned long offset = sizeof(unsigned long) * CHIK_GFX_DRAWABLE_MESH_MAX_ASSETS;
+
     if (m == (void *)0x0) {
         LOGF_ERR("Mesh is null.\n");
         return;
@@ -148,15 +154,64 @@ void mesh_append_asset(void *m, void *a, unsigned long size) {
     }
 
     mesh_t *mesh = (mesh_t *)m;
-    mesh->assets = realloc(mesh->assets, mesh->assets_size + size);
+    mesh->assets = realloc(mesh->assets, mesh->assets_size + size + offset);
 
     if (mesh->assets == (void *)0x0) {
         LOGF_ERR("Could not allocate mesh asset.\n");
         return;
     }
 
+    memcpy((void *)((unsigned long)mesh->assets + mesh->assets_count * sizeof(unsigned long)), &mesh->assets_size, sizeof(mesh->assets_size));
     memcpy((void *)((unsigned long)mesh->assets + mesh->assets_size), a, size);
     mesh->assets_size += size;
+    mesh->assets_count++;
+}
+
+/*
+ *    Sets the assets of a mesh.
+ *
+ *    @param void *m              The mesh.
+ *    @param void *a              The asset.
+ *    @param unsigned long size   The size of the asset.
+ *    @param unsigned long i      The index of the asset.
+ */
+void mesh_set_asset(void *m, void *a, unsigned long size, unsigned long i) {
+    unsigned long j;
+    unsigned long offset;
+
+    if (m == (void *)0x0) {
+        LOGF_ERR("Mesh is null.\n");
+        return;
+    }
+    if (a == (void *)0x0) {
+        LOGF_ERR("Asset is null.\n");
+        return;
+    }
+
+    mesh_t *mesh = (mesh_t *)m;
+
+    offset = *(unsigned long*)((unsigned long)mesh->assets + i * sizeof(unsigned long));
+
+    memcpy((void *)((unsigned long)mesh->assets + offset), a, size);
+}
+
+/*
+ *    Returns the data of an asset.
+ *
+ *    @param void *a            The assets.
+ *    @param unsigned long i    The index of the asset.
+ * 
+ *    @return void *            The asset data.
+ */
+void *mesh_get_asset(void *a, unsigned long i) {
+    if (a == (void *)0x0) {
+        LOGF_ERR("Assets are null.\n");
+        return (void *)0x0;
+    }
+
+    unsigned long offset = *(unsigned long*)((unsigned long)a + i * sizeof(unsigned long));
+
+    return (void*)((unsigned long)a + offset);
 }
 
 /*
@@ -235,7 +290,7 @@ void mesh_draw(void *m) {
             /*
              *    Draw the triangle.
              */
-            triangle_t *pTri = (triangle_t *)malloc(sizeof(triangle_t));
+            /*triangle_t *pTri = (triangle_t *)malloc(sizeof(triangle_t));
             pTri->v0         = malloc(VERTEX_ASM_MAX_VERTEX_SIZE);
             pTri->v1         = malloc(VERTEX_ASM_MAX_VERTEX_SIZE);
             pTri->v2         = malloc(VERTEX_ASM_MAX_VERTEX_SIZE);
@@ -244,7 +299,8 @@ void mesh_draw(void *m) {
             memcpy(pTri->v0, a0, VERTEX_ASM_MAX_VERTEX_SIZE);
             memcpy(pTri->v1, b0, VERTEX_ASM_MAX_VERTEX_SIZE);
             memcpy(pTri->v2, c0, VERTEX_ASM_MAX_VERTEX_SIZE);
-            threadpool_submit(raster_rasterize_triangle_thread, (void *)pTri);
+            threadpool_submit(raster_rasterize_triangle_thread, (void *)pTri);*/
+            raster_rasterize_triangle(a0, b0, c0, mesh->assets);
         }
     }
     threadpool_wait();
