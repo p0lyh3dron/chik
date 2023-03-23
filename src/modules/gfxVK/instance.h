@@ -25,6 +25,11 @@ void instance_init(void);
 void instance_pick_gpu(unsigned long gpu);
 
 /*
+ *    Performs the rest of the instance initialization.
+ */
+void instance_finish_init(void);
+
+/*
  *    Destroys the vulkan instance.
  */
 void instance_destroy(void);

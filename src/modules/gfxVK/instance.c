@@ -18,7 +18,7 @@
 
 #define CHIK_GFXVK_INSTANCE_LAYERS 1
 
-const char *_instance_device_extensions[CHIK_GFXVK_INSTANCE_DEVICE_EXTENSIONS] = (const char *[]){
+const char *_device_extensions[CHIK_GFXVK_INSTANCE_DEVICE_EXTENSIONS] = (const char *[]){
     VK_KHR_SWAPCHAIN_EXTENSION_NAME,
 };
 
@@ -29,6 +29,12 @@ const char *_instance_layers[CHIK_GFXVK_INSTANCE_LAYERS] = (const char *[]){
 VkInstance               _instance;
 VkPhysicalDevice         _physical_device;
 VkDebugUtilsMessengerEXT _debug_messenger;
+VkDevice                 _device;
+VkSurfaceKHR             _surface;
+long                     _graphics_queue_idx;
+long                     _present_queue_idx;
+VkQueue                  _graphics_queue;
+VkQueue                  _present_queue;
 
 SDL_Window *_win;
 
@@ -92,7 +98,7 @@ unsigned int instance_device_supports_extensions(VkPhysicalDevice device) {
         unsigned int found = 0;
 
         for (unsigned int j = 0; j < extension_count; j++) {
-            if (strcmp(_instance_device_extensions[i], extensions[j].extensionName) == 0) {
+            if (strcmp(_device_extensions[i], extensions[j].extensionName) == 0) {
                 found = 1;
                 break;
             }
@@ -219,7 +225,7 @@ void instance_init(void) {
         .applicationVersion = VK_MAKE_VERSION(version.x, version.y, version.z),
         .pEngineName        = app_get_engine_name(),
         .engineVersion      = VK_MAKE_VERSION(engine_version.x, engine_version.y, engine_version.z),
-        .apiVersion         = VK_API_VERSION_1_3,
+        .apiVersion         = VK_API_VERSION_1_0,
     };
     VkInstanceCreateInfo instance_info = {
         .sType                   = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO,
@@ -283,9 +289,98 @@ void instance_pick_gpu(unsigned long gpu) {
 }
 
 /*
+ *    Performs the rest of the instance initialization.
+ */
+void instance_finish_init(void) {
+    SDL_Vulkan_CreateSurface(_win, _instance, &_surface);
+    if (_surface == VK_NULL_HANDLE) {
+        LOGF_ERR("Failed to create vulkan surface.\n");
+        return;
+    }
+
+    unsigned int queue_family_count = 0;
+    vkGetPhysicalDeviceQueueFamilyProperties(_physical_device, &queue_family_count, (VkQueueFamilyProperties *)0x0);
+
+    VkQueueFamilyProperties *queue_families = (VkQueueFamilyProperties *)malloc(sizeof(VkQueueFamilyProperties) * queue_family_count);
+    vkGetPhysicalDeviceQueueFamilyProperties(_physical_device, &queue_family_count, queue_families);
+
+    _graphics_queue_idx = -1;
+    _present_queue_idx  = -1;
+
+    for (unsigned int i = 0; i < queue_family_count; i++) {
+        if (queue_families[i].queueFlags & VK_QUEUE_GRAPHICS_BIT)
+            _graphics_queue_idx = i;
+
+        VkBool32 present_support = VK_FALSE;
+        vkGetPhysicalDeviceSurfaceSupportKHR(_physical_device, i, _surface, &present_support);
+
+        if (present_support)
+            _present_queue_idx = i;
+
+        if (_graphics_queue_idx != -1 && _present_queue_idx != -1)
+            break;
+    }
+
+    free(queue_families);
+
+    if (_graphics_queue_idx == -1 || _present_queue_idx == -1) {
+        LOGF_ERR("Failed to find queue families.\n");
+        return;
+    }
+
+    const float queue_priority = 1.0f;
+    VkDeviceQueueCreateInfo queue_infos[2] = {0};
+    queue_infos[0] = (VkDeviceQueueCreateInfo){
+        .sType            = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO,
+        .pNext            = (const void *)0x0,
+        .flags            = 0,
+        .queueFamilyIndex = _graphics_queue_idx,
+        .queueCount       = 1,
+        .pQueuePriorities = &queue_priority,
+    };
+
+    queue_infos[1] = (VkDeviceQueueCreateInfo){
+        .sType            = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO,
+        .pNext            = (const void *)0x0,
+        .flags            = 0,
+        .queueFamilyIndex = _present_queue_idx,
+        .queueCount       = 1,
+        .pQueuePriorities = &queue_priority,
+    };
+
+    VkPhysicalDeviceFeatures device_features = {0};
+    device_features.samplerAnisotropy = VK_TRUE;
+
+    VkDeviceCreateInfo device_info = {
+        .sType                   = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO,
+        .pNext                   = (const void *)0x0,
+        .flags                   = 0,
+        .queueCreateInfoCount    = 2,
+        .pQueueCreateInfos       = queue_infos,
+        .enabledLayerCount       = 0,
+        .ppEnabledLayerNames     = (const char **)0x0,
+        .enabledExtensionCount   = CHIK_GFXVK_INSTANCE_DEVICE_EXTENSIONS,
+        .ppEnabledExtensionNames = _device_extensions,
+        .pEnabledFeatures        = &device_features,
+    };
+
+    VkResult result = vkCreateDevice(_physical_device, &device_info, (const void *)0x0, &_device);
+
+    if (result != VK_SUCCESS) {
+        LOGF_ERR("Failed to create vulkan device.\n");
+        return;
+    }
+
+    vkGetDeviceQueue(_device, _graphics_queue_idx, 0, &_graphics_queue);
+    vkGetDeviceQueue(_device, _present_queue_idx,  0, &_present_queue);
+}
+
+/*
  *    Destroys the vulkan instance.
  */
 void instance_destroy(void) {
+    vkDestroyDevice(_device, (const void *)0x0);
+    vkDestroySurfaceKHR(_instance, _surface, (const void *)0x0);
     if (args_has("--vklayers"))
         instance_destroy_layers();
 
