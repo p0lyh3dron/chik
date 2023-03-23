@@ -7,7 +7,7 @@ file( GLOB_RECURSE SOURCES CONFIGURE_DEPENDS *.c )
 get_property( CHIK_GAMES GLOBAL PROPERTY CHIK_GAMES )
 get_property( LIBCHIK GLOBAL PROPERTY LIBCHIK )
 
-link_libraries( LibChik SDL2 )
+link_libraries( LibChik SDL2 vulkan )
 
 add_library( Chik_GFXVK SHARED ${SOURCES} )
 
