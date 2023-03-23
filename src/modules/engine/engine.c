@@ -84,8 +84,8 @@ u32 engine_init(const s8 *modules, ...) {
 
         if (h == nullptr) {
             VLOGF_FAT("Unable to open "
-                      "module: %s\n",
-                      modules);
+                      "module: %s: %s\n",
+                      modules, dl_error());
             result = 0;
             break;
         }
