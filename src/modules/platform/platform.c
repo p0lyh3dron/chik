@@ -190,7 +190,7 @@ u32 surface_init(void) {
      */
     _win = SDL_CreateWindow(pTitle, SDL_WINDOWPOS_CENTERED,
                             SDL_WINDOWPOS_CENTERED, width, height,
-                            SDL_WINDOW_SHOWN | SDL_WINDOW_RESIZABLE);
+                            SDL_WINDOW_SHOWN | SDL_WINDOW_RESIZABLE | SDL_WINDOW_VULKAN);
     if (_win == nullptr) {
         VLOGF_ERR("Window could not be created! "
                   "SDL_Error: %s\n",
@@ -198,32 +198,43 @@ u32 surface_init(void) {
         return 0;
     }
 
-    /*
-     *    Create the renderer.
-     */
-    _rend = SDL_CreateRenderer(_win, -1, SDL_RENDERER_ACCELERATED);
+    if (args_has("--software-renderer")) {
+        /*
+        *    Create the renderer.
+        */
+        _rend = SDL_CreateRenderer(_win, -1, SDL_RENDERER_ACCELERATED);
 
-    if (_rend == nullptr) {
-        VLOGF_ERR("Renderer could not be created! "
-                  "SDL_Error: %s\n",
-                  SDL_GetError());
-        return 0;
-    }
+        if (_rend == nullptr) {
+            VLOGF_ERR("Renderer could not be created! "
+                    "SDL_Error: %s\n",
+                    SDL_GetError());
+            return 0;
+        }
 
-    /*
-     *    Create the texture.
-     */
-    _tex = SDL_CreateTexture(_rend, SDL_PIXELFORMAT_ARGB8888,
-                             SDL_TEXTUREACCESS_STREAMING, width, height);
-    if (_tex == nullptr) {
-        VLOGF_ERR("Texture could not be created! "
-                  "SDL_Error: %s\n",
-                  SDL_GetError());
-        return 0;
+        /*
+        *    Create the texture.
+        */
+        _tex = SDL_CreateTexture(_rend, SDL_PIXELFORMAT_ARGB8888,
+                                SDL_TEXTUREACCESS_STREAMING, width, height);
+        if (_tex == nullptr) {
+            VLOGF_ERR("Texture could not be created! "
+                    "SDL_Error: %s\n",
+                    SDL_GetError());
+            return 0;
+        }
     }
 #endif /* USE_SDL  */
     return 1;
 }
+
+#if USE_SDL
+/*
+ *    Returns the SDL window.
+ */
+SDL_Window *surface_get_window(void) {
+    return _win;
+}
+#endif /* USE_SDL  */
 
 /*
  *    Cleans up SDL.
