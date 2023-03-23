@@ -46,24 +46,24 @@ void raster_clear_depth(void);
 /*
  *    Check a pixel against the depth buffer.
  *
- *    @param    u32              The x coordinate of the pixel.
- *    @param    u32              The y coordinate of the pixel.
- *    @param    f32              The depth of the pixel.
+ *    @param    unsigned int              The x coordinate of the pixel.
+ *    @param    unsigned int              The y coordinate of the pixel.
+ *    @param    float              The depth of the pixel.
  *
- *    @return   u32              Whether the pixel should be drawn.
+ *    @return   unsigned int              Whether the pixel should be drawn.
  */
-u32 raster_check_depth(u32 sX, u32 sY, f32 sDepth);
+unsigned int raster_check_depth(unsigned int sX, unsigned int sY, float sDepth);
 
 /*
  *    Draw a scanline.
  *
- *    @param s32           The screen x coordinate of the start of the scanline.
- *    @param s32           The screen x coordinate of the end of the scanline.
- *    @param s32           The screen y coordinate of the scanline.
+ *    @param int           The screen x coordinate of the start of the scanline.
+ *    @param int           The screen x coordinate of the end of the scanline.
+ *    @param int           The screen y coordinate of the scanline.
  *    @param void *        The first vertex of the scanline.
  *    @param void *        The second vertex of the scanline.
  */
-void raster_draw_scanline(s32 sX1, s32 sX2, s32 sY, void *spV1, void *spV2, void *assets);
+void raster_draw_scanline(int sX1, int sX2, int sY, void *spV1, void *spV2, void *assets);
 
 /*
  *    Rasterizes a single triangle.

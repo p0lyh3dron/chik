@@ -18,34 +18,34 @@
 
 typedef struct {
     dl_handle_t handle;
-    const s8   *name;
-    u32 (*update)(f32 sDT);
-    u32 (*exit)(void);
+    const char *name;
+    unsigned int (*update)(float sDT);
+    unsigned int (*exit)(void);
 } module_t;
 
 /*
  *    Initializes the engine with the specified modules.
  *
- *    @param const s8 *modules    The name of the modules to initialize.
+ *    @param const char *modules    The name of the modules to initialize.
  *    @param ...                  The other modules to initialize.
  *
- *    @return u32          Returns 0 on failure, 1 on success.
+ *    @return unsigned int          Returns 0 on failure, 1 on success.
  */
-u32 engine_init(const s8 *modules, ...);
+unsigned int engine_init(const char *modules, ...);
 
 /*
  *    Updates the shell.
  *
- *    @return u32           Returns 0 on failure, 1 on success.
+ *    @return unsigned int           Returns 0 on failure, 1 on success.
  */
-u32 engine_update_shell(void);
+unsigned int engine_update_shell(void);
 
 /*
  *    Updates the engine.
  *
- *    @return u32           Returns 0 on failure, 1 on success.
+ *    @return unsigned int           Returns 0 on failure, 1 on success.
  */
-u32 engine_update(void);
+unsigned int engine_update(void);
 
 /*
  *    Frees the engine.

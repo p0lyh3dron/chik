@@ -22,13 +22,13 @@
  *    Creates a vertex buffer.
  *
  *    @param void *v              The vertex data.
- *    @param u32 size             The size of the vertex data.
- *    @param u32 stride           The stride of the vertex data.
+ *    @param unsigned int size             The size of the vertex data.
+ *    @param unsigned int stride           The stride of the vertex data.
  *    @param v_layout_t layout    The layout of the vertex data.
  *
  *    @return void *              The vertex buffer.
  */
-void *vbuffer_create(void *v, u32 size, u32 stride, v_layout_t layout) {
+void *vbuffer_create(void *v, unsigned int size, unsigned int stride, v_layout_t layout) {
     vbuffer_t *buf;
 
     if (v == nullptr) {
@@ -72,7 +72,7 @@ void *vbuffer_create(void *v, u32 size, u32 stride, v_layout_t layout) {
  *    @param void *buf   The vertex buffer to free.
  */
 void vbuffer_free(void *buf) {
-    if (buf == (void*)0x0) {
+    if (buf == (void *)0x0) {
         LOGF_ERR("Vertex buffer pointer is null.\n");
         return;
     }
@@ -97,7 +97,7 @@ void vbuffer_free(void *buf) {
  */
 void *mesh_create(void *v) {
     unsigned long i;
-    mesh_t *mesh = (mesh_t *)malloc(sizeof(mesh_t));
+    mesh_t       *mesh = (mesh_t *)malloc(sizeof(mesh_t));
 
     if (mesh == (mesh_t *)0x0) {
         LOGF_ERR("Could not allocate mesh.\n");
@@ -129,7 +129,7 @@ void mesh_set_vbuffer(void *m, void *v) {
     }
 
     mesh_t *mesh = (mesh_t *)m;
-    mesh->vbuf   = (vbuffer_t* )v;
+    mesh->vbuf   = (vbuffer_t *)v;
 }
 
 /*
@@ -190,7 +190,7 @@ void mesh_set_asset(void *m, void *a, unsigned long size, unsigned long i) {
 
     mesh_t *mesh = (mesh_t *)m;
 
-    offset = *(unsigned long*)((unsigned long)mesh->assets + i * sizeof(unsigned long));
+    offset = *(unsigned long *)((unsigned long)mesh->assets + i * sizeof(unsigned long));
 
     memcpy((void *)((unsigned long)mesh->assets + offset), a, size);
 }
@@ -200,7 +200,7 @@ void mesh_set_asset(void *m, void *a, unsigned long size, unsigned long i) {
  *
  *    @param void *a            The assets.
  *    @param unsigned long i    The index of the asset.
- * 
+ *
  *    @return void *            The asset data.
  */
 void *mesh_get_asset(void *a, unsigned long i) {
@@ -209,9 +209,9 @@ void *mesh_get_asset(void *a, unsigned long i) {
         return (void *)0x0;
     }
 
-    unsigned long offset = *(unsigned long*)((unsigned long)a + i * sizeof(unsigned long));
+    unsigned long offset = *(unsigned long *)((unsigned long)a + i * sizeof(unsigned long));
 
-    return (void*)((unsigned long)a + offset);
+    return (void *)((unsigned long)a + offset);
 }
 
 /*
@@ -234,14 +234,14 @@ void mesh_draw(void *m) {
         return;
     }
 
-    u32    num_verts = buf->size / buf->stride;
+    unsigned int num_verts = buf->size / buf->stride;
 
     vertexasm_set_layout(buf->layout);
 
-    for (u32 i = 0; i < num_verts; i += 3) {
-        u8 a0[VERTEX_ASM_MAX_VERTEX_SIZE];
-        u8 b0[VERTEX_ASM_MAX_VERTEX_SIZE];
-        u8 c0[VERTEX_ASM_MAX_VERTEX_SIZE];
+    for (unsigned int i = 0; i < num_verts; i += 3) {
+        unsigned char a0[VERTEX_ASM_MAX_VERTEX_SIZE];
+        unsigned char b0[VERTEX_ASM_MAX_VERTEX_SIZE];
+        unsigned char c0[VERTEX_ASM_MAX_VERTEX_SIZE];
 
         void *a = buf->buf + (i + 0) * buf->stride;
         void *b = buf->buf + (i + 1) * buf->stride;
@@ -268,14 +268,14 @@ void mesh_draw(void *m) {
          *    linear interpolation to find the point on the triangle
          *    that is inside the view frustum.
          */
-        s32 clipped_vertices = 0;
+        int clipped_vertices = 0;
 
-        u8 *new_verts = cull_clip_triangle(a0, b0, c0, &clipped_vertices, 1);
+        unsigned char *new_verts = cull_clip_triangle(a0, b0, c0, &clipped_vertices, 1);
 
         /*
          *    Draw the clipped vertices.
          */
-        for (s64 j = 0; j < clipped_vertices - 2; ++j) {
+        for (long j = 0; j < clipped_vertices - 2; ++j) {
             memcpy(a0, new_verts + (0 + 0) * VERTEX_ASM_MAX_VERTEX_SIZE,
                    buf->stride);
             memcpy(b0, new_verts + (j + 1) * VERTEX_ASM_MAX_VERTEX_SIZE,

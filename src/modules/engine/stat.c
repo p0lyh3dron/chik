@@ -30,9 +30,9 @@ void stat_start_frame() {
      *    frame count, and bounds it to not exceed
      *    the maximum number of averaging frames.
      */
-    _stat.time_diff = _stat.time_diff;
-    _stat.time_diff = tv.tv_sec * 1000000 + tv.tv_usec;
-    _stat.time_diff = _stat.time_diff - _stat.time_diff;
+    _stat.time_diff                                      = _stat.time_diff;
+    _stat.time_diff                                      = tv.tv_sec * 1000000 + tv.tv_usec;
+    _stat.time_diff                                      = _stat.time_diff - _stat.time_diff;
     _stat.frame_times[_stat.frames++ % FRAMES_AVG_COUNT] = _stat.time_diff;
 
     /*
@@ -83,40 +83,40 @@ stat_t *stat_get() { return &_stat; }
  *    Returns the difference between the current time and the
  *    previous time.
  *
- *    @return s64    The difference between the current time and the
+ *    @return long    The difference between the current time and the
  *                   previous time in microseconds.
  */
-s64 stat_get_time_diff() { return _stat.time_diff; }
+long stat_get_time_diff() { return _stat.time_diff; }
 
 /*
  *    Returns the frame rate.
  *
- *    @return f32    The frame rate.
+ *    @return float    The frame rate.
  */
-f32 stat_get_frame_rate() { return _stat.frame_rate; }
+float stat_get_frame_rate() { return _stat.frame_rate; }
 
 /*
  *    Returns the number of frames.
  *
- *    @return s64    The number of frames.
+ *    @return long    The number of frames.
  */
-s64 stat_get_frames() { return _stat.frames; }
+long stat_get_frames() { return _stat.frames; }
 
 /*
  *    Returns the start time.
  *
- *    @return s64    The start time.
+ *    @return long    The start time.
  */
-s64 stat_get_start_time() { return _stat.start_time; }
+long stat_get_start_time() { return _stat.start_time; }
 
 /*
  *    Dumps the engine statistics to a file.
  *
- *    @param const s8 *file    The file name.
+ *    @param const char *file    The file name.
  *
- *    @return u32          Returns 0 on failure, 1 on success.
+ *    @return unsigned int          Returns 0 on failure, 1 on success.
  */
-u32 stat_dump(const s8 *file) {
+unsigned int stat_dump(const char *file) {
     FILE *fp = fopen(file, "w");
     if (fp == nullptr) {
         return 0;

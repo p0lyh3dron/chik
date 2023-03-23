@@ -10,29 +10,29 @@
  */
 #include "audio.h"
 
-u32 _sample_width = 0;
-u32 _sample_rate  = 0;
-u32 _num_channels = 0;
-u32 _num_samples  = 0;
+unsigned int _sample_width = 0;
+unsigned int _sample_rate  = 0;
+unsigned int _num_channels = 0;
+unsigned int _num_samples  = 0;
 
 resource_t *_audio_resources = nullptr;
 
 audio_t *_audio[CHIK_AUDIO_MAX_AUDIO_HANDLES] = {nullptr};
 
-u8 *_audio_buf = nullptr;
+unsigned char *_audio_buf = nullptr;
 
-u32 audio_init(void);
+unsigned int audio_init(void);
 
-u32 audio_update(f32 dt);
+unsigned int audio_update(float dt);
 
-u32 audio_shutdown(void);
+unsigned int audio_shutdown(void);
 
 CHIK_MODULE(audio_init, audio_update, audio_shutdown)
 
-u32 (*platform_write_sound)(s8 *)                           = 0;
-void (*platform_get_sound_info)(u32 *, u32 *, u32 *, u32 *) = 0;
+unsigned int (*platform_write_sound)(char *)                                                    = 0;
+void (*platform_get_sound_info)(unsigned int *, unsigned int *, unsigned int *, unsigned int *) = 0;
 
-u32 audio_init(void) {
+unsigned int audio_init(void) {
     *(void **)(&platform_write_sound) =
         engine_load_function("platform_write_sound");
     *(void **)(&platform_get_sound_info) =
@@ -59,7 +59,7 @@ u32 audio_init(void) {
 
     platform_get_sound_info(&_sample_width, &_sample_rate, &_num_channels,
                             &_num_samples);
-    _audio_buf = (u8 *)malloc(_sample_width * _num_channels * _num_samples);
+    _audio_buf = (unsigned char *)malloc(_sample_width * _num_channels * _num_samples);
     if (_audio_buf == nullptr) {
         LOGF_ERR("Failed to allocate audio buffer!\n");
         return 0;
@@ -68,9 +68,9 @@ u32 audio_init(void) {
     return 1;
 }
 
-u32 audio_update(f32 dt) {
-    u64      i;
-    audio_t *audio;
+unsigned int audio_update(float dt) {
+    unsigned long i;
+    audio_t      *audio;
 
     /*
      *    Write audio data to the sound buffer.
@@ -86,7 +86,7 @@ u32 audio_update(f32 dt) {
     return 1;
 }
 
-u32 audio_shutdown(void) {
+unsigned int audio_shutdown(void) {
     free(_audio_buf);
     resource_destroy(_audio_resources);
 
@@ -99,8 +99,8 @@ u32 audio_shutdown(void) {
  *    @return audio_t *    The audio pointer.
  */
 audio_t *audio_ptr_init(void) {
-    u64      i;
-    audio_t *pAudio = (audio_t *)malloc(sizeof(audio_t));
+    unsigned long i;
+    audio_t      *pAudio = (audio_t *)malloc(sizeof(audio_t));
 
     if (pAudio == nullptr) {
         LOGF_ERR("Failed to allocate audio!\n");
@@ -125,13 +125,13 @@ audio_t *audio_ptr_init(void) {
 /*
  *    Populates a buffer with WAV data.
  *
- *    @param const s8 *path    The path to the WAV file.
+ *    @param const char *path    The path to the WAV file.
  *
- *    @return u8 *         The buffer.
+ *    @return unsigned char *         The buffer.
  */
-u8 *audio_read_wav(const s8 *path) {
-    u32 len  = 0;
-    u8 *data = file_read(path, &len);
+unsigned char *audio_read_wav(const char *path) {
+    unsigned int   len  = 0;
+    unsigned char *data = file_read(path, &len);
 
     if (data == nullptr) {
         LOGF_ERR("Failed to read WAV file!\n");
@@ -148,12 +148,12 @@ u8 *audio_read_wav(const s8 *path) {
 /*
  *    Creates an audio handle from a file on disk.
  *
- *    @param const s8 *path    The path to the audio file.
- *    @param u32 loop          Whether the audio should loop.
+ *    @param const char *path    The path to the audio file.
+ *    @param unsigned int loop          Whether the audio should loop.
  *
  *    @return trap_t     The handle to the audio file.
  */
-trap_t audio_create_from_file(const s8 *path, u32 loop) {
+trap_t audio_create_from_file(const char *path, unsigned int loop) {
     trap_t   h;
     audio_t *a = audio_ptr_init();
 
@@ -187,9 +187,9 @@ trap_t audio_create_from_file(const s8 *path, u32 loop) {
  *
  *    @param trap_t audio     The handle to the audio file.
  *
- *    @return u32         Whether the audio was successfully played.
+ *    @return unsigned int         Whether the audio was successfully played.
  */
-u32 audio_play(trap_t audio) {
+unsigned int audio_play(trap_t audio) {
     audio_t *a = resource_get(_audio_resources, audio);
 
     if (a == nullptr) {
@@ -206,9 +206,9 @@ u32 audio_play(trap_t audio) {
  *
  *    @param trap_t audio    The handle to the audio file.
  *
- *    @return u32         Whether the audio was successfully stopped.
+ *    @return unsigned int         Whether the audio was successfully stopped.
  */
-u32 audio_stop(trap_t audio) {
+unsigned int audio_stop(trap_t audio) {
     audio_t *a = resource_get(_audio_resources, audio);
 
     if (a == nullptr) {
@@ -226,6 +226,6 @@ u32 audio_stop(trap_t audio) {
  *    @param vec3_t listen_pos      The position of the listener.
  *    @param vec3_t source_pos      The position of the sound source.
  *
- *    @return u32         Whether the listener position was successfully set.
+ *    @return unsigned int         Whether the listener position was successfully set.
  */
-u32 audio_set_listener_position(vec3_t listen_pos, vec3_t source_pos) {}
+unsigned int audio_set_listener_position(vec3_t listen_pos, vec3_t source_pos) {}

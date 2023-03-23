@@ -14,15 +14,15 @@
 #include "camera.h"
 #include "vertexasm.h"
 
-frustum_t _frustum;
-u32       _vert_size = 0;
+frustum_t    _frustum;
+unsigned int _vert_size = 0;
 
 /*
  *    Sets the current vertex size.
  *
- *    @param u32 size           The size of the vertex data.
+ *    @param unsigned int size           The size of the vertex data.
  */
-void cull_set_vertex_size(u32 size) { _vert_size = size; }
+void cull_set_vertex_size(unsigned int size) { _vert_size = size; }
 
 /*
  *    Clips a pair of vertices.
@@ -31,22 +31,22 @@ void cull_set_vertex_size(u32 size) { _vert_size = size; }
  *    @param void          *v0       The first vertex.
  *    @param void          *v1       The second vertex.
  *    @param void          *ret      The clipped vertex.
- *    @param u32            first    True if this is the first vertex.
+ *    @param unsigned int            first    True if this is the first vertex.
  *
- *    @return u32               Bitmask of the clip flags.
+ *    @return unsigned int               Bitmask of the clip flags.
  *                              0x0 = keep the first vertex.
  *                              0x1 = modify first vertex with the clipped.
  *                              0x2 = modify the first vertex of the array.
  *
  */
-u32 cull_clip_vertex(plane_t *plane, void *v0, void *v1, void *ret, u32 first) {
-    f32 t;
+unsigned int cull_clip_vertex(plane_t *plane, void *v0, void *v1, void *ret, unsigned int first) {
+    float t;
 
     vec4_t p0 = vertex_get_position(v0);
     vec4_t p1 = vertex_get_position(v1);
 
-    f32 outside      = plane_distance(plane, (vec3_t *)&p0);
-    f32 next_outside = plane_distance(plane, (vec3_t *)&p1);
+    float outside      = plane_distance(plane, (vec3_t *)&p0);
+    float next_outside = plane_distance(plane, (vec3_t *)&p1);
     /*
      *    Check if the triangle is outside the frustum.
      */
@@ -105,11 +105,11 @@ u32 cull_clip_vertex(plane_t *plane, void *v0, void *v1, void *ret, u32 first) {
  *
  *    @param void           *v        The vertex to insert.
  *    @param void          **list     The list of vertices.
- *    @param u32             idx      The target index.
- *    @param u32             count    The number of vertices in the list.
- *    @param u32             len      The list size.
+ *    @param unsigned int             idx      The target index.
+ *    @param unsigned int             count    The number of vertices in the list.
+ *    @param unsigned int             len      The list size.
  */
-void cull_insert_vertex(void *v, void **list, u32 idx, u32 count, u32 len) {
+void cull_insert_vertex(void *v, void **list, unsigned int idx, unsigned int count, unsigned int len) {
     unsigned long i;
 
     if (idx >= len) {
@@ -125,25 +125,25 @@ void cull_insert_vertex(void *v, void **list, u32 idx, u32 count, u32 len) {
      *    Shift the vertices down.
      */
     for (i = count; i > idx; i--) {
-        memcpy((u8 *)list + i * VERTEX_ASM_MAX_VERTEX_SIZE,
-               (u8 *)list + (i - 1) * VERTEX_ASM_MAX_VERTEX_SIZE, _vert_size);
+        memcpy((unsigned char *)list + i * VERTEX_ASM_MAX_VERTEX_SIZE,
+               (unsigned char *)list + (i - 1) * VERTEX_ASM_MAX_VERTEX_SIZE, _vert_size);
     }
 
     /*
      *    Insert the vertex.
      */
-    memcpy((u8 *)list + idx * VERTEX_ASM_MAX_VERTEX_SIZE, v, _vert_size);
+    memcpy((unsigned char *)list + idx * VERTEX_ASM_MAX_VERTEX_SIZE, v, _vert_size);
 }
 
 /*
  *    Removes a vertex from a clipped vertex list.
  *
- *    @param u32             idx      The index to remove.
+ *    @param unsigned int             idx      The index to remove.
  *    @param void          **list     The list of vertices.
- *    @param u32             count    The number of vertices in the list.
- *    @param u32             len     The list size.
+ *    @param unsigned int             count    The number of vertices in the list.
+ *    @param unsigned int             len     The list size.
  */
-void cull_remove_vertex(u32 idx, void **list, u32 len, u32 sSize) {
+void cull_remove_vertex(unsigned int idx, void **list, unsigned int len, unsigned int sSize) {
     unsigned long i;
 
     if (idx >= sSize) {
@@ -159,11 +159,11 @@ void cull_remove_vertex(u32 idx, void **list, u32 len, u32 sSize) {
      */
     for (i = idx; i < len - 1; i++) {
         /*
-         *    The scope doesn't seem to know that void **list is a u8[][], so
+         *    The scope doesn't seem to know that void **list is a unsigned char[][], so
          * we'll use direct memory access. I hope this works on other platforms.
          */
-        memcpy((u8 *)list + i * VERTEX_ASM_MAX_VERTEX_SIZE,
-               (u8 *)list + (i + 1) * VERTEX_ASM_MAX_VERTEX_SIZE, _vert_size);
+        memcpy((unsigned char *)list + i * VERTEX_ASM_MAX_VERTEX_SIZE,
+               (unsigned char *)list + (i + 1) * VERTEX_ASM_MAX_VERTEX_SIZE, _vert_size);
     }
 }
 
@@ -171,8 +171,8 @@ void cull_remove_vertex(u32 idx, void **list, u32 len, u32 sSize) {
  *    Creates the view frustum.
  */
 void cull_create_frustum() {
-    f32 n = 0.1;
-    f32 f = 100;
+    float n = 0.1;
+    float f = 100;
 
     vec2_t nsw = {-n, -n};
     vec2_t nse = {n, -n};
@@ -272,25 +272,25 @@ void cull_create_frustum() {
  *    @param void *v0             The first vertex.
  *    @param void *v1             The second vertex.
  *    @param void *v2             The third vertex.
- *    @param s32  *num_verts      The number of new vertices.
- *    @param u32   is_clipped     Whether or not to clip the triangle.
+ *    @param int  *num_verts      The number of new vertices.
+ *    @param unsigned int   is_clipped     Whether or not to clip the triangle.
  *
  *    @return void *    The new vertices.
  */
-void *cull_clip_triangle(void *v0, void *v1, void *v2, s32 *num_verts,
-                         u32 is_clipped) {
+void *cull_clip_triangle(void *v0, void *v1, void *v2, int *num_verts,
+                         unsigned int is_clipped) {
     unsigned long i;
     unsigned long j;
-    u32           remove_first;
-    u32           ret;
+    unsigned int  remove_first;
+    unsigned int  ret;
 
     /*
      *    TODO:    This used to be eight, but I changed it to sixteen
      *             because for some reason, eleven clipped vertices
      *             were being returned, overwriting platform_draw_image
      */
-    static u8 vertices[16 * VERTEX_ASM_MAX_VERTEX_SIZE];
-    u8        v[VERTEX_ASM_MAX_VERTEX_SIZE];
+    static unsigned char vertices[16 * VERTEX_ASM_MAX_VERTEX_SIZE];
+    unsigned char        v[VERTEX_ASM_MAX_VERTEX_SIZE];
 
     *num_verts = 3;
 

@@ -20,19 +20,19 @@
 
 module_t _modules[ENGINE_MAX_MODULES] = {0};
 
-s8 *(*plat_read_stdin)() = nullptr;
+char *(*plat_read_stdin)() = nullptr;
 
-s8  _shl_cmds[CHIK_ENGINE_SHELL_MAX_COMMAND_LENGTH] = {0};
-s32 _shl_cmd_indx                                   = 0;
+char _shl_cmds[CHIK_ENGINE_SHELL_MAX_COMMAND_LENGTH] = {0};
+int  _shl_cmd_indx                                   = 0;
 
 /*
  *    Loads a function from the engine for external use.
  *
- *    @param const s8 *name    The name of the function to load.
+ *    @param const char *name    The name of the function to load.
  *
  *    @return void *       Returns a pointer to the function.
  */
-void *engine_load_function(const s8 *name) {
+void *engine_load_function(const char *name) {
     unsigned long i;
     void         *fun;
 
@@ -54,20 +54,20 @@ void *engine_load_function(const s8 *name) {
 /*
  *    Initializes the engine with the specified modules.
  *
- *    @param const s8 *modules    The name of the modules to initialize.
+ *    @param const char *modules    The name of the modules to initialize.
  *    @param ...                  The other modules to initialize.
  *
- *    @return u32          Returns 0 on failure, 1 on success.
+ *    @return unsigned int          Returns 0 on failure, 1 on success.
  */
-u32 engine_init(const s8 *modules, ...) {
-    va_list     args;
-    dl_handle_t h;
-    u32         result      = 1;
-    u32         module_indx = 0;
-    stat_t     *stat        = stat_get();
-    u32 (*entry)(void *);
-    u32 (*update)(f32);
-    u32 (*exit)(void);
+unsigned int engine_init(const char *modules, ...) {
+    va_list      args;
+    dl_handle_t  h;
+    unsigned int result      = 1;
+    unsigned int module_indx = 0;
+    stat_t      *stat        = stat_get();
+    unsigned int (*entry)(void *);
+    unsigned int (*update)(float);
+    unsigned int (*exit)(void);
 
     /*
      *    Set the start time.
@@ -83,9 +83,7 @@ u32 engine_init(const s8 *modules, ...) {
         h = dl_open(modules);
 
         if (h == nullptr) {
-            VLOGF_FAT("Unable to open "
-                      "module: %s: %s\n",
-                      modules, dl_error());
+            VLOGF_FAT("Unable to open module: %s: %s\n", modules, dl_error());
             result = 0;
             break;
         }
@@ -96,33 +94,25 @@ u32 engine_init(const s8 *modules, ...) {
 
         if (entry != nullptr) {
             if (!entry(&engine_load_function)) {
-                VLOGF_FAT("Unable to "
-                          "initialize module: %s\n",
-                          modules);
+                VLOGF_FAT("Unable to initialize module: %s\n", modules);
                 result = 0;
                 break;
             }
         } else {
-            VLOGF_WARN("Unable to load "
-                       "module entry: %s\n",
-                       modules);
+            VLOGF_WARN("Unable to load module entry: %s\n", modules);
         }
 
         if (update == nullptr)
-            VLOGF_WARN("Unable to load "
-                       "module update: %s\n",
-                       modules);
+            VLOGF_WARN("Unable to load module update: %s\n", modules);
 
         if (exit == nullptr)
-            VLOGF_WARN("Unable to load "
-                       "module exit: %s\n",
-                       modules);
+            VLOGF_WARN("Unable to load module exit: %s\n", modules);
 
         VLOGF_NOTE("Module loaded: %s\n", modules);
 
         _modules[module_indx++] = (module_t){h, modules, update, exit};
 
-        modules = va_arg(args, const s8 *);
+        modules = va_arg(args, const char *);
     }
 
     va_end(args);
@@ -130,8 +120,7 @@ u32 engine_init(const s8 *modules, ...) {
     *(void **)(&plat_read_stdin) = engine_load_function("platform_read_stdin");
 
     if (!plat_read_stdin) {
-        LOGF_FAT("Unable to load function "
-                 "platform_read_stdin\n");
+        LOGF_FAT("Unable to load function platform_read_stdin\n");
         result = 0;
     }
 
@@ -141,10 +130,10 @@ u32 engine_init(const s8 *modules, ...) {
 /*
  *    Updates the shell.
  *
- *    @return u32           Returns 0 on failure, 1 on success.
+ *    @return unsigned int           Returns 0 on failure, 1 on success.
  */
-u32 engine_update_shell(void) {
-    s8 *pBuf = plat_read_stdin();
+unsigned int engine_update_shell(void) {
+    char *pBuf = plat_read_stdin();
 
     if (pBuf != nullptr)
         memcpy(_shl_cmds + _shl_cmd_indx++, pBuf, 1);
@@ -161,12 +150,12 @@ u32 engine_update_shell(void) {
 /*
  *    Updates the engine.
  *
- *    @return u32           Returns 0 on failure, 1 on success.
+ *    @return unsigned int           Returns 0 on failure, 1 on success.
  */
-u32 engine_update(void) {
-    u32 i;
-    u32 result = 1;
-    f32 dt     = (f32)stat_get_time_diff() / 1000000.0f;
+unsigned int engine_update(void) {
+    unsigned int i;
+    unsigned int result = 1;
+    float        dt     = (float)stat_get_time_diff() / 1000000.0f;
 
     stat_start_frame();
     engine_update_shell();
@@ -190,8 +179,7 @@ void engine_free() {
                 if (_modules[i].exit()) {
                     VLOGF_NOTE("Module exited: %s\n", _modules[i].name);
                 } else {
-                    VLOGF_FATAL("Module failed to exit: %s\n",
-                                _modules[i].name);
+                    VLOGF_FATAL("Module failed to exit: %s\n", _modules[i].name);
                 }
             }
             dl_close(_modules[i].handle);
@@ -199,5 +187,5 @@ void engine_free() {
     }
 
     if (!stat_dump("stats.txt"))
-        LOGF_ERR("u32 engine_free(): Unable to dump stats\n");
+        LOGF_ERR("unsigned int engine_free(): Unable to dump stats\n");
 }

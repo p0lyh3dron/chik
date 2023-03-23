@@ -19,8 +19,8 @@ rendertarget_t *_z_buffer;
  *    Sets up the rasterization stage.
  */
 void raster_setup(void) {
-    u32 width;
-    u32 height;
+    unsigned int width;
+    unsigned int height;
 
     if (args_has("-w") && args_has("-h")) {
         width  = args_get_int("-w");
@@ -52,8 +52,8 @@ void raster_set_rendertarget(rendertarget_t *target) {
  *    Clears the depth buffer.
  */
 void raster_clear_depth(void) {
-    u64  i;
-    f32 *pDepth = (f32 *)_z_buffer->target->buf;
+    unsigned long i;
+    float        *pDepth = (float *)_z_buffer->target->buf;
 
     for (i = 0; i < _z_buffer->target->width * _z_buffer->target->height; i++) {
         pDepth[i] = 1000.f;
@@ -63,15 +63,15 @@ void raster_clear_depth(void) {
 /*
  *    Check a pixel against the depth buffer.
  *
- *    @param    u32 x              The x coordinate of the pixel.
- *    @param    u32 y              The y coordinate of the pixel.
- *    @param    f32 d              The depth of the pixel.
+ *    @param    unsigned int x              The x coordinate of the pixel.
+ *    @param    unsigned int y              The y coordinate of the pixel.
+ *    @param    float d              The depth of the pixel.
  *
- *    @return   u32              Whether the pixel should be drawn.
+ *    @return   unsigned int              Whether the pixel should be drawn.
  */
-u32 raster_check_depth(u32 x, u32 y, f32 d) {
-    f32 *pDepth = (f32 *)_z_buffer->target->buf;
-    u32  i      = y * _z_buffer->target->width + x;
+unsigned int raster_check_depth(unsigned int x, unsigned int y, float d) {
+    float       *pDepth = (float *)_z_buffer->target->buf;
+    unsigned int i      = y * _z_buffer->target->width + x;
 
     if (d < pDepth[i]) {
         pDepth[i] = d;
@@ -84,20 +84,20 @@ u32 raster_check_depth(u32 x, u32 y, f32 d) {
 /*
  *    Draw a scanline.
  *
- *    @param s32 x1          The screen x coordinate of the start of the
+ *    @param int x1          The screen x coordinate of the start of the
  * scanline.
- *    @param s32 x2          The screen x coordinate of the end of the scanline.
- *    @param s32 y           The screen y coordinate of the scanline.
+ *    @param int x2          The screen x coordinate of the end of the scanline.
+ *    @param int y           The screen y coordinate of the scanline.
  *    @param void *v1        The first vertex of the scanline.
  *    @param void *v2        The second vertex of the scanline.
  */
-void raster_draw_scanline(s32 x1, s32 x2, s32 y, void *v1, void *v2, void *assets) {
-    s32        x;
-    s32        end_x;
-    s32        temp;
-    f32        z;
-    f32        iz1;
-    f32        iz2;
+void raster_draw_scanline(int x1, int x2, int y, void *v1, void *v2, void *assets) {
+    int        x;
+    int        end_x;
+    int        temp;
+    float      z;
+    float      iz1;
+    float      iz2;
     vec_t     *tempv;
     vec4_t     p1;
     vec4_t     p2;
@@ -143,11 +143,11 @@ void raster_draw_scanline(s32 x1, s32 x2, s32 y, void *v1, void *v2, void *asset
     f.pos.x = x;
     f.pos.y = y;
 
-    while (x < end_x && x < (s32)_raster_target->target->width) {
+    while (x < end_x && x < (int)_raster_target->target->width) {
         /*
          *    Linearly interpolate between inverted z coordinates, and invert.
          */
-        z = 1 / ((p1.z - iz1 * (f32)(x - x1)) + iz2 * (f32)(x - x1));
+        z = 1 / ((p1.z - iz1 * (float)(x - x1)) + iz2 * (float)(x - x1));
         if (!raster_check_depth(x, y, z)) {
             x++;
             continue;
@@ -156,7 +156,7 @@ void raster_draw_scanline(s32 x1, s32 x2, s32 y, void *v1, void *v2, void *asset
         /*
          *    Interpolate the vector values, and apply to the fragment.
          */
-        new_v = vertex_build_interpolated(v1, v2, (f32)(x - x1) / (x2 - x1));
+        new_v = vertex_build_interpolated(v1, v2, (float)(x - x1) / (x2 - x1));
         new_v = vertex_scale(new_v, z, V_POS);
 
         fragment_apply(new_v, &f, assets);
@@ -191,26 +191,26 @@ void raster_rasterize_triangle(void *r0, void *r1, void *r2, void *assets) {
      *    Map the normalized coordinates to screen coordinates.
      */
     vec2u_t v1 = {
-        .x = (u32)((p1.x + 1.0f) * _raster_target->target->width / 2),
-        .y = (u32)((p1.y + 1.0f) * _raster_target->target->height / 2),
+        .x = (unsigned int)((p1.x + 1.0f) * _raster_target->target->width / 2),
+        .y = (unsigned int)((p1.y + 1.0f) * _raster_target->target->height / 2),
     };
     vec2u_t v2 = {
-        .x = (u32)((p2.x + 1.0f) * _raster_target->target->width / 2),
-        .y = (u32)((p2.y + 1.0f) * _raster_target->target->height / 2),
+        .x = (unsigned int)((p2.x + 1.0f) * _raster_target->target->width / 2),
+        .y = (unsigned int)((p2.y + 1.0f) * _raster_target->target->height / 2),
     };
     vec2u_t v3 = {
-        .x = (u32)((p3.x + 1.0f) * _raster_target->target->width / 2),
-        .y = (u32)((p3.y + 1.0f) * _raster_target->target->height / 2),
+        .x = (unsigned int)((p3.x + 1.0f) * _raster_target->target->width / 2),
+        .y = (unsigned int)((p3.y + 1.0f) * _raster_target->target->height / 2),
     };
 
-    u8 v0[VERTEX_ASM_MAX_VERTEX_SIZE];
-    u8 v[VERTEX_ASM_MAX_VERTEX_SIZE];
+    unsigned char v0[VERTEX_ASM_MAX_VERTEX_SIZE];
+    unsigned char v[VERTEX_ASM_MAX_VERTEX_SIZE];
 
-    u8 pIA[VERTEX_ASM_MAX_VERTEX_SIZE];
-    u8 pIB[VERTEX_ASM_MAX_VERTEX_SIZE];
-    u8 pIC[VERTEX_ASM_MAX_VERTEX_SIZE];
+    unsigned char pIA[VERTEX_ASM_MAX_VERTEX_SIZE];
+    unsigned char pIB[VERTEX_ASM_MAX_VERTEX_SIZE];
+    unsigned char pIC[VERTEX_ASM_MAX_VERTEX_SIZE];
 
-    u8 swap[VERTEX_ASM_MAX_VERTEX_SIZE];
+    unsigned char swap[VERTEX_ASM_MAX_VERTEX_SIZE];
 
     vec4_t pa;
     vec4_t pb;
@@ -220,12 +220,12 @@ void raster_rasterize_triangle(void *r0, void *r1, void *r2, void *assets) {
      *    In order to perform perspective correction, we need to know the
      *    z-coordinates of the vertices.
      */
-    f32 z1 = p1.z;
-    f32 z2 = p2.z;
-    f32 z3 = p3.z;
+    float z1 = p1.z;
+    float z2 = p2.z;
+    float z3 = p3.z;
 
     vec2u_t temp;
-    f32     tempf;
+    float   tempf;
     void   *pTemp;
 
     /*
@@ -345,11 +345,11 @@ void raster_rasterize_triangle(void *r0, void *r1, void *r2, void *assets) {
         while (y >= v3.y) {
             memcpy(v0,
                    vertex_build_interpolated(pIB, pIC,
-                                             (f32)(v1.y - y) / (v1.y - v3.y)),
+                                             (float)(v1.y - y) / (v1.y - v3.y)),
                    VERTEX_ASM_MAX_VERTEX_SIZE);
             memcpy(v,
                    vertex_build_interpolated(pIA, pIC,
-                                             (f32)(v1.y - y) / (v1.y - v3.y)),
+                                             (float)(v1.y - y) / (v1.y - v3.y)),
                    VERTEX_ASM_MAX_VERTEX_SIZE);
             raster_draw_scanline(v2.x + (y - v1.y) * dy2,
                                  v1.x + (y - v1.y) * dy1, y, v0, v, assets);
@@ -386,11 +386,11 @@ void raster_rasterize_triangle(void *r0, void *r1, void *r2, void *assets) {
         while (y >= v3.y) {
             memcpy(v0,
                    vertex_build_interpolated(pIA, pIB,
-                                             (f32)(v1.y - y) / (v1.y - v3.y)),
+                                             (float)(v1.y - y) / (v1.y - v3.y)),
                    VERTEX_ASM_MAX_VERTEX_SIZE);
             memcpy(v,
                    vertex_build_interpolated(pIA, pIC,
-                                             (f32)(v1.y - y) / (v1.y - v3.y)),
+                                             (float)(v1.y - y) / (v1.y - v3.y)),
                    VERTEX_ASM_MAX_VERTEX_SIZE);
             raster_draw_scanline(v1.x + (y - v1.y) * dy0,
                                  v1.x + (y - v1.y) * dy1, y, v0, v, assets);
@@ -406,19 +406,19 @@ void raster_rasterize_triangle(void *r0, void *r1, void *r2, void *assets) {
         if (v2.x < v3.x) {
             memcpy(v,
                    vertex_build_interpolated(pIA, pIC,
-                                             (f32)(v1.y - y) / (v1.y - v3.y)),
+                                             (float)(v1.y - y) / (v1.y - v3.y)),
                    VERTEX_ASM_MAX_VERTEX_SIZE);
             if (y >= v2.y) {
                 memcpy(v0,
                        vertex_build_interpolated(
-                           pIA, pIB, (f32)(v1.y - y) / (v1.y - v2.y)),
+                           pIA, pIB, (float)(v1.y - y) / (v1.y - v2.y)),
                        VERTEX_ASM_MAX_VERTEX_SIZE);
                 raster_draw_scanline(v1.x + (y - v1.y) * dy0,
                                      v1.x + (y - v1.y) * dy1, y, v0, v, assets);
             } else {
                 memcpy(v0,
                        vertex_build_interpolated(
-                           pIB, pIC, (f32)(v2.y - y) / (v2.y - v3.y)),
+                           pIB, pIC, (float)(v2.y - y) / (v2.y - v3.y)),
                        VERTEX_ASM_MAX_VERTEX_SIZE);
                 raster_draw_scanline(v2.x + (y - v2.y) * dy2,
                                      v1.x + (y - v1.y) * dy1, y, v0, v, assets);
@@ -430,19 +430,19 @@ void raster_rasterize_triangle(void *r0, void *r1, void *r2, void *assets) {
         else {
             memcpy(v0,
                    vertex_build_interpolated(pIA, pIC,
-                                             (f32)(v1.y - y) / (v1.y - v3.y)),
+                                             (float)(v1.y - y) / (v1.y - v3.y)),
                    VERTEX_ASM_MAX_VERTEX_SIZE);
             if (y >= v2.y) {
                 memcpy(v,
                        vertex_build_interpolated(
-                           pIA, pIB, (f32)(v1.y - y) / (v1.y - v2.y)),
+                           pIA, pIB, (float)(v1.y - y) / (v1.y - v2.y)),
                        VERTEX_ASM_MAX_VERTEX_SIZE);
                 raster_draw_scanline(v1.x + (y - v1.y) * dy1,
                                      v1.x + (y - v1.y) * dy0, y, v0, v, assets);
             } else {
                 memcpy(v,
                        vertex_build_interpolated(
-                           pIB, pIC, (f32)(v2.y - y) / (v2.y - v3.y)),
+                           pIB, pIC, (float)(v2.y - y) / (v2.y - v3.y)),
                        VERTEX_ASM_MAX_VERTEX_SIZE);
                 raster_draw_scanline(v1.x + (y - v1.y) * dy1,
                                      v2.x + (y - v2.y) * dy2, y, v0, v, assets);

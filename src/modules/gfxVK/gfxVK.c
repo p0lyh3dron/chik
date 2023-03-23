@@ -26,9 +26,9 @@ void *(*surface_get_window)(void);
  *    Creates the graphics context.
  */
 unsigned int graphics_init(void) {
-    *(void**)(&surface_get_window) = engine_load_function("surface_get_window");
+    *(void **)(&surface_get_window) = engine_load_function("surface_get_window");
 
-    if (surface_get_window == (void*)0x0) {
+    if (surface_get_window == (void *)0x0) {
         LOGF_ERR("Failed to load surface_get_window.\n");
         return 0;
     }
@@ -47,7 +47,6 @@ unsigned int graphics_init(void) {
  *    @return unsigned int   The return code.
  */
 unsigned int graphics_update(float dt) {
-
 }
 
 /*

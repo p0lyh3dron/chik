@@ -39,8 +39,8 @@
 
 #define MAX_STDIN_READ 256
 
-u32 _keys[MAX_INPUT_TYPES]                        = {0};
-s8  _key_alias[MAX_INPUT_TYPES][MAX_ALIAS_LENGTH] = {{'\0'}};
+unsigned int _keys[MAX_INPUT_TYPES]                        = {0};
+char         _key_alias[MAX_INPUT_TYPES][MAX_ALIAS_LENGTH] = {{'\0'}};
 
 #if USE_ALSA
 snd_pcm_t *_aud_dev = nullptr;
@@ -51,8 +51,8 @@ SDL_Window   *_win  = nullptr;
 SDL_Renderer *_rend = nullptr;
 SDL_Texture  *_tex  = nullptr;
 
-const s8 *_key_state                   = nullptr;
-s8        _key_mask[SDL_NUM_SCANCODES] = {0};
+const char *_key_state                   = nullptr;
+char        _key_mask[SDL_NUM_SCANCODES] = {0};
 #endif /* USE_SDL  */
 
 vec2u_t platform_get_screen_size(void);
@@ -60,12 +60,12 @@ vec2u_t platform_get_screen_size(void);
 /*
  *    Initialize the audio device.
  */
-u32 audio_init(void) {
+unsigned int audio_init(void) {
 #if USE_ALSA
-    u32                  rate     = PCM_SAMPLE_RATE;
-    u32                  channels = PCM_CHANNELS;
+    unsigned int         rate     = PCM_SAMPLE_RATE;
+    unsigned int         channels = PCM_CHANNELS;
     snd_pcm_hw_params_t *pParams  = nullptr;
-    u32                  ret;
+    unsigned int         ret;
 
     /*
      *    Open the PCM device in playback mode
@@ -163,10 +163,10 @@ void audio_quit(void) {
 /*
  *    Initializes SDL for presentation and input.
  */
-u32 surface_init(void) {
-    s32       width  = args_get_int("-w");
-    s32       height = args_get_int("-h");
-    const s8 *pTitle = app_get_name();
+unsigned int surface_init(void) {
+    int         width  = args_get_int("-w");
+    int         height = args_get_int("-h");
+    const char *pTitle = app_get_name();
 
     if (SDL_Init(SDL_INIT_VIDEO) < 0) {
         VLOGF_FAT("SDL_Init() failed: %s\n", SDL_GetError());
@@ -200,26 +200,26 @@ u32 surface_init(void) {
 
     if (args_has("--software-renderer")) {
         /*
-        *    Create the renderer.
-        */
+         *    Create the renderer.
+         */
         _rend = SDL_CreateRenderer(_win, -1, SDL_RENDERER_ACCELERATED);
 
         if (_rend == nullptr) {
             VLOGF_ERR("Renderer could not be created! "
-                    "SDL_Error: %s\n",
-                    SDL_GetError());
+                      "SDL_Error: %s\n",
+                      SDL_GetError());
             return 0;
         }
 
         /*
-        *    Create the texture.
-        */
+         *    Create the texture.
+         */
         _tex = SDL_CreateTexture(_rend, SDL_PIXELFORMAT_ARGB8888,
-                                SDL_TEXTUREACCESS_STREAMING, width, height);
+                                 SDL_TEXTUREACCESS_STREAMING, width, height);
         if (_tex == nullptr) {
             VLOGF_ERR("Texture could not be created! "
-                    "SDL_Error: %s\n",
-                    SDL_GetError());
+                      "SDL_Error: %s\n",
+                      SDL_GetError());
             return 0;
         }
     }
@@ -251,7 +251,7 @@ void surface_quit(void) {
 /*
  *    Capture input events.
  */
-u32 input_capture(void) {
+unsigned int input_capture(void) {
 #if USE_SDL
     vec2u_t res = platform_get_screen_size();
 
@@ -274,18 +274,18 @@ u32 input_capture(void) {
 /*
  *    Parses the input event lookup.
  *
- *    @param const s8 *file    The file with the lookup table.
+ *    @param const char *file    The file with the lookup table.
  */
-u32 input_parse(const s8 *file) {
-    u32 fileLen;
-    s8 *pFile = file_read(file, &fileLen);
-    u32 p     = 0;
-    u32 i     = 0;
-    u32 j;
-    u32 key;
+unsigned int input_parse(const char *file) {
+    unsigned int fileLen;
+    char        *pFile = file_read(file, &fileLen);
+    unsigned int p     = 0;
+    unsigned int i     = 0;
+    unsigned int j;
+    unsigned int key;
 
     if (pFile == nullptr) {
-        VLOGF_ERR("u32 input_parse( const s8 * ): Failed to read file: %s\n",
+        VLOGF_ERR("unsigned int input_parse( const char * ): Failed to read file: %s\n",
                   file);
         return 0;
     }
@@ -361,12 +361,12 @@ u32 input_parse(const s8 *file) {
  *
  *    @param image_t *image    The image to draw.
  *
- *    @return u32         1 if successful, 0 otherwise.
+ *    @return unsigned int         1 if successful, 0 otherwise.
  */
-u32 platform_draw_image(image_t *image) {
+unsigned int platform_draw_image(image_t *image) {
 #if USE_SDL
     SDL_RenderClear(_rend);
-    SDL_UpdateTexture(_tex, nullptr, image->buf, image->width * sizeof(u32));
+    SDL_UpdateTexture(_tex, nullptr, image->buf, image->width * sizeof(unsigned int));
     SDL_RenderCopyEx(_rend, _tex, nullptr, nullptr, 0.0, nullptr,
                      SDL_FLIP_VERTICAL);
     SDL_RenderPresent(_rend);
@@ -392,11 +392,11 @@ vec2u_t platform_get_screen_size(void) {
 /*
  *    Pops an event from the input queue.
  *
- *    @param u32 *info    Additional information about the event.
+ *    @param unsigned int *info    Additional information about the event.
  *
- *    @return s8 *    The event, or nullptr if there are no events.
+ *    @return char *    The event, or nullptr if there are no events.
  */
-s8 *platform_get_event(u32 *info) {
+char *platform_get_event(unsigned int *info) {
 #if USE_SDL
     unsigned long i;
 
@@ -433,13 +433,13 @@ vec2u_t platform_get_joystick_event() {
  *    therefore the caller should ensure that the buffer
  *    is large enough.
  *
- *    @param s8 *buf     The data to write.
+ *    @param char *buf     The data to write.
  *
- *    @return u32     1 if successful, 0 otherwise.
+ *    @return unsigned int     1 if successful, 0 otherwise.
  */
-u32 platform_write_sound(s8 *buf) {
+unsigned int platform_write_sound(char *buf) {
 #if USE_ALSA
-    u32 ret;
+    unsigned int ret;
 
     if (ret = snd_pcm_writei(_aud_dev, buf, PCM_BUFFER_SIZE) == -EPIPE) {
         LOGF_WARN("Audio buffer can't "
@@ -460,13 +460,13 @@ u32 platform_write_sound(s8 *buf) {
 /*
  *    Gets the playback bits per sample, sample rate, channels, and buffer size.
  *
- *    @param u32 *bits_per_samp    The bits per sample.
- *    @param u32 *sample_rate      The sample rate.
- *    @param u32 *num_channels     The channels.
- *    @param u32 *buf_len          The buffer size.
+ *    @param unsigned int *bits_per_samp    The bits per sample.
+ *    @param unsigned int *sample_rate      The sample rate.
+ *    @param unsigned int *num_channels     The channels.
+ *    @param unsigned int *buf_len          The buffer size.
  */
-void platform_get_sound_info(u32 *bits_per_samp, u32 *sample_rate,
-                             u32 *num_channels, u32 *buf_len) {
+void platform_get_sound_info(unsigned int *bits_per_samp, unsigned int *sample_rate,
+                             unsigned int *num_channels, unsigned int *buf_len) {
     *bits_per_samp = PCM_SAMPLE_WIDTH;
     *sample_rate   = PCM_SAMPLE_RATE;
     *num_channels  = PCM_CHANNELS;
@@ -476,11 +476,11 @@ void platform_get_sound_info(u32 *bits_per_samp, u32 *sample_rate,
 /*
  *    Reads from stdin.
  *
- *    @return s8 *    The string read from stdin.
+ *    @return char *    The string read from stdin.
  */
-s8 *platform_read_stdin() {
+char *platform_read_stdin() {
 #if __unix__
-    static s8 buf[MAX_STDIN_READ] = {0};
+    static char buf[MAX_STDIN_READ] = {0};
 
     if (read(0, &buf, 1) > 0)
         return buf;
@@ -493,9 +493,9 @@ s8 *platform_read_stdin() {
 /*
  *    Initializes the platform.
  *
- *    @return u32    1 if successful, 0 otherwise.
+ *    @return unsigned int    1 if successful, 0 otherwise.
  */
-u32 platform_init(void) {
+unsigned int platform_init(void) {
     if (!audio_init()) {
         LOGF_ERR("Unable to initialize audio.\n");
         return 0;
@@ -518,11 +518,11 @@ u32 platform_init(void) {
 /*
  *    Updates the platform.
  *
- *    @param  f32 dt    Delta time.
+ *    @param  float dt    Delta time.
  *
- *    @return u32    1 if successful, 0 otherwise.
+ *    @return unsigned int    1 if successful, 0 otherwise.
  */
-u32 platform_update(f32 dt) {
+unsigned int platform_update(float dt) {
     memset(_key_mask, 0, sizeof(_key_mask));
     input_capture();
     return 1;
@@ -531,9 +531,9 @@ u32 platform_update(f32 dt) {
 /*
  *    Cleans up the platform.
  *
- *    @return u32    1 if successful, 0 otherwise.
+ *    @return unsigned int    1 if successful, 0 otherwise.
  */
-u32 platform_cleanup(void) {
+unsigned int platform_cleanup(void) {
     audio_quit();
     surface_quit();
     return 1;

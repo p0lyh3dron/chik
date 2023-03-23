@@ -11,9 +11,9 @@
  */
 #include "libchik.h"
 
-u32 graphics_init(void);
-u32 graphics_update(f32);
-u32 graphics_exit(void);
+unsigned int graphics_init(void);
+unsigned int graphics_update(float);
+unsigned int graphics_exit(void);
 
 CHIK_MODULE(graphics_init, graphics_update, graphics_exit)
 
@@ -27,8 +27,8 @@ CHIK_MODULE(graphics_init, graphics_update, graphics_exit)
 #include "rendertarget.h"
 #include "vertexasm.h"
 
-u32 (*platform_draw_image)(image_t *)     = 0;
-vec2u_t (*platform_get_screen_size)(void) = 0;
+unsigned int (*platform_draw_image)(image_t *) = 0;
+vec2u_t (*platform_get_screen_size)(void)      = 0;
 
 extern rendertarget_t *_back_buffer;
 
@@ -37,7 +37,7 @@ resource_t *_handles;
 /*
  *    Creates the graphics context.
  */
-u32 graphics_init(void) {
+unsigned int graphics_init(void) {
     _handles                 = resource_new(64 * 1024 * 1024);
     platform_draw_image      = engine_load_function("platform_draw_image");
     platform_get_screen_size = engine_load_function("platform_get_screen_size");
@@ -69,16 +69,16 @@ u32 graphics_init(void) {
 /*
  *    Updates the graphics context.
  *
- *    @param f32 dt    The time since the last update.
+ *    @param float dt    The time since the last update.
  *
- *    @return u32   The return code.
+ *    @return unsigned int   The return code.
  */
-u32 graphics_update(f32 dt) { return 1; }
+unsigned int graphics_update(float dt) { return 1; }
 
 /*
  *    Cleans up the graphics subsystem.
  */
-u32 graphics_exit(void) { return 1; }
+unsigned int graphics_exit(void) { return 1; }
 
 /*
  *    Creates a camera.

@@ -19,10 +19,10 @@
 #define CHIK_AUDIO_TYPE_HRTF (1 << 1)
 
 typedef struct {
-    int flags;
-    u8 *data;
-    u32 pos;
-    u32 playing;
+    int            flags;
+    unsigned char *data;
+    unsigned int   pos;
+    unsigned int   playing;
 } audio_t;
 
 /*
@@ -35,39 +35,39 @@ audio_t *audio_ptr_init(void);
 /*
  *    Populates a buffer with WAV data.
  *
- *    @param const s8 *path    The path to the WAV file.
+ *    @param const char *path    The path to the WAV file.
  *
- *    @return u8 *         The buffer.
+ *    @return unsigned char *         The buffer.
  */
-u8 *audio_read_wav(const s8 *path);
+unsigned char *audio_read_wav(const char *path);
 
 /*
  *    Creates an audio handle from a file on disk.
  *
- *    @param const s8 *path    The path to the audio file.
- *    @param u32 loop          Whether the audio should loop.
+ *    @param const char *path    The path to the audio file.
+ *    @param unsigned int loop          Whether the audio should loop.
  *
  *    @return trap_t     The handle to the audio file.
  */
-trap_t audio_create_from_file(const s8 *path, u32 loop);
+trap_t audio_create_from_file(const char *path, unsigned int loop);
 
 /*
  *    Plays an audio handle.
  *
  *    @param trap_t audio     The handle to the audio file.
  *
- *    @return u32         Whether the audio was successfully played.
+ *    @return unsigned int         Whether the audio was successfully played.
  */
-u32 audio_play(trap_t audio);
+unsigned int audio_play(trap_t audio);
 
 /*
  *    Stops an audio handle.
  *
  *    @param trap_t audio    The handle to the audio file.
  *
- *    @return u32         Whether the audio was successfully stopped.
+ *    @return unsigned int         Whether the audio was successfully stopped.
  */
-u32 audio_stop(trap_t audio);
+unsigned int audio_stop(trap_t audio);
 
 /*
  *    Sets the listener position for HRTF audio.
@@ -75,8 +75,8 @@ u32 audio_stop(trap_t audio);
  *    @param vec3_t listen_pos      The position of the listener.
  *    @param vec3_t source_pos      The position of the sound source.
  *
- *    @return u32         Whether the listener position was successfully set.
+ *    @return unsigned int         Whether the listener position was successfully set.
  */
-u32 audio_set_listener_position(vec3_t listen_pos, vec3_t source_pos);
+unsigned int audio_set_listener_position(vec3_t listen_pos, vec3_t source_pos);
 
 #endif /* CHIK_AUDIO_H  */

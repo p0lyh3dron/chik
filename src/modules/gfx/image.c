@@ -17,15 +17,15 @@
 /*
  *    Creates an image.
  *
- *    @param u32 width           The width of the image.
- *    @param u32 height          The height of the image.
- *    @param u32 format          The format of the image.
+ *    @param unsigned int width           The width of the image.
+ *    @param unsigned int height          The height of the image.
+ *    @param unsigned int format          The format of the image.
  *
  *    @return image_t *    The image.
  *                         NULL if the image could not be created.
  *                         The image should be freed with image_free().
  */
-image_t *image_create(u32 width, u32 height, u32 format) {
+image_t *image_create(unsigned int width, unsigned int height, unsigned int format) {
     image_t *image = (image_t *)malloc(sizeof(image_t));
 
     if (image == NULL) {
@@ -40,7 +40,7 @@ image_t *image_create(u32 width, u32 height, u32 format) {
      *    In the future, image data may not be just width * height * format.
      *    For now, we just allocate the amount of memory we need.
      */
-    image->buf = (u32 *)malloc(width * height * sizeof(u32));
+    image->buf = (unsigned int *)malloc(width * height * sizeof(unsigned int));
 
     if (image->buf == NULL) {
         LOGF_ERR("Could not allocate memory for image buffer.");
@@ -53,12 +53,12 @@ image_t *image_create(u32 width, u32 height, u32 format) {
 /*
  *    Deduces a file format from a file.
  *
- *    @param const s8 *file  The file to deduce the format from.
+ *    @param const char *file  The file to deduce the format from.
  *
  *    @return file_type_e The file format.
  *                        FILE_TYPE_UNKNOWN if the file could not be deduced.
  */
-file_type_e file_type(const s8 *file) {
+file_type_e file_type(const char *file) {
     /*
      *    We'll be lazy and just check the file extension.
      *    In the future, we'll need to check the file header.
@@ -77,21 +77,21 @@ file_type_e file_type(const s8 *file) {
 /*
  *    Loads a bmp image from a file.
  *
- *    @param const s8 *file  The file to load the image from.
+ *    @param const char *file  The file to load the image from.
  *
  *    @return image_t *  The image.
  *                       NULL if the image could not be loaded.
  *                       The image should be freed with image_free().
  */
-image_t *image_load_bmp(const s8 *file) {
-    u32          len;
-    u32          padding = 0;
-    u64          i;
-    bmp_header_t header;
-    image_t     *image;
-    u8          *data;
+image_t *image_load_bmp(const char *file) {
+    unsigned int   len;
+    unsigned int   padding = 0;
+    unsigned long  i;
+    bmp_header_t   header;
+    image_t       *image;
+    unsigned char *data;
 
-    u8 *buf = file_read(file, &len);
+    unsigned char *buf = file_read(file, &len);
 
     if (buf == nullptr) {
         VLOGF_ERR("Could not read file %s.\n", file);
@@ -103,12 +103,12 @@ image_t *image_load_bmp(const s8 *file) {
      */
     header = *(bmp_header_t *)buf;
 
-    header.width  = *(u32 *)(buf + 0x12);
-    header.height = *(u32 *)(buf + 0x16);
+    header.width  = *(unsigned int *)(buf + 0x12);
+    header.height = *(unsigned int *)(buf + 0x16);
 
-    header.offset = *(u32 *)(buf + 0x0A);
+    header.offset = *(unsigned int *)(buf + 0x0A);
 
-    if (*(u16 *)header.magic != 0x4D42) {
+    if (*(unsigned short *)header.magic != 0x4D42) {
         VLOGF_ERR("File %s is not a bmp file.", file);
         free(buf);
         return NULL;
@@ -117,7 +117,7 @@ image_t *image_load_bmp(const s8 *file) {
     /*
      *    Read the image data.
      */
-    data = (u8 *)(buf + header.offset);
+    data = (unsigned char *)(buf + header.offset);
 
     /*
      *    Create the image.
@@ -137,7 +137,7 @@ image_t *image_load_bmp(const s8 *file) {
         /*
          *    Don't touch.
          */
-        memcpy((u8 *)image->buf + (header.width * i) * 4,
+        memcpy((unsigned char *)image->buf + (header.width * i) * 4,
                data + (header.width * i) * 4 + i * padding, header.width * 4);
         /*
          *    Literal magic.
@@ -156,14 +156,14 @@ image_t *image_load_bmp(const s8 *file) {
 /*
  *    Creates an image from a file.
  *
- *    @param s8 *file          The path to the image file.
- *    @param u32 format        The format of the image.
+ *    @param char *file          The path to the image file.
+ *    @param unsigned int format        The format of the image.
  *
  *    @return image_t *  The image.
  *                       NULL if the image could not be created.
  *                       The image should be freed with image_free().
  */
-image_t *image_create_from_file(s8 *file, u32 format) {
+image_t *image_create_from_file(char *file, unsigned int format) {
     file_type_e type = file_type(file);
 
     if (type == FILE_TYPE_UNSUPPORTED) {
@@ -178,14 +178,14 @@ image_t *image_create_from_file(s8 *file, u32 format) {
  *    Sets a pixel in an image.
  *
  *    @param image_t *image     The image.
- *    @param u32                The x coordinate of the pixel.
- *    @param u32                The y coordinate of the pixel.
- *    @param u32                The color of the pixel.
+ *    @param unsigned int                The x coordinate of the pixel.
+ *    @param unsigned int                The y coordinate of the pixel.
+ *    @param unsigned int                The color of the pixel.
  *
- *    @return u32          1 if the pixel was set, 0 if the pixel could not be
+ *    @return unsigned int          1 if the pixel was set, 0 if the pixel could not be
  * set.
  */
-u32 image_set_pixel(image_t *image, u32 x, u32 y, u32 color) {
+unsigned int image_set_pixel(image_t *image, unsigned int x, unsigned int y, unsigned int color) {
     if (x >= image->width || y >= image->height) {
         return 0;
     }
@@ -199,12 +199,12 @@ u32 image_set_pixel(image_t *image, u32 x, u32 y, u32 color) {
  *    Clears an image.
  *
  *    @param  image_t *image     The image.
- *    @param  u32 color          The color to clear the image with.
+ *    @param  unsigned int color          The color to clear the image with.
  *
- *    @return u32           1 if the image was cleared, 0 if the image could not
+ *    @return unsigned int           1 if the image was cleared, 0 if the image could not
  * be cleared.
  */
-u32 image_clear(image_t *image, u32 color) {
+unsigned int image_clear(image_t *image, unsigned int color) {
     if (image == NULL) {
         LOGF_ERR("Tried to clear a NULL image.");
         return 0;
@@ -213,7 +213,7 @@ u32 image_clear(image_t *image, u32 color) {
     /*
      *    Fastest way to clear is to memset the entire buffer.
      */
-    memset(image->buf, color, image->width * image->height * sizeof(u32));
+    memset(image->buf, color, image->width * image->height * sizeof(unsigned int));
 
     return 1;
 }

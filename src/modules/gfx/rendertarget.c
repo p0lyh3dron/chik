@@ -20,15 +20,15 @@ rendertarget_t *_back_buffer = NULL;
 /*
  *    Creates a render target.
  *
- *    @param u32 width           The width of the render target.
- *    @param u32 height          The height of the render target.
- *    @param u32 fmt             The format of the render target.
+ *    @param unsigned int width           The width of the render target.
+ *    @param unsigned int height          The height of the render target.
+ *    @param unsigned int fmt             The format of the render target.
  *
  *    @return rendertarget_t *    The render target.
  *                                NULL if the render target could not be
  * created. The render target should be freed with rendertarget_free().
  */
-rendertarget_t *rendertarget_create(u32 width, u32 height, u32 fmt) {
+rendertarget_t *rendertarget_create(unsigned int width, unsigned int height, unsigned int fmt) {
     unsigned long   i;
     image_t        *image;
     rendertarget_t *render_target = malloc(sizeof(rendertarget_t));

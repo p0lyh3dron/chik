@@ -45,7 +45,7 @@ vec4_t vertex_get_position(void *v) {
     if (i == _layout.count)
         return (vec4_t){0, 0, 0, 0};
 
-    return *(vec4_t *)((u8 *)v + _layout.attributes[i].offset);
+    return *(vec4_t *)((unsigned char *)v + _layout.attributes[i].offset);
 }
 
 /*
@@ -65,7 +65,7 @@ void vertex_set_position(void *v, vec4_t pos) {
     if (i == _layout.count)
         return;
 
-    *(vec4_t *)((u8 *)v + _layout.attributes[i].offset) = pos;
+    *(vec4_t *)((unsigned char *)v + _layout.attributes[i].offset) = pos;
 }
 
 /*
@@ -87,14 +87,14 @@ void vertex_perspective_divide(void *v) {
  *
  *    @param void *v0          The raw vertex data of the first vertex.
  *    @param void *v1          The raw vertex data of the second vertex.
- *    @param f32   diff        The normalized difference between the two
+ *    @param float   diff        The normalized difference between the two
  * vertices.
  *
  *    @return void *       The raw vertex data of the new vertex.
  */
-void *vertex_build_interpolated(void *v0, void *v1, f32 diff) {
-    unsigned long      i;
-    static __thread u8 buf[VERTEX_ASM_MAX_VERTEX_SIZE];
+void *vertex_build_interpolated(void *v0, void *v1, float diff) {
+    unsigned long                 i;
+    static __thread unsigned char buf[VERTEX_ASM_MAX_VERTEX_SIZE];
 
     for (i = 0; i < _layout.count; i++) {
         vec_interp((vec_t *)(buf + _layout.attributes[i].offset),
@@ -110,15 +110,15 @@ void *vertex_build_interpolated(void *v0, void *v1, f32 diff) {
  *    Scales a vertex by a scalar.
  *
  *    @param void *v            The raw vertex data.
- *    @param f32   scale        The scalar to scale the vertex by.
- *    @param u32   flags        A usage flag that determines how to scale the
+ *    @param float   scale        The scalar to scale the vertex by.
+ *    @param unsigned int   flags        A usage flag that determines how to scale the
  * vertex.
  *
  *    @return void *       The raw vertex data of the scaled vertex.
  */
-void *vertex_scale(void *v, f32 scale, u32 flags) {
-    unsigned long      i;
-    static __thread u8 buf[VERTEX_ASM_MAX_VERTEX_SIZE];
+void *vertex_scale(void *v, float scale, unsigned int flags) {
+    unsigned long                 i;
+    static __thread unsigned char buf[VERTEX_ASM_MAX_VERTEX_SIZE];
 
     for (i = 0; i < _layout.count; i++) {
         if (!(_layout.attributes[i].usage & flags)) {

@@ -9,8 +9,8 @@
  */
 #include "instance.h"
 
-#include <vulkan/vulkan.h>
 #include <SDL2/SDL_vulkan.h>
+#include <vulkan/vulkan.h>
 
 #include "gfxVK.h"
 
@@ -18,11 +18,11 @@
 
 #define CHIK_GFXVK_INSTANCE_LAYERS 1
 
-const char *_instance_device_extensions[CHIK_GFXVK_INSTANCE_DEVICE_EXTENSIONS] = (const char*[]) {
+const char *_instance_device_extensions[CHIK_GFXVK_INSTANCE_DEVICE_EXTENSIONS] = (const char *[]){
     VK_KHR_SWAPCHAIN_EXTENSION_NAME,
 };
 
-const char *_instance_layers[CHIK_GFXVK_INSTANCE_LAYERS] = (const char*[]) {
+const char *_instance_layers[CHIK_GFXVK_INSTANCE_LAYERS] = (const char *[]){
     "VK_LAYER_KHRONOS_validation",
 };
 
@@ -42,7 +42,7 @@ SDL_Window *_win;
  *    @param const VkDebugUtilsMessengerCallbackDataEXT *data         The data of the
  *                                                                    message.
  *    @param void                                       *user_data    The user data.
- * 
+ *
  *    @return VkBool32                                  Whether or not the message
  *                                                      should be suppressed.
  */
@@ -51,21 +51,21 @@ VKAPI_ATTR VkBool32 VKAPI_CALL instance_validation_layer_callback(VkDebugUtilsMe
                                                                   const VkDebugUtilsMessengerCallbackDataEXT *data,
                                                                   void                                       *user_data) {
     switch (severity) {
-        case VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT:
-            VLOGF_NOTE("%s\n", data->pMessage);
-            break;
-        case VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT:
-            VLOGF_NOTE("%s\n", data->pMessage);
-            break;
-        case VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT:
-            VLOGF_WARN("%s\n", data->pMessage);
-            break;
-        case VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT:
-            VLOGF_ERR("%s\n", data->pMessage);
-            break;
-        default:
-            LOGF_ERR("Unknown severity level.\n");
-            break;
+    case VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT:
+        VLOGF_NOTE("%s\n", data->pMessage);
+        break;
+    case VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT:
+        VLOGF_NOTE("%s\n", data->pMessage);
+        break;
+    case VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT:
+        VLOGF_WARN("%s\n", data->pMessage);
+        break;
+    case VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT:
+        VLOGF_ERR("%s\n", data->pMessage);
+        break;
+    default:
+        LOGF_ERR("Unknown severity level.\n");
+        break;
     }
 
     return VK_FALSE;
@@ -75,7 +75,7 @@ VKAPI_ATTR VkBool32 VKAPI_CALL instance_validation_layer_callback(VkDebugUtilsMe
  *    Determines if a device supports the required extensions.
  *
  *    @param VkPhysicalDevice device    The device to check.
- *    
+ *
  *    @return unsigned int             Whether or not the device supports the
  *                                     required extensions.
  */
@@ -83,10 +83,10 @@ unsigned int instance_device_supports_extensions(VkPhysicalDevice device) {
     unsigned int supported = 1;
 
     unsigned long extension_count = 0;
-    vkEnumerateDeviceExtensionProperties(device, (const char*)0x0, &extension_count, (VkExtensionProperties*)0x0);
-    VkExtensionProperties* extensions = (VkExtensionProperties*)malloc(sizeof(VkExtensionProperties) * extension_count);
+    vkEnumerateDeviceExtensionProperties(device, (const char *)0x0, &extension_count, (VkExtensionProperties *)0x0);
+    VkExtensionProperties *extensions = (VkExtensionProperties *)malloc(sizeof(VkExtensionProperties) * extension_count);
 
-    vkEnumerateDeviceExtensionProperties(device, (const char*)0x0, &extension_count, extensions);
+    vkEnumerateDeviceExtensionProperties(device, (const char *)0x0, &extension_count, extensions);
 
     for (unsigned int i = 0; i < CHIK_GFXVK_INSTANCE_DEVICE_EXTENSIONS; i++) {
         unsigned int found = 0;
@@ -119,8 +119,8 @@ unsigned int instance_supports_layers(void) {
     unsigned int supported = 1;
 
     unsigned long layer_count = 0;
-    vkEnumerateInstanceLayerProperties(&layer_count, (VkLayerProperties*)0x0);
-    VkLayerProperties* layers = (VkLayerProperties*)malloc(sizeof(VkLayerProperties) * layer_count);
+    vkEnumerateInstanceLayerProperties(&layer_count, (VkLayerProperties *)0x0);
+    VkLayerProperties *layers = (VkLayerProperties *)malloc(sizeof(VkLayerProperties) * layer_count);
 
     vkEnumerateInstanceLayerProperties(&layer_count, layers);
 
@@ -156,12 +156,12 @@ void instance_create_layers(void) {
 
     VkDebugUtilsMessengerCreateInfoEXT debug_info = {
         .sType           = VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT,
-        .pNext           = (const void*)0x0,
+        .pNext           = (const void *)0x0,
         .flags           = 0,
         .messageSeverity = VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT,
         .messageType     = VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT,
         .pfnUserCallback = instance_validation_layer_callback,
-        .pUserData       = (void*)0x0,
+        .pUserData       = (void *)0x0,
     };
 
     PFN_vkCreateDebugUtilsMessengerEXT vkCreateDebugUtilsMessengerEXT = (PFN_vkCreateDebugUtilsMessengerEXT)vkGetInstanceProcAddr(_instance, "vkCreateDebugUtilsMessengerEXT");
@@ -171,7 +171,7 @@ void instance_create_layers(void) {
         return;
     }
 
-    if (vkCreateDebugUtilsMessengerEXT(_instance, &debug_info, (const VkAllocationCallbacks*)0x0, &_debug_messenger) != VK_SUCCESS)
+    if (vkCreateDebugUtilsMessengerEXT(_instance, &debug_info, (const VkAllocationCallbacks *)0x0, &_debug_messenger) != VK_SUCCESS)
         LOGF_ERR("Failed to create debug messenger.\n");
 }
 
@@ -186,7 +186,7 @@ void instance_destroy_layers(void) {
         return;
     }
 
-    vkDestroyDebugUtilsMessengerEXT(_instance, _debug_messenger, (const VkAllocationCallbacks*)0x0);
+    vkDestroyDebugUtilsMessengerEXT(_instance, _debug_messenger, (const VkAllocationCallbacks *)0x0);
 }
 
 /*
@@ -194,16 +194,15 @@ void instance_destroy_layers(void) {
  */
 void instance_init(void) {
     unsigned int extensions_count = 0;
-    _win = surface_get_window();
+    _win                          = surface_get_window();
 
-    if (SDL_Vulkan_GetInstanceExtensions(_win, &extensions_count, (const char**)0x0) == SDL_FALSE) {
+    if (SDL_Vulkan_GetInstanceExtensions(_win, &extensions_count, (const char **)0x0) == SDL_FALSE) {
         VLOGF_ERR("Failed to get instance extensions: %s.\n", SDL_GetError());
         return;
     }
 
-    const char** extensions = (const char**)malloc(sizeof(const char*) * (extensions_count + 1));
+    const char **extensions = (const char **)malloc(sizeof(const char *) * (extensions_count + 1));
     SDL_Vulkan_GetInstanceExtensions(_win, &extensions_count, extensions);
-
 
     if (args_has("--vklayers")) {
         extensions[extensions_count] = VK_EXT_DEBUG_UTILS_EXTENSION_NAME;
@@ -215,7 +214,7 @@ void instance_init(void) {
 
     VkApplicationInfo app_info = {
         .sType              = VK_STRUCTURE_TYPE_APPLICATION_INFO,
-        .pNext              = (const void*)0x0,
+        .pNext              = (const void *)0x0,
         .pApplicationName   = app_get_name(),
         .applicationVersion = VK_MAKE_VERSION(version.x, version.y, version.z),
         .pEngineName        = app_get_engine_name(),
@@ -224,16 +223,16 @@ void instance_init(void) {
     };
     VkInstanceCreateInfo instance_info = {
         .sType                   = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO,
-        .pNext                   = (const void*)0x0,
+        .pNext                   = (const void *)0x0,
         .flags                   = 0,
         .pApplicationInfo        = &app_info,
         .enabledLayerCount       = args_has("--vklayers") ? CHIK_GFXVK_INSTANCE_LAYERS : 0,
-        .ppEnabledLayerNames     = args_has("--vklayers") ? _instance_layers : (const char**)0x0,
+        .ppEnabledLayerNames     = args_has("--vklayers") ? _instance_layers : (const char **)0x0,
         .enabledExtensionCount   = extensions_count,
         .ppEnabledExtensionNames = extensions,
     };
 
-    VkResult   result = vkCreateInstance(&instance_info, (const void*)0x0, &_instance);
+    VkResult result = vkCreateInstance(&instance_info, (const void *)0x0, &_instance);
 
     if (result != VK_SUCCESS)
         LOGF_ERR("Failed to create vulkan instance.\n");
@@ -250,17 +249,17 @@ void instance_init(void) {
 void instance_pick_gpu(unsigned long gpu) {
     unsigned long gpu_count = 0;
 
-    vkEnumeratePhysicalDevices(_instance, &gpu_count, (VkPhysicalDevice*)0x0);
+    vkEnumeratePhysicalDevices(_instance, &gpu_count, (VkPhysicalDevice *)0x0);
 
     if (gpu > gpu_count) {
         LOGF_ERR("Invalid GPU index.\n");
         return;
     }
 
-    VkPhysicalDevice* gpus = (VkPhysicalDevice*)malloc(sizeof(VkPhysicalDevice) * gpu_count);
+    VkPhysicalDevice *gpus = (VkPhysicalDevice *)malloc(sizeof(VkPhysicalDevice) * gpu_count);
 
     vkEnumeratePhysicalDevices(_instance, &gpu_count, gpus);
-    
+
     if (gpu >= gpu_count) {
         LOGF_ERR("Invalid graphics card index.\n");
         free(gpus);
@@ -277,7 +276,7 @@ void instance_pick_gpu(unsigned long gpu) {
 
     VkPhysicalDeviceProperties prop;
     vkGetPhysicalDeviceProperties(gpus[gpu], &prop);
-    
+
     VLOGF_NOTE("Picked graphics card: %s.\n", prop.deviceName);
 
     free(gpus);
@@ -290,5 +289,5 @@ void instance_destroy(void) {
     if (args_has("--vklayers"))
         instance_destroy_layers();
 
-    vkDestroyInstance(_instance, (const void*)0x0);
+    vkDestroyInstance(_instance, (const void *)0x0);
 }

@@ -18,10 +18,10 @@
 #include "image.h"
 
 typedef struct {
-    void      *buf;
-    u32        stride;
-    u32        size;
-    v_layout_t layout;
+    void        *buf;
+    unsigned int stride;
+    unsigned int size;
+    v_layout_t   layout;
 } vbuffer_t;
 
 typedef struct {
@@ -35,13 +35,13 @@ typedef struct {
  *    Creates a vertex buffer.
  *
  *    @param void *v              The vertex data.
- *    @param u32 size             The size of the vertex data.
- *    @param u32 stride           The stride of the vertex data.
+ *    @param unsigned int size             The size of the vertex data.
+ *    @param unsigned int stride           The stride of the vertex data.
  *    @param v_layout_t layout    The layout of the vertex data.
  *
  *    @return void *              The vertex buffer.
  */
-void *vbuffer_create(void *v, u32 size, u32 stride, v_layout_t layout);
+void *vbuffer_create(void *v, unsigned int size, unsigned int stride, v_layout_t layout);
 
 /*
  *    Frees a vertex buffer.
@@ -91,7 +91,7 @@ void mesh_set_asset(void *m, void *a, unsigned long size, unsigned long i);
  *
  *    @param void *a            The assets.
  *    @param unsigned long i    The index of the asset.
- * 
+ *
  *    @return void *            The asset data.
  */
 void *mesh_get_asset(void *a, unsigned long i);

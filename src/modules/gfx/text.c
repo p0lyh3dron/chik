@@ -15,7 +15,7 @@
 
 #include "image.h"
 
-u8 _font[95][13] = {
+unsigned char _font[95][13] = {
     /*
      *    Space ( 32 )
      */
@@ -219,11 +219,11 @@ u8 _font[95][13] = {
 /*
  *    Creates a text texture.
  *
- *    @param  const s8 *text    The text to render.
+ *    @param  const char *text    The text to render.
  *
  *    @return image_t *     The handle of the text texture.
  */
-image_t *text_create(const s8 *text) {
+image_t *text_create(const char *text) {
     char          c;
     unsigned long i;
     unsigned long j;
@@ -232,7 +232,7 @@ image_t *text_create(const s8 *text) {
     image_t      *font;
     trap_t        trap;
 
-    if (text == (const s8 *)0x0) {
+    if (text == (const char *)0x0) {
         LOGF_ERR("Invalid text.\n");
         return (image_t *)0x0;
     }
