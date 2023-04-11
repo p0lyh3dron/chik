@@ -30,8 +30,8 @@
 #define PCM_BUFFER_SIZE  8192
 #define PCM_SAMPLE_WIDTH 16
 
-#define DEFAULT_WIDTH  480
-#define DEFAULT_HEIGHT 270
+#define DEFAULT_WIDTH  1152
+#define DEFAULT_HEIGHT 864
 #define DEFAULT_TITLE  "Chik Application"
 
 #define MAX_INPUT_TYPES  256

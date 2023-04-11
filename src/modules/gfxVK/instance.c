@@ -9,6 +9,8 @@
  */
 #include "instance.h"
 
+#include "libchik.h"
+
 #include <SDL2/SDL_vulkan.h>
 #include <vulkan/vulkan.h>
 
@@ -35,6 +37,7 @@ long                     _graphics_queue_idx;
 long                     _present_queue_idx;
 VkQueue                  _graphics_queue;
 VkQueue                  _present_queue;
+VkFramebuffer            _framebuffer;
 
 SDL_Window *_win;
 
@@ -355,7 +358,7 @@ void instance_finish_init(void) {
         .sType                   = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO,
         .pNext                   = (const void *)0x0,
         .flags                   = 0,
-        .queueCreateInfoCount    = 2,
+        .queueCreateInfoCount    = _graphics_queue_idx == _present_queue_idx ? 1 : 2,
         .pQueueCreateInfos       = queue_infos,
         .enabledLayerCount       = 0,
         .ppEnabledLayerNames     = (const char **)0x0,
@@ -373,6 +376,33 @@ void instance_finish_init(void) {
 
     vkGetDeviceQueue(_device, _graphics_queue_idx, 0, &_graphics_queue);
     vkGetDeviceQueue(_device, _present_queue_idx,  0, &_present_queue);
+}
+
+/*
+ *    Gets the vulkan physical device.
+ *
+ *    @return VkPhysicalDevice    The vulkan physical device.
+ */
+VkPhysicalDevice instance_get_gpu(void) {
+    return _physical_device;
+}
+
+/*
+ *    Gets the vulkan surface.
+ *
+ *    @return VkSurfaceKHR    The vulkan surface.
+ */
+VkSurfaceKHR instance_get_surface(void) {
+    return _surface;
+}
+
+/*
+ *    Gets the vulkan device.
+ *
+ *    @return VkDevice    The vulkan device.
+ */
+VkDevice instance_get_device(void) {
+    return _device;
 }
 
 /*

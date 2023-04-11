@@ -10,7 +10,7 @@
 #ifndef CHIK_GFXVK_INSTANCE_H
 #define CHIK_GFXVK_INSTANCE_H
 
-#include "libchik.h"
+#include <vulkan/vulkan.h>
 
 /*
  *    Initializes the vulkan instance.
@@ -28,6 +28,27 @@ void instance_pick_gpu(unsigned long gpu);
  *    Performs the rest of the instance initialization.
  */
 void instance_finish_init(void);
+
+/*
+ *    Gets the vulkan physical device.
+ *
+ *    @return VkPhysicalDevice    The vulkan physical device.
+ */
+VkPhysicalDevice instance_get_gpu(void);
+
+/*
+ *    Gets the vulkan surface.
+ *
+ *    @return VkSurfaceKHR    The vulkan surface.
+ */
+VkSurfaceKHR instance_get_surface(void);
+
+/*
+ *    Gets the vulkan device.
+ *
+ *    @return VkDevice    The vulkan device.
+ */
+VkDevice instance_get_device(void);
 
 /*
  *    Destroys the vulkan instance.
