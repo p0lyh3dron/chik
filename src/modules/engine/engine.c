@@ -72,7 +72,10 @@ unsigned int engine_init(const char *modules, ...) {
     /*
      *    Set the start time.
      */
-    stat->start_time = time(nullptr);
+    struct timeval tv;
+    gettimeofday(&tv, nullptr);
+    stat->start_time = tv.tv_sec * 1000000.0 + tv.tv_usec;
+    stat->prev_time  = stat->start_time;
 
     /*
      *    Initialize the engine modules.

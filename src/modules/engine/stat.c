@@ -30,10 +30,10 @@ void stat_start_frame() {
      *    frame count, and bounds it to not exceed
      *    the maximum number of averaging frames.
      */
-    _stat.time_diff                                      = _stat.time_diff;
-    _stat.time_diff                                      = tv.tv_sec * 1000000 + tv.tv_usec;
-    _stat.time_diff                                      = _stat.time_diff - _stat.time_diff;
-    _stat.frame_times[_stat.frames++ % FRAMES_AVG_COUNT] = _stat.time_diff;
+    _stat.time_diff                                      = _stat.prev_time;
+    _stat.prev_time                                      = tv.tv_sec * 1000000 + tv.tv_usec;
+    _stat.time_diff                                      = _stat.prev_time - _stat.time_diff;
+    _stat.frame_times[_stat.frames++ % FRAMES_AVG_COUNT] = _stat.prev_time;
 
     /*
      *    Calculate the fps.
