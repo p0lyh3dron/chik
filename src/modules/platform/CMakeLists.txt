@@ -7,11 +7,11 @@ file( GLOB_RECURSE SOURCES CONFIGURE_DEPENDS *.c )
 get_property( CHIK_GAMES GLOBAL PROPERTY CHIK_GAMES )
 get_property( LIBCHIK GLOBAL PROPERTY LIBCHIK )
 
-link_libraries( LibChik SDL2 )
+link_libraries( LibChik SDL2 asound )
 
 add_library( Chik_Platform SHARED ${SOURCES} )
 
-add_definitions( -DUSE_SDL )
+add_definitions( -DUSE_SDL -DUSE_ALSA )
 
 include_directories( ${LIBCHIK} )
 

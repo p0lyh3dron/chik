@@ -29,6 +29,7 @@
 #define PCM_SAMPLE_RATE  44100
 #define PCM_BUFFER_SIZE  8192
 #define PCM_SAMPLE_WIDTH 16
+#define PCM_WRITE_SIZE   PCM_BUFFER_SIZE / PCM_CHANNELS * PCM_SAMPLE_WIDTH / 8
 
 #define DEFAULT_WIDTH  1152
 #define DEFAULT_HEIGHT 864
@@ -64,13 +65,14 @@ unsigned int audio_init(void) {
 #if USE_ALSA
     unsigned int         rate     = PCM_SAMPLE_RATE;
     unsigned int         channels = PCM_CHANNELS;
+    unsigned int         periods  = 2;
     snd_pcm_hw_params_t *pParams  = nullptr;
     unsigned int         ret;
 
     /*
      *    Open the PCM device in playback mode
      */
-    if (ret = snd_pcm_open(&_aud_dev, PCM_DEVICE, SND_PCM_STREAM_PLAYBACK, 0) <
+    if (ret = snd_pcm_open(&_aud_dev, PCM_DEVICE, SND_PCM_STREAM_PLAYBACK, SND_PCM_NONBLOCK) <
               0) {
         VLOGF_WARN("Can't open \"%s\" PCM device. %s\n", PCM_DEVICE,
                    snd_strerror(ret));
@@ -116,6 +118,16 @@ unsigned int audio_init(void) {
     if (ret =
             snd_pcm_hw_params_set_rate_near(_aud_dev, pParams, &rate, 0) < 0) {
         VLOGF_WARN("Can't set rate. %s\n", snd_strerror(ret));
+        return 1;
+    }
+
+    if (ret = snd_pcm_hw_params_set_periods(_aud_dev, pParams, periods, 0) < 0) {
+        VLOGF_WARN("Can't set periods. %s\n", snd_strerror(ret));
+        return 1;
+    }
+
+    if (ret = snd_pcm_hw_params_set_buffer_size(_aud_dev, pParams, periods * PCM_BUFFER_SIZE) < 0) {
+        VLOGF_WARN("Can't set buffer size. %s\n", snd_strerror(ret));
         return 1;
     }
 
@@ -441,7 +453,7 @@ unsigned int platform_write_sound(char *buf) {
 #if USE_ALSA
     unsigned int ret;
 
-    if (ret = snd_pcm_writei(_aud_dev, buf, PCM_BUFFER_SIZE) == -EPIPE) {
+    if (ret = snd_pcm_writei(_aud_dev, buf, PCM_WRITE_SIZE) == -EPIPE) {
         LOGF_WARN("Audio buffer can't "
                   "keep up with sound playback!\n");
         snd_pcm_prepare(_aud_dev);
