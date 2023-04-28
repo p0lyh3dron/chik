@@ -15,6 +15,8 @@ unsigned int _sample_rate  = 0;
 unsigned int _num_channels = 0;
 unsigned int _num_samples  = 0;
 
+double _audio_time = 0.0;
+
 audio_t *_audio[CHIK_AUDIO_MAX_AUDIO_HANDLES] = {(audio_t *)0x0};
 
 unsigned char *_audio_buf = (unsigned char *)0x0;
@@ -69,7 +71,7 @@ unsigned int audio_update(float dt) {
             audio_t *audio = _audio[i];
             if (audio->data != (unsigned char*)0x0) {
                 /* Simply add the audio data to the buffer.  */
-                if (audio->flags & CHIK_AUDIO_TYPE_LOOP) {
+                if (audio->flags & CHIK_AUDIO_TYPE_LOOP && 0) {
                     unsigned long j;
                     for (j = 0; j < _num_samples * 4; j += _sample_width / 8) {
                         short *buf = (short *)(_audio_buf + j);
@@ -77,7 +79,37 @@ unsigned int audio_update(float dt) {
                     }
                 }
                 else {
+                    float  ear_dist = 0.5;
+                    vec2_t ear_strength;
 
+                    /* Calculate the volume in each ear due to distance from source.  */
+                    ear_strength.x = pow(audio->source_pos.x - audio->listen_pos.x - ear_dist * cos(audio->direction.y), 2) +
+                                     pow(audio->source_pos.z - audio->listen_pos.z - ear_dist * sin(audio->direction.y), 2) +
+                                     pow(audio->source_pos.y - audio->listen_pos.y, 2);
+
+                    ear_strength.y = pow(audio->source_pos.x - audio->listen_pos.x + ear_dist * cos(audio->direction.y), 2) +
+                                     pow(audio->source_pos.z - audio->listen_pos.z + ear_dist * sin(audio->direction.y), 2) +
+                                     pow(audio->source_pos.y - audio->listen_pos.y, 2);
+
+                    ear_strength.x = 1.0 / ear_strength.x, 2;
+                    ear_strength.y = 1.0 / ear_strength.y, 2;
+
+                    ear_strength.x = MIN(ear_strength.x, 1.0);
+                    ear_strength.y = MIN(ear_strength.y, 1.0);
+
+                    VLOGF_NOTE("Ear strength: %f, %f\n", ear_strength.x, ear_strength.y);
+
+                    float         strength;
+                    char          left;
+                    unsigned long j;
+                    for (j = left = 0; j < _num_samples * 4; j += _sample_width / 8) {
+                        strength = left ? ear_strength.y : ear_strength.x;
+
+                        short *buf = (short *)(_audio_buf + j);
+                        *buf += strength * (*(short*)(audio->data + audio->pos * _sample_width / 8 + j));
+
+                        left = !left;
+                    }
                 }
             }
 
@@ -332,10 +364,11 @@ unsigned int audio_stop(void *audio) {
  *    @param void *audio            The handle to the audio file.
  *    @param vec3_t listen_pos      The position of the listener.
  *    @param vec3_t source_pos      The position of the sound source.
+ *    @param vec2_t direction       The direction of the listener.
  *
  *    @return unsigned int         Whether the listener position was successfully set.
  */
-unsigned int audio_set_listener_position(void *audio, vec3_t listen_pos, vec3_t source_pos) {
+unsigned int audio_set_listener_position(void *audio, vec3_t listen_pos, vec3_t source_pos, vec2_t direction) {
     if (audio == (void *)0x0) {
         LOGF_ERR("Failed to get audio from resources!\n");
 
@@ -346,6 +379,7 @@ unsigned int audio_set_listener_position(void *audio, vec3_t listen_pos, vec3_t 
 
     a->listen_pos = listen_pos;
     a->source_pos = source_pos;
+    a->direction  = direction;
 
     return 1;
 }

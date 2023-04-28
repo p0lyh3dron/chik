@@ -27,6 +27,7 @@ typedef struct {
 
     vec3_t listen_pos;
     vec3_t source_pos;
+    vec2_t direction;
 } audio_t;
 
 /*
@@ -80,9 +81,10 @@ unsigned int audio_stop(void *audio);
  *    @param void *audio            The handle to the audio file.
  *    @param vec3_t listen_pos      The position of the listener.
  *    @param vec3_t source_pos      The position of the sound source.
+ *    @param vec2_t direction       The direction of the listener.
  *
  *    @return unsigned int         Whether the listener position was successfully set.
  */
-unsigned int audio_set_listener_position(void *audio, vec3_t listen_pos, vec3_t source_pos);
+unsigned int audio_set_listener_position(void *audio, vec3_t listen_pos, vec3_t source_pos, vec2_t direction);
 
 #endif /* CHIK_AUDIO_H  */

@@ -65,7 +65,6 @@ unsigned int audio_init(void) {
 #if USE_ALSA
     unsigned int         rate     = PCM_SAMPLE_RATE;
     unsigned int         channels = PCM_CHANNELS;
-    unsigned int         periods  = 2;
     snd_pcm_hw_params_t *pParams  = nullptr;
     unsigned int         ret;
 
@@ -121,15 +120,7 @@ unsigned int audio_init(void) {
         return 1;
     }
 
-    if (ret = snd_pcm_hw_params_set_periods(_aud_dev, pParams, periods, 0) < 0) {
-        VLOGF_WARN("Can't set periods. %s\n", snd_strerror(ret));
-        return 1;
-    }
-
-    if (ret = snd_pcm_hw_params_set_buffer_size(_aud_dev, pParams, periods * PCM_BUFFER_SIZE) < 0) {
-        VLOGF_WARN("Can't set buffer size. %s\n", snd_strerror(ret));
-        return 1;
-    }
+    snd_pcm_hw_params_set_buffer_size(_aud_dev, pParams, PCM_BUFFER_SIZE);
 
     /*
      *    Apply the hardware parameters to the PCM device.
@@ -453,16 +444,18 @@ unsigned int platform_write_sound(char *buf) {
 #if USE_ALSA
     unsigned int ret;
 
-    if (ret = snd_pcm_writei(_aud_dev, buf, PCM_WRITE_SIZE) == -EPIPE) {
-        LOGF_WARN("Audio buffer can't "
-                  "keep up with sound playback!\n");
-        snd_pcm_prepare(_aud_dev);
-        return 0;
-    } else if (ret < 0) {
-        VLOGF_WARN("Can't write to PCM "
-                   "device. %s\n",
-                   snd_strerror(ret));
-        return 0;
+    if ((ret = snd_pcm_avail_update(_aud_dev)) > 2048) {
+        if (ret = snd_pcm_writei(_aud_dev, buf, PCM_WRITE_SIZE) == -EPIPE) {
+            LOGF_WARN("Audio buffer can't "
+                    "keep up with sound playback!\n");
+            snd_pcm_prepare(_aud_dev);
+            return 0;
+        } else if (ret < 0) {
+            VLOGF_WARN("Can't write to PCM "
+                    "device. %s\n",
+                    snd_strerror(ret));
+            return 0;
+        }
     }
 
     return 1;
