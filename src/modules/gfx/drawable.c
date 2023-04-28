@@ -290,17 +290,21 @@ void mesh_draw(void *m) {
             /*
              *    Draw the triangle.
              */
-            /*triangle_t *pTri = (triangle_t *)malloc(sizeof(triangle_t));
-            pTri->v0         = malloc(VERTEX_ASM_MAX_VERTEX_SIZE);
-            pTri->v1         = malloc(VERTEX_ASM_MAX_VERTEX_SIZE);
-            pTri->v2         = malloc(VERTEX_ASM_MAX_VERTEX_SIZE);
-            pTri->assets     = mesh->assets;
+            if (args_has("--multithreaded-render")) {
+                triangle_t *pTri = (triangle_t *)malloc(sizeof(triangle_t));
+                pTri->v0         = malloc(VERTEX_ASM_MAX_VERTEX_SIZE);
+                pTri->v1         = malloc(VERTEX_ASM_MAX_VERTEX_SIZE);
+                pTri->v2         = malloc(VERTEX_ASM_MAX_VERTEX_SIZE);
+                pTri->assets     = mesh->assets;
 
-            memcpy(pTri->v0, a0, VERTEX_ASM_MAX_VERTEX_SIZE);
-            memcpy(pTri->v1, b0, VERTEX_ASM_MAX_VERTEX_SIZE);
-            memcpy(pTri->v2, c0, VERTEX_ASM_MAX_VERTEX_SIZE);
-            threadpool_submit(raster_rasterize_triangle_thread, (void *)pTri);*/
-            raster_rasterize_triangle(a0, b0, c0, mesh->assets);
+                memcpy(pTri->v0, a0, VERTEX_ASM_MAX_VERTEX_SIZE);
+                memcpy(pTri->v1, b0, VERTEX_ASM_MAX_VERTEX_SIZE);
+                memcpy(pTri->v2, c0, VERTEX_ASM_MAX_VERTEX_SIZE);
+                threadpool_submit(raster_rasterize_triangle_thread, (void *)pTri);
+            }
+            else {
+                raster_rasterize_triangle(a0, b0, c0, mesh->assets);
+            }
         }
     }
     threadpool_wait();

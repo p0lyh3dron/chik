@@ -27,7 +27,7 @@ void raster_setup(void) {
         height = args_get_int("-h");
     } else {
         width  = 1152;
-        height = 764;
+        height = 864;
     }
 
     _z_buffer = rendertarget_create(width, height, 32);

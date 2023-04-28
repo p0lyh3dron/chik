@@ -83,50 +83,49 @@ unsigned int graphics_exit(void) { return 1; }
 /*
  *    Creates a camera.
  *
- *    @return trap_t          The handle to the camera.
+ *    @return void *         The camera pointer.
  */
-trap_t create_camera(void) {
-    camera_t cam;
-    trap_t   handle;
+void *create_camera(void) {
+    camera_t *cam = malloc(sizeof(camera_t));
 
-    cam.pos.x = 0.0f;
-    cam.pos.y = 0.0f;
-    cam.pos.z = 0.0f;
+    if (cam == (camera_t*)0x0) {
+        LOGF_ERR("Failed to allocate camera.\n");
 
-    cam.ang.x = 0.0f;
-    cam.ang.y = 0.0f;
-
-    cam.near = 0.1f;
-    cam.far  = 1000.f;
-
-    cam.fov = 90.0f;
-
-    cam.aspect = (float)_back_buffer->target->width /
-                 (float)_back_buffer->target->height;
-
-    handle = resource_add(_handles, &cam, sizeof(camera_t));
-
-    if (BAD_TRAP(handle)) {
-        LOGF_ERR("Failed to add camera resource.\n");
-        return INVALID_TRAP;
+        return (void*)0x0;
     }
 
-    return handle;
+    cam->pos.x = 0.0f;
+    cam->pos.y = 0.0f;
+    cam->pos.z = 0.0f;
+
+    cam->ang.x = 0.0f;
+    cam->ang.y = 0.0f;
+
+    cam->near  = 0.1f;
+    cam->far   = 1000.f;
+
+    cam->fov   = 90.0f;
+
+    cam->aspect = (float)_back_buffer->target->width /
+                  (float)_back_buffer->target->height;
+
+    return cam;
 }
 
 /*
  *    Sets camera position.
  *
- *    @param trap_t camera            The handle to the camera.
+ *    @param void  *camera            The handle to the camera.
  *    @param vec3_t pos               The position of the camera.
  */
-void set_camera_position(trap_t camera, vec3_t pos) {
-    camera_t *cam = resource_get(_handles, camera);
-
-    if (cam == NULL) {
+void set_camera_position(void *camera, vec3_t pos) {
+    if (camera == (void*)0x0) {
         LOGF_ERR("Failed to get camera resource.\n");
+
         return;
     }
+
+    camera_t *cam = (camera_t*)camera;
 
     cam->pos = pos;
 }
@@ -134,65 +133,72 @@ void set_camera_position(trap_t camera, vec3_t pos) {
 /*
  *    Sets camera direction.
  *
- *    @param trap_t camera          The handle to the camera.
+ *    @param void  *camera          The handle to the camera.
  *    @param vec2_t dir             The direction of the camera.
  */
-void set_camera_direction(trap_t dir, vec2_t sDirection) {
-    camera_t *camera = resource_get(_handles, dir);
-
-    if (camera == NULL) {
+void set_camera_direction(void *camera, vec2_t dir) {
+    if (camera == (void*)0x0) {
         LOGF_ERR("Failed to get camera resource.\n");
+
         return;
     }
 
-    camera->ang = sDirection;
+    camera_t *cam = (camera_t*)camera;
+
+    cam->ang = dir;
 }
 
 /*
  *    Sets camera FOV.
  *
- *    @param trap_t camera          The handle to the camera.
+ *    @param void  *camera          The handle to the camera.
  *    @param float  fov             The FOV of the camera.
  */
-void set_camera_fov(trap_t fov, float sFov) {
-    camera_t *cam = resource_get(_handles, fov);
-
-    if (cam == NULL) {
+void set_camera_fov(void *camera, float fov) {
+    if (camera == (void*)0x0) {
         LOGF_ERR("Failed to get camera resource.\n");
+
         return;
     }
 
-    cam->fov = sFov;
+    camera_t *cam = (camera_t*)camera;
+
+    cam->fov = fov;
 }
 
 /*
  *    Sets the global camera.
  *
- *    @param trap_t cam         The handle to the camera.
+ *    @param void *cam         The handle to the camera.
  */
-void set_camera(trap_t cam) {
-    _camera = resource_get(_handles, cam);
-
-    if (_camera == NULL)
-        LOGF_ERR("Failed to get camera resource.\n");
+void set_camera(void *cam) {
+    _camera = cam;
 }
 
 /*
  *    Returns the camera's view matrix.
  *
- *    @param trap_t camera     The handle to the camera.
+ *    @param void *cam         The handle to the camera.
  *
  *    @return mat4_t           The view matrix.
  */
-mat4_t get_camera_view(trap_t camera) {
-    camera_t *cam = resource_get(_handles, camera);
-
-    if (cam == NULL) {
+mat4_t get_camera_view(void *cam) {
+    if (cam == (void*)0x0) {
         LOGF_ERR("Failed to get camera resource.\n");
+
         return m4_identity();
     }
 
+    camera_t *camera = (camera_t*)cam;
+
     return camera_view(cam);
+}
+
+/*
+ *    Begins a new render group.
+ */
+void begin_render_group(void) {
+    raster_clear_depth();
 }
 
 /*
