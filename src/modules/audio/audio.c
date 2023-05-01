@@ -91,13 +91,11 @@ unsigned int audio_update(float dt) {
                                      pow(audio->source_pos.z - audio->listen_pos.z + ear_dist * sin(audio->direction.y), 2) +
                                      pow(audio->source_pos.y - audio->listen_pos.y, 2);
 
-                    ear_strength.x = 1.0 / ear_strength.x, 2;
-                    ear_strength.y = 1.0 / ear_strength.y, 2;
+                    ear_strength.x = 1.0 / ear_strength.x * 4;
+                    ear_strength.y = 1.0 / ear_strength.y * 4;
 
                     ear_strength.x = MIN(ear_strength.x, 1.0);
                     ear_strength.y = MIN(ear_strength.y, 1.0);
-
-                    VLOGF_NOTE("Ear strength: %f, %f\n", ear_strength.x, ear_strength.y);
 
                     float         strength;
                     char          left;
