@@ -1,3 +1,6 @@
 [submodule "libchik"]
 	path = libchik
 	url = https://github.com/p0lyh3dron/libchik
+[submodule "src/modules/gfxVK/spvlib"]
+	path = src/modules/gfxVK/spvlib
+	url = https://github.com/p0lyh3dron/spvlib
