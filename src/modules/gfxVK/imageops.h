@@ -57,4 +57,21 @@ VkImageView imageops_create_image_view(VkImage image, VkFormat format, VkImageAs
  */
 void imageops_destroy_image(vulkan_image_t *image);
 
+/*
+ *    Creates the temporary texture.
+ */
+void imageops_create_temp_texture();
+
+/*
+ *    Gets the temporary texture.
+ *
+ *    @return VkImageView    The temporary texture.
+ */
+VkImageView imageops_get_temp_texture();
+
+/*
+ *    Destroys the temporary texture.
+ */
+void imageops_destroy_temp_texture();
+
 #endif /* CHIK_GFXVK_IMAGEOPS_H  */

@@ -91,10 +91,7 @@ void swapchain_create(unsigned long count) {
     
     uint32_t i;
     for (i = 0; i < _swapchain_image_count; i++) {
-        if (shell_get_variable("gfx_msaa_samples").i > 1)
-            _swapchain_image_views[i] = imageops_create_image_view(_swapchain_images[i], CHIK_GFXVK_RENDERPASSES_FORMAT, VK_IMAGE_ASPECT_COLOR_BIT, 1);
-        else
-            _swapchain_image_views[i] = VK_NULL_HANDLE;
+        _swapchain_image_views[i] = imageops_create_image_view(_swapchain_images[i], CHIK_GFXVK_RENDERPASSES_FORMAT, VK_IMAGE_ASPECT_COLOR_BIT, 1);
 
         VkImageView attachments[3] = {
             _color->view,
@@ -116,6 +113,24 @@ void swapchain_create(unsigned long count) {
             LOGF_ERR("Failed to create framebuffer.\n");
         }
     }
+}
+
+/*
+ *    Gets the swapchain.
+ *
+ *    @return VkSwapchainKHR    The swapchain.
+ */
+VkSwapchainKHR swapchain_get(void) {
+    return _swapchain;
+}
+
+/*
+ *    Gets the framebuffers.
+ *
+ *    @return VkFramebuffer *framebuffer    The framebuffers.
+ */
+VkFramebuffer *swapchain_get_framebuffers(void) {
+    return _swapchain_framebuffers;
 }
 
 /*

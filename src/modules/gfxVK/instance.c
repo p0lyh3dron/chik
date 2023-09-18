@@ -38,6 +38,7 @@ long                     _present_queue_idx;
 VkQueue                  _graphics_queue;
 VkQueue                  _present_queue;
 VkFramebuffer            _framebuffer;
+VkSampler                _texture_sampler;
 
 SDL_Window *_win;
 
@@ -376,6 +377,34 @@ void instance_finish_init(void) {
 
     vkGetDeviceQueue(_device, _graphics_queue_idx, 0, &_graphics_queue);
     vkGetDeviceQueue(_device, _present_queue_idx,  0, &_present_queue);
+
+    VkPhysicalDeviceProperties prop;
+    vkGetPhysicalDeviceProperties(_physical_device, &prop);
+
+    VkSamplerCreateInfo sampler;
+    sampler.sType                   = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
+    sampler.pNext                   = (const void *)0x0;
+    sampler.flags                   = 0;
+    sampler.magFilter               = VK_FILTER_LINEAR;
+    sampler.minFilter               = VK_FILTER_LINEAR;
+    sampler.mipmapMode              = VK_SAMPLER_MIPMAP_MODE_LINEAR;
+    sampler.addressModeU            = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+    sampler.addressModeV            = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+    sampler.addressModeW            = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+    sampler.mipLodBias              = 0.0f;
+    sampler.anisotropyEnable        = VK_TRUE;
+    sampler.maxAnisotropy           = prop.limits.maxSamplerAnisotropy;
+    sampler.compareEnable           = VK_FALSE;
+    sampler.compareOp               = VK_COMPARE_OP_ALWAYS;
+    sampler.minLod                  = 0.0f;
+    sampler.maxLod                  = 0.0f;
+    sampler.borderColor             = VK_BORDER_COLOR_INT_OPAQUE_BLACK;
+    sampler.unnormalizedCoordinates = VK_FALSE;
+
+    if (vkCreateSampler(_device, &sampler, (const void *)0x0, &_texture_sampler) != VK_SUCCESS) {
+        LOGF_ERR("Failed to create texture sampler.\n");
+        return;
+    }
 }
 
 /*
@@ -406,9 +435,100 @@ VkDevice instance_get_device(void) {
 }
 
 /*
+ *    Gets the vulkan graphics queue index.
+ *
+ *    @return unsigned long    The vulkan graphics queue.
+ */
+unsigned long instance_get_graphics_queue_idx(void) {
+    return _graphics_queue_idx;
+}
+
+/*
+ *    Gets the vulkan graphics queue.
+ *
+ *    @return VkQueue    The vulkan graphics queue.
+ */
+VkQueue instance_get_graphics_queue(void) {
+    return _graphics_queue;
+}
+
+/*
+ *    Gets the vulkan present queue.
+ *
+ *    @return VkQueue    The vulkan present queue.
+ */
+VkQueue instance_get_present_queue(void) {
+    return _present_queue;
+}
+
+/*
+ *    Creates a GPU buffer.
+ *
+ *    @param VkDeviceSize          size          The size of the buffer.
+ *    @param VkBufferUsageFlags    usage         The usage of the buffer.
+ *    @param VkMemoryPropertyFlags properties    The properties of the buffer.
+ *    @param VkBuffer             *buffer        The buffer to create.
+ *    @param VkDeviceMemory       *buffer_memory The buffer memory to create.
+ */
+void instance_create_buffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBuffer *buffer, VkDeviceMemory *buffer_memory) {
+    VkBufferCreateInfo buffer_info = {
+        .sType                 = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO,
+        .pNext                 = (const void *)0x0,
+        .flags                 = 0,
+        .size                  = size,
+        .usage                 = usage,
+        .sharingMode           = VK_SHARING_MODE_EXCLUSIVE,
+        .queueFamilyIndexCount = 0,
+        .pQueueFamilyIndices   = (unsigned int *)0x0,
+    };
+
+    if (vkCreateBuffer(_device, &buffer_info, (const void *)0x0, buffer) != VK_SUCCESS) {
+        LOGF_ERR("Failed to create buffer.\n");
+        return;
+    }
+
+    VkMemoryRequirements mem_requirements;
+    vkGetBufferMemoryRequirements(_device, *buffer, &mem_requirements);
+
+    VkMemoryAllocateInfo alloc_info = {
+        .sType           = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO,
+        .pNext           = (const void *)0x0,
+        .allocationSize  = mem_requirements.size,
+        .memoryTypeIndex = 0,
+    };
+
+    VkPhysicalDeviceMemoryProperties mem_properties;
+    vkGetPhysicalDeviceMemoryProperties(_physical_device, &mem_properties);
+
+    for (unsigned int i = 0; i < mem_properties.memoryTypeCount; i++) {
+        if ((mem_requirements.memoryTypeBits & (1 << i)) && (mem_properties.memoryTypes[i].propertyFlags & properties) == properties) {
+            alloc_info.memoryTypeIndex = i;
+            break;
+        }
+    }
+
+    if (vkAllocateMemory(_device, &alloc_info, (const void *)0x0, buffer_memory) != VK_SUCCESS) {
+        LOGF_ERR("Failed to allocate buffer memory.\n");
+        return;
+    }
+
+    vkBindBufferMemory(_device, *buffer, *buffer_memory, 0);
+}
+
+/*
+ *    Returns the texure sampler.
+ *
+ *    @return VkSampler    The texture sampler.
+ */
+VkSampler instance_get_texture_sampler(void) {
+    return _texture_sampler;
+}
+
+/*
  *    Destroys the vulkan instance.
  */
 void instance_destroy(void) {
+    vkDestroySampler(_device, _texture_sampler, (const void *)0x0);
     vkDestroyDevice(_device, (const void *)0x0);
     vkDestroySurfaceKHR(_instance, _surface, (const void *)0x0);
     if (args_has("--vklayers"))

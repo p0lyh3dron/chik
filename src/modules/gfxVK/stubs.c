@@ -1,42 +1,18 @@
 #include "libchik.h"
 
+#include "presentation.h"
+
 void image_create_from_file(const char *path, image_t *img) {
 }
 
 void text_create(void) {
 }
 
-void *vbuffer_create(void *v, unsigned int size, unsigned int stride, v_layout_t layout) {
-}
-
-void vbuffer_free(void *buf) {
-}
-
-void *mesh_create(void *v) {
-}
-
-void mesh_set_vbuffer(void *m, void *v) {
-}
-
-void mesh_append_asset(void *m, void *a, unsigned long size) {
-}
-
-void mesh_set_asset(void *m, void *a, unsigned long size, unsigned long index) {
-}
-
-void *mesh_get_asset(void *m, unsigned long index) {
-}
-
-void mesh_draw(void *m) {
-}
-
-void mesh_free(void *m) {
-}
-
 mat4_t get_camera_view(trap_t sCamera) {
 }
 
 void draw_frame(void) {
+    presentation_draw_frame();
 }
 
 trap_t create_camera(void) {

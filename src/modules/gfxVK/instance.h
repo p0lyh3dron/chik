@@ -51,6 +51,46 @@ VkSurfaceKHR instance_get_surface(void);
 VkDevice instance_get_device(void);
 
 /*
+ *    Gets the vulkan graphics queue index.
+ *
+ *    @return unsigned long    The vulkan graphics queue.
+ */
+unsigned long instance_get_graphics_queue_idx(void);
+
+/*
+ *    Gets the vulkan graphics queue.
+ *
+ *    @return VkQueue    The vulkan graphics queue.
+ */
+VkQueue instance_get_graphics_queue(void);
+
+/*
+ *    Gets the vulkan present queue.
+ *
+ *    @return VkQueue    The vulkan present queue.
+ */
+VkQueue instance_get_present_queue(void);
+
+
+/*
+ *    Creates a GPU buffer.
+ *
+ *    @param VkDeviceSize          size          The size of the buffer.
+ *    @param VkBufferUsageFlags    usage         The usage of the buffer.
+ *    @param VkMemoryPropertyFlags properties    The properties of the buffer.
+ *    @param VkBuffer             *buffer        The buffer to create.
+ *    @param VkDeviceMemory       *buffer_memory The buffer memory to create.
+ */
+void instance_create_buffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkBuffer *buffer, VkDeviceMemory *buffer_memory);
+
+/*
+ *    Returns the texure sampler.
+ *
+ *    @return VkSampler    The texture sampler.
+ */
+VkSampler instance_get_texture_sampler(void);
+
+/*
  *    Destroys the vulkan instance.
  */
 void instance_destroy(void);

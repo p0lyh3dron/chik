@@ -13,12 +13,48 @@
 
 #include "libchik.h"
 
-#include "spvlib/spvlib.h"
-
+#include "imageops.h"
 #include "instance.h"
+#include "presentation.h"
 #include "renderpasses.h"
 
 cached_shader_t _shader_cache[CHIK_GFXVK_SHADER_CACHE_SIZE] = {0};
+
+VkDescriptorPool _descriptor_pool;
+
+mesh_t       *_meshes[32] = {0};
+unsigned long _mesh_count = 0;
+
+/*
+ *    Initializes the descriptor pool.
+ */
+void shader_init(void) {
+    VkDescriptorPoolSize pool_sizes[2];
+    pool_sizes[0].type            = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+    pool_sizes[0].descriptorCount = 256;
+    pool_sizes[1].type            = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+    pool_sizes[1].descriptorCount = 256;
+
+    VkDescriptorPoolCreateInfo pool_info;
+    pool_info.sType         = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
+    pool_info.pNext         = (void *)0x0;
+    pool_info.flags         = 0;
+    pool_info.maxSets       = CHIK_GFXVK_FRAMES_IN_FLIGHT;
+    pool_info.poolSizeCount = 2;
+    pool_info.pPoolSizes    = pool_sizes;
+
+    if (vkCreateDescriptorPool(instance_get_device(), &pool_info, (VkAllocationCallbacks *)0x0, &_descriptor_pool) != VK_SUCCESS) {
+        LOGF_ERR("Failed to create descriptor pool.\n");
+        return;
+    }
+}
+
+/*
+ *    Frees the descriptor pool.
+ */
+void shader_exit(void) {
+    vkDestroyDescriptorPool(instance_get_device(), _descriptor_pool, (VkAllocationCallbacks *)0x0);
+}
 
 /*
  *    Creates the descriptor set layout for the given shader.
@@ -331,7 +367,7 @@ void *load_shader(const char *vert_file, const char *frag_file) {
     color_blend_info.blendConstants[0] = 0.0f;
     color_blend_info.blendConstants[1] = 0.0f;
 
-    VkDescriptorSetLayout descriptor_set_layout = create_descriptor_set_layout(vert_spv, frag_spv);
+    shader->d_layout = create_descriptor_set_layout(vert_spv, frag_spv);
     
     VkPushConstantRange push_constant_range;
     push_constant_range.stageFlags = VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT;
@@ -343,11 +379,11 @@ void *load_shader(const char *vert_file, const char *frag_file) {
     layout_info.pNext                  = (void *)0x0;
     layout_info.flags                  = 0;
     layout_info.setLayoutCount         = 1;
-    layout_info.pSetLayouts            = &descriptor_set_layout;
+    layout_info.pSetLayouts            = &shader->d_layout;
     layout_info.pushConstantRangeCount = 1;
     layout_info.pPushConstantRanges    = &push_constant_range;
 
-    if (vkCreatePipelineLayout(instance_get_device(), &layout_info, (VkAllocationCallbacks *)0x0, &shader->layout) != VK_SUCCESS) {
+    if (vkCreatePipelineLayout(instance_get_device(), &layout_info, (VkAllocationCallbacks *)0x0, &shader->p_layout) != VK_SUCCESS) {
         LOGF_ERR("Failed to create pipeline layout.\n");
         return (void *)0x0;
     }
@@ -390,13 +426,150 @@ void *load_shader(const char *vert_file, const char *frag_file) {
     pipeline_info.pDepthStencilState  = &depth_stencil_info;
     pipeline_info.pColorBlendState    = &color_blend_info;
     pipeline_info.pDynamicState       = (VkPipelineDynamicStateCreateInfo *)0x0;
-    pipeline_info.layout              = shader->layout;
+    pipeline_info.layout              = shader->p_layout;
     pipeline_info.renderPass          = renderpasses_get();
 
     if (vkCreateGraphicsPipelines(instance_get_device(), VK_NULL_HANDLE, 1, &pipeline_info, (VkAllocationCallbacks *)0x0, &shader->pipeline) != VK_SUCCESS) {
         LOGF_ERR("Failed to create graphics pipeline.\n");
         return (void *)0x0;
     }
+
+    vkDestroyShaderModule(instance_get_device(), vert_module, (VkAllocationCallbacks *)0x0);
+    vkDestroyShaderModule(instance_get_device(), frag_module, (VkAllocationCallbacks *)0x0);
+
+    shader->vert_spv = vert_spv;
+    shader->frag_spv = frag_spv;
+}
+
+void *vbuffer_create(void *v, unsigned int size, unsigned int stride, v_layout_t layout) {
+    VkDeviceSize buffer_size = size;
+
+    VkBuffer       staging_buffer;
+    VkDeviceMemory staging_buffer_memory;
+
+    instance_create_buffer(buffer_size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, &staging_buffer, &staging_buffer_memory);
+
+    void *data;
+    vkMapMemory(instance_get_device(), staging_buffer_memory, 0, buffer_size, 0, &data);
+    memcpy(data, v, (size_t)buffer_size);
+    vkUnmapMemory(instance_get_device(), staging_buffer_memory);
+
+    VkBuffer       buffer;
+    VkDeviceMemory buffer_memory;
+
+    instance_create_buffer(buffer_size, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, &buffer, &buffer_memory);
+
+    VkCommandBuffer command_buffer = presentation_create_command();
+
+    VkBufferCopy copy_region;
+    copy_region.srcOffset = 0;
+    copy_region.dstOffset = 0;
+    copy_region.size      = buffer_size;
+
+    vkCmdCopyBuffer(command_buffer, staging_buffer, buffer, 1, &copy_region);
+
+    presentation_destroy_command(command_buffer);
+
+    vkDestroyBuffer(instance_get_device(), staging_buffer, (VkAllocationCallbacks *)0x0);
+    vkFreeMemory(instance_get_device(), staging_buffer_memory, (VkAllocationCallbacks *)0x0);
+
+    vbuffer_t *vbuffer = (vbuffer_t *)malloc(sizeof(vbuffer_t));
+
+    if (vbuffer == (vbuffer_t *)0x0) {
+        LOGF_ERR("Failed to allocate memory for vertex buffer.\n");
+        return (void *)0x0;
+    }
+
+    vbuffer->buffer = buffer;
+    vbuffer->memory = buffer_memory;
+    vbuffer->size   = buffer_size;
+
+    return (void *)vbuffer;
+}
+
+void vbuffer_free(void *buf) {
+    vbuffer_t *vbuffer = (vbuffer_t *)buf;
+
+    vkDestroyBuffer(instance_get_device(), vbuffer->buffer, (VkAllocationCallbacks *)0x0);
+    vkFreeMemory(instance_get_device(), vbuffer->memory, (VkAllocationCallbacks *)0x0);
+
+    free(vbuffer);
+}
+
+void *mesh_create(void *v) {
+    mesh_t *mesh = (mesh_t *)malloc(sizeof(mesh_t));
+
+    if (mesh == (mesh_t *)0x0) {
+        LOGF_ERR("Failed to allocate memory for mesh.\n");
+        return (void *)0x0;
+    }
+
+    mesh->vbuffer = v;
+
+    return (void *)mesh;
+}
+
+void mesh_set_vbuffer(void *m, void *v) {
+    mesh_t *mesh = (mesh_t *)m;
+
+    mesh->vbuffer = v;
+}
+
+void mesh_append_asset(void *m, void *a, unsigned long size) {
+}
+
+void mesh_set_asset(void *m, void *a, unsigned long size, unsigned long index) {
+    unsigned long  i;
+    mesh_t        *mesh   = (mesh_t *)m;
+
+    _api_type_e type = spv_get_uniform_type(mesh->shader->vert_spv, index);
+
+    if (type == _API_TYPE_NONE) {
+        type = spv_get_uniform_type(mesh->shader->frag_spv, index);
+        return;
+    }
+
+    if (type == _API_TYPE_SAMPLER) {
+        for (i = 0; i < CHIK_GFXVK_FRAMES_IN_FLIGHT; ++i) {        
+            VkDescriptorImageInfo image_info;
+            image_info.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+            image_info.imageView   = imageops_get_temp_texture_view();
+            image_info.sampler     = instance_get_texture_sampler();
+
+            VkWriteDescriptorSet descriptor_write;
+            descriptor_write.sType            = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+            descriptor_write.pNext            = (void *)0x0;
+            descriptor_write.dstSet           = mesh->d_set[i];
+            descriptor_write.dstBinding       = index;
+            descriptor_write.dstArrayElement  = 0;
+            descriptor_write.descriptorCount  = 1;
+            descriptor_write.descriptorType   = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+            descriptor_write.pImageInfo       = &image_info;
+
+            vkUpdateDescriptorSets(instance_get_device(), 1, &descriptor_write, 0, (VkDescriptorSet *)0x0);
+        }
+    }
+
+    for (i = 0; i < CHIK_GFXVK_FRAMES_IN_FLIGHT; ++i) {
+        /* If data and not image  */
+        memcpy(mesh->uniforms[i].data[index], a, size);
+    }
+}
+
+void *mesh_get_asset(void *m, unsigned long index) {
+}
+
+void mesh_draw(void *m) {
+    _meshes[_mesh_count++] = (mesh_t *)m;
+}
+
+void mesh_free(void *m) {
+    mesh_t *mesh = (mesh_t *)m;
+
+    vbuffer_free(mesh->vbuffer);
+    vkFreeDescriptorSets(instance_get_device(), _descriptor_pool, CHIK_GFXVK_FRAMES_IN_FLIGHT, mesh->d_set);
+
+    free(mesh);
 }
 
 /*
@@ -405,5 +578,22 @@ void *load_shader(const char *vert_file, const char *frag_file) {
  *    @param void *shader    The shader to free.
  */
 void free_shader(void *shader) {
+    vkDestroyDescriptorSetLayout(instance_get_device(), ((shader_t *)shader)->d_layout, (VkAllocationCallbacks *)0x0);
+    vkDestroyPipelineLayout(instance_get_device(), ((shader_t *)shader)->p_layout, (VkAllocationCallbacks *)0x0);
+    vkDestroyPipeline(instance_get_device(), ((shader_t *)shader)->pipeline, (VkAllocationCallbacks *)0x0);
+}
 
+/*
+ *    Returns the list of draw commands.
+ *
+ *    @param unsigned int *count    The number of draw commands.
+ *
+ *    @return mesh_t **    The list of draw commands.
+ */
+mesh_t **get_draw_commands(unsigned int *count) {
+    *count = _mesh_count;
+
+    _mesh_count = 0;
+
+    return _meshes;
 }

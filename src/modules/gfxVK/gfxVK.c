@@ -12,7 +12,9 @@
 
 #include "gfxVK.h"
 
+#include "imageops.h"
 #include "instance.h"
+#include "presentation.h"
 #include "renderpasses.h"
 #include "swapchain.h"
 #include "shader.h"
@@ -60,8 +62,15 @@ unsigned int graphics_init(void) {
 
     renderpasses_init();
 
+    presentation_init();
+
+    imageops_create_temp_texture();
+
     swapchain_create(shell_get_variable("gfx_buffered_frames").i);
+
+    shader_init();
     load_shader("assets/shaders/sprite_vert.spv", "assets/shaders/sprite_frag.spv");
+    shader_exit();
 
     return 1;
 }
@@ -74,6 +83,7 @@ unsigned int graphics_init(void) {
  *    @return unsigned int   The return code.
  */
 unsigned int graphics_update(float dt) {
+    return 1;
 }
 
 /*
@@ -81,6 +91,8 @@ unsigned int graphics_update(float dt) {
  */
 unsigned int graphics_exit(void) {
     swapchain_destroy();
+    imageops_destroy_temp_texture();
+    presentation_destroy();
     renderpasses_destroy();
     instance_destroy();
 

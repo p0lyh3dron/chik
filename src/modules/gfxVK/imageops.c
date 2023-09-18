@@ -10,6 +10,9 @@
 #include "imageops.h"
 
 #include "instance.h"
+#include "presentation.h"
+
+vulkan_image_t *_temp_texture;
 
 /*
  *    Finds the memory type for given properties.
@@ -29,6 +32,41 @@ uint32_t find_memory_type(uint32_t type_filter, VkMemoryPropertyFlags properties
             return i;
         }
     }
+}
+
+/*
+ *    Transitions an image layout.
+ *
+ *    @param VkImage               image           The image.
+ *    @param VkFormat              format          The format of the image.
+ *    @param VkImageLayout         old_layout      The old layout of the image.
+ *    @param VkImageLayout         new_layout      The new layout of the image.
+ *    @param uint32_t              mip_levels      The number of mip levels.
+ */
+void imageops_transition_image_layout(VkImage image, VkFormat format, VkImageLayout old_layout, VkImageLayout new_layout, uint32_t mip_levels) {
+    VkCommandBuffer command = presentation_create_command();
+
+    VkImageMemoryBarrier barrier = {
+        .sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER,
+        .oldLayout = old_layout,
+        .newLayout = new_layout,
+        .srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+        .dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+        .srcAccessMask = 0,
+        .dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT,
+        .image = image,
+        .subresourceRange = {
+            .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
+            .baseMipLevel = 0,
+            .levelCount = mip_levels,
+            .baseArrayLayer = 0,
+            .layerCount = 1
+        }
+    };
+
+    vkCmdPipelineBarrier(command, VK_PIPELINE_STAGE_HOST_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT, 0, 0, (const VkMemoryBarrier*)0x0, 0, (const VkBufferMemoryBarrier*)0x0, 1, &barrier);
+
+    presentation_destroy_command(command);
 }
 
 /*
@@ -167,4 +205,69 @@ void imageops_destroy_image(vulkan_image_t *image) {
     vkFreeMemory(instance_get_device(), image->memory, (const VkAllocationCallbacks*)0x0);
 
     free(image);
+}
+
+/*
+ *    Creates the temporary texture.
+ */
+void imageops_create_temp_texture() {
+    VkDeviceSize image_size = 2 * 2 * 4;
+
+    char pixels[] = {
+        110, 200, 250, 255,        220, 250, 255, 255,
+        220, 250, 255, 255,        110, 200, 250, 255,
+    };
+
+    VkBuffer staging_buffer;
+    VkDeviceMemory staging_buffer_memory;
+
+    instance_create_buffer(image_size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, &staging_buffer, &staging_buffer_memory);
+
+    void *data;
+    vkMapMemory(instance_get_device(), staging_buffer_memory, 0, image_size, 0, &data);
+    memcpy(data, pixels, (size_t)image_size);
+    vkUnmapMemory(instance_get_device(), staging_buffer_memory);
+
+    _temp_texture = imageops_create_image(VK_FORMAT_R8G8B8A8_SRGB, 2, 2, 1, VK_SAMPLE_COUNT_1_BIT, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, VK_IMAGE_ASPECT_COLOR_BIT);
+
+    imageops_transition_image_layout(_temp_texture->image, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1);
+
+    VkCommandBuffer command = presentation_create_command();
+
+    VkBufferImageCopy region = {
+        .bufferOffset = 0,
+        .bufferRowLength = 0,
+        .bufferImageHeight = 0,
+        .imageSubresource = {
+            .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
+            .mipLevel = 0,
+            .baseArrayLayer = 0,
+            .layerCount = 1
+        },
+        .imageOffset = {0, 0, 0},
+        .imageExtent = {2, 2, 1},
+    };
+
+    vkCmdCopyBufferToImage(command, staging_buffer, _temp_texture->image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
+
+    presentation_destroy_command(command);
+
+    vkDestroyBuffer(instance_get_device(), staging_buffer, (const VkAllocationCallbacks*)0x0);
+    vkFreeMemory(instance_get_device(), staging_buffer_memory, (const VkAllocationCallbacks*)0x0);
+}
+
+/*
+ *    Gets the temporary texture.
+ *
+ *    @return VkImageView    The temporary texture.
+ */
+VkImageView imageops_get_temp_texture() {
+    return _temp_texture->view;
+}
+
+/*
+ *    Destroys the temporary texture.
+ */
+void imageops_destroy_temp_texture() {
+    imageops_destroy_image(_temp_texture);
 }
