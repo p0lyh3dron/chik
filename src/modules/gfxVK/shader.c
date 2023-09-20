@@ -186,7 +186,7 @@ void *load_shader(const char *vert_file, const char *frag_file) {
         return (void *)0x0;
     }
 
-    VkShaderModuleCreateInfo vert_info;
+    VkShaderModuleCreateInfo vert_info = {0};
     vert_info.sType    = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
     vert_info.pNext    = (void *)0x0;
     vert_info.flags    = 0;
@@ -200,7 +200,7 @@ void *load_shader(const char *vert_file, const char *frag_file) {
         return (void *)0x0;
     }
 
-    VkShaderModuleCreateInfo frag_info;
+    VkShaderModuleCreateInfo frag_info = {0};
     frag_info.sType    = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
     frag_info.pNext    = (void *)0x0;
     frag_info.flags    = 0;
@@ -214,7 +214,7 @@ void *load_shader(const char *vert_file, const char *frag_file) {
         return (void *)0x0;
     }
 
-    VkPipelineShaderStageCreateInfo vert_stage_info;
+    VkPipelineShaderStageCreateInfo vert_stage_info = {0};
     vert_stage_info.sType               = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
     vert_stage_info.pNext               = (void *)0x0;
     vert_stage_info.flags               = 0;
@@ -222,7 +222,7 @@ void *load_shader(const char *vert_file, const char *frag_file) {
     vert_stage_info.module              = vert_module;
     vert_stage_info.pName               = "main";
 
-    VkPipelineShaderStageCreateInfo frag_stage_info;
+    VkPipelineShaderStageCreateInfo frag_stage_info = {0};
     frag_stage_info.sType               = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
     frag_stage_info.pNext               = (void *)0x0;
     frag_stage_info.flags               = 0;
@@ -276,12 +276,12 @@ void *load_shader(const char *vert_file, const char *frag_file) {
         offset = attr[i].offset;
     }
 
-    VkVertexInputBindingDescription binding_desc;
+    VkVertexInputBindingDescription binding_desc = {0};
     binding_desc.binding   = 0;
     binding_desc.stride    = offset;
     binding_desc.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
 
-    VkPipelineVertexInputStateCreateInfo vertex_input_info;
+    VkPipelineVertexInputStateCreateInfo vertex_input_info = {0};
     vertex_input_info.sType                           = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
     vertex_input_info.pNext                           = (void *)0x0;
     vertex_input_info.flags                           = 0;
@@ -290,14 +290,14 @@ void *load_shader(const char *vert_file, const char *frag_file) {
     vertex_input_info.vertexAttributeDescriptionCount = input_count;
     vertex_input_info.pVertexAttributeDescriptions    = attr;
 
-    VkPipelineInputAssemblyStateCreateInfo input_assembly_info;
+    VkPipelineInputAssemblyStateCreateInfo input_assembly_info = {0};
     input_assembly_info.sType                  = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
     input_assembly_info.pNext                  = (void *)0x0;
     input_assembly_info.flags                  = 0;
     input_assembly_info.topology               = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
     input_assembly_info.primitiveRestartEnable = VK_FALSE;
 
-    VkViewport viewport;
+    VkViewport viewport = {0};
     viewport.x        = 0.0f;
     viewport.y        = 0.0f;
     viewport.width    = (float)shell_get_variable("gfx_width").i;
@@ -305,13 +305,13 @@ void *load_shader(const char *vert_file, const char *frag_file) {
     viewport.minDepth = 0.0f;
     viewport.maxDepth = 1.0f;
 
-    VkRect2D scissor;
+    VkRect2D scissor = {0};
     scissor.offset.x      = 0;
     scissor.offset.y      = 0;
     scissor.extent.width  = shell_get_variable("gfx_width").i;
     scissor.extent.height = shell_get_variable("gfx_height").i;
 
-    VkPipelineViewportStateCreateInfo viewport_info;
+    VkPipelineViewportStateCreateInfo viewport_info = {0};
     viewport_info.sType         = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
     viewport_info.pNext         = (void *)0x0;
     viewport_info.flags         = 0;
@@ -320,14 +320,14 @@ void *load_shader(const char *vert_file, const char *frag_file) {
     viewport_info.scissorCount  = 1;
     viewport_info.pScissors     = &scissor;
 
-    VkPipelineRasterizationStateCreateInfo rasterizer_info;
+    VkPipelineRasterizationStateCreateInfo rasterizer_info = {0};
     rasterizer_info.sType                   = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
     rasterizer_info.pNext                   = (void *)0x0;
     rasterizer_info.flags                   = 0;
     rasterizer_info.depthClampEnable        = VK_FALSE;
     rasterizer_info.rasterizerDiscardEnable = VK_FALSE;
     rasterizer_info.polygonMode             = VK_POLYGON_MODE_FILL;
-    rasterizer_info.cullMode                = VK_CULL_MODE_BACK_BIT;
+    rasterizer_info.cullMode                = VK_CULL_MODE_NONE;
     rasterizer_info.frontFace               = VK_FRONT_FACE_CLOCKWISE;
     rasterizer_info.depthBiasEnable         = VK_FALSE;
     rasterizer_info.depthBiasConstantFactor = 0.0f;
@@ -335,7 +335,7 @@ void *load_shader(const char *vert_file, const char *frag_file) {
     rasterizer_info.depthBiasSlopeFactor    = 0.0f;
     rasterizer_info.lineWidth               = 1.0f;
 
-    VkPipelineMultisampleStateCreateInfo multisample_info;
+    VkPipelineMultisampleStateCreateInfo multisample_info = {0};
     multisample_info.sType                 = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
     multisample_info.pNext                 = (void *)0x0;
     multisample_info.flags                 = 0;
@@ -346,7 +346,7 @@ void *load_shader(const char *vert_file, const char *frag_file) {
     multisample_info.alphaToCoverageEnable = VK_FALSE;
     multisample_info.alphaToOneEnable      = VK_FALSE;
 
-    VkPipelineColorBlendAttachmentState color_blend_attachment;
+    VkPipelineColorBlendAttachmentState color_blend_attachment = {0};
     color_blend_attachment.blendEnable         = VK_FALSE;
     color_blend_attachment.srcColorBlendFactor = VK_BLEND_FACTOR_ONE;
     color_blend_attachment.dstColorBlendFactor = VK_BLEND_FACTOR_ZERO;
@@ -356,7 +356,7 @@ void *load_shader(const char *vert_file, const char *frag_file) {
     color_blend_attachment.alphaBlendOp        = VK_BLEND_OP_ADD;
     color_blend_attachment.colorWriteMask      = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
     
-    VkPipelineColorBlendStateCreateInfo color_blend_info;
+    VkPipelineColorBlendStateCreateInfo color_blend_info = {0};
     color_blend_info.sType             = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
     color_blend_info.pNext             = (void *)0x0;
     color_blend_info.flags             = 0;
@@ -369,12 +369,12 @@ void *load_shader(const char *vert_file, const char *frag_file) {
 
     shader->d_layout = create_descriptor_set_layout(vert_spv, frag_spv);
     
-    VkPushConstantRange push_constant_range;
+    VkPushConstantRange push_constant_range = {0};
     push_constant_range.stageFlags = VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT;
     push_constant_range.offset     = 0;
     push_constant_range.size       = 64;
 
-    VkPipelineLayoutCreateInfo layout_info;
+    VkPipelineLayoutCreateInfo layout_info = {0};
     layout_info.sType                  = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
     layout_info.pNext                  = (void *)0x0;
     layout_info.flags                  = 0;
@@ -388,7 +388,7 @@ void *load_shader(const char *vert_file, const char *frag_file) {
         return (void *)0x0;
     }
 
-    VkStencilOpState stencil_op;
+    VkStencilOpState stencil_op = {0};
     stencil_op.failOp      = VK_STENCIL_OP_KEEP;
     stencil_op.passOp      = VK_STENCIL_OP_KEEP;
     stencil_op.depthFailOp = VK_STENCIL_OP_KEEP;
@@ -397,7 +397,7 @@ void *load_shader(const char *vert_file, const char *frag_file) {
     stencil_op.writeMask   = 0;
     stencil_op.reference   = 0;
 
-    VkPipelineDepthStencilStateCreateInfo depth_stencil_info;
+    VkPipelineDepthStencilStateCreateInfo depth_stencil_info = {0};
     depth_stencil_info.sType                 = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
     depth_stencil_info.pNext                 = (void *)0x0;
     depth_stencil_info.flags                 = 0;
@@ -411,7 +411,7 @@ void *load_shader(const char *vert_file, const char *frag_file) {
     depth_stencil_info.minDepthBounds        = 0.0f;
     depth_stencil_info.maxDepthBounds        = 1.0f;
 
-    VkGraphicsPipelineCreateInfo pipeline_info;
+    VkGraphicsPipelineCreateInfo pipeline_info = {0};
     pipeline_info.sType               = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
     pipeline_info.pNext               = (void *)0x0;
     pipeline_info.flags               = 0;
@@ -428,6 +428,9 @@ void *load_shader(const char *vert_file, const char *frag_file) {
     pipeline_info.pDynamicState       = (VkPipelineDynamicStateCreateInfo *)0x0;
     pipeline_info.layout              = shader->p_layout;
     pipeline_info.renderPass          = renderpasses_get();
+    pipeline_info.subpass             = 0;
+    pipeline_info.basePipelineHandle  = VK_NULL_HANDLE;
+    pipeline_info.basePipelineIndex   = -1;
 
     if (vkCreateGraphicsPipelines(instance_get_device(), VK_NULL_HANDLE, 1, &pipeline_info, (VkAllocationCallbacks *)0x0, &shader->pipeline) != VK_SUCCESS) {
         LOGF_ERR("Failed to create graphics pipeline.\n");
@@ -439,6 +442,8 @@ void *load_shader(const char *vert_file, const char *frag_file) {
 
     shader->vert_spv = vert_spv;
     shader->frag_spv = frag_spv;
+
+    return (void *)shader;
 }
 
 void *vbuffer_create(void *v, unsigned int size, unsigned int stride, v_layout_t layout) {
@@ -505,8 +510,72 @@ void *mesh_create(void *v) {
     }
 
     mesh->vbuffer = v;
+    mesh->shader  = (shader_t *)0x0;
 
     return (void *)mesh;
+}
+
+void mesh_set_shader(void *m, void *s) {
+    mesh_t *mesh = (mesh_t *)m;
+
+    mesh->shader = (shader_t *)s;
+
+    VkDescriptorSetLayout layouts[CHIK_GFXVK_FRAMES_IN_FLIGHT];
+    for (unsigned long i = 0; i < CHIK_GFXVK_FRAMES_IN_FLIGHT; ++i) {
+        layouts[i] = mesh->shader->d_layout;
+    }
+
+    mesh->d_set = (VkDescriptorSet *)malloc(sizeof(VkDescriptorSet) * CHIK_GFXVK_FRAMES_IN_FLIGHT);
+
+    VkDescriptorSetAllocateInfo alloc_info;
+    alloc_info.sType              = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
+    alloc_info.pNext              = (void *)0x0;
+    alloc_info.descriptorPool     = _descriptor_pool;
+    alloc_info.descriptorSetCount = CHIK_GFXVK_FRAMES_IN_FLIGHT;
+    alloc_info.pSetLayouts        = layouts;
+
+    if (vkAllocateDescriptorSets(instance_get_device(), &alloc_info, mesh->d_set) != VK_SUCCESS) {
+        LOGF_ERR("Failed to allocate descriptor sets.\n");
+        return;
+    }
+
+    unsigned long num_uniforms_vert = spv_get_uniform_count(mesh->shader->vert_spv);
+    unsigned long num_uniforms_frag = spv_get_uniform_count(mesh->shader->frag_spv);
+
+    unsigned long i;
+
+    for (i = 0; i < num_uniforms_vert; ++i) {
+        _api_type_e type = spv_get_uniform_type(mesh->shader->vert_spv, i);
+
+        if (type == _API_TYPE_NONE) {
+            type = spv_get_uniform_type(mesh->shader->frag_spv, i);
+        }
+
+        if (type == _API_TYPE_SAMPLER) {
+            for (unsigned long j = 0; j < CHIK_GFXVK_FRAMES_IN_FLIGHT; ++j) {
+                VkDescriptorImageInfo image_info;
+                image_info.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+                image_info.imageView   = imageops_get_temp_texture_view();
+                image_info.sampler     = instance_get_texture_sampler();
+
+                VkWriteDescriptorSet descriptor_write;
+                descriptor_write.sType            = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+                descriptor_write.pNext            = (void *)0x0;
+                descriptor_write.dstSet           = mesh->d_set[j];
+                descriptor_write.dstBinding       = i;
+                descriptor_write.dstArrayElement  = 0;
+                descriptor_write.descriptorCount  = 1;
+                descriptor_write.descriptorType   = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+                descriptor_write.pImageInfo       = &image_info;
+
+                vkUpdateDescriptorSets(instance_get_device(), 1, &descriptor_write, 0, (VkDescriptorSet *)0x0);
+            }
+        }
+
+        if (type == _API_TYPE_STORAGE_BUFFER || type == _API_TYPE_UNIFORM_BUFFER) {
+
+        }
+    }
 }
 
 void mesh_set_vbuffer(void *m, void *v) {

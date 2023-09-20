@@ -69,8 +69,6 @@ unsigned int graphics_init(void) {
     swapchain_create(shell_get_variable("gfx_buffered_frames").i);
 
     shader_init();
-    load_shader("assets/shaders/sprite_vert.spv", "assets/shaders/sprite_frag.spv");
-    shader_exit();
 
     return 1;
 }
@@ -90,6 +88,7 @@ unsigned int graphics_update(float dt) {
  *    Cleans up the graphics subsystem.
  */
 unsigned int graphics_exit(void) {
+    shader_exit();
     swapchain_destroy();
     imageops_destroy_temp_texture();
     presentation_destroy();
