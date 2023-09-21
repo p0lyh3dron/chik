@@ -30,6 +30,7 @@ typedef struct {
     VkBuffer        buffer;
     VkDeviceMemory  memory;
     VkDeviceSize    size;
+    unsigned long   count;
 } vbuffer_t;
 
 typedef struct {

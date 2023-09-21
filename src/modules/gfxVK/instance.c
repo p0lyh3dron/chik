@@ -385,8 +385,8 @@ void instance_finish_init(void) {
     sampler.sType                   = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
     sampler.pNext                   = (const void *)0x0;
     sampler.flags                   = 0;
-    sampler.magFilter               = VK_FILTER_LINEAR;
-    sampler.minFilter               = VK_FILTER_LINEAR;
+    sampler.magFilter               = VK_FILTER_NEAREST;
+    sampler.minFilter               = VK_FILTER_NEAREST;
     sampler.mipmapMode              = VK_SAMPLER_MIPMAP_MODE_LINEAR;
     sampler.addressModeU            = VK_SAMPLER_ADDRESS_MODE_REPEAT;
     sampler.addressModeV            = VK_SAMPLER_ADDRESS_MODE_REPEAT;

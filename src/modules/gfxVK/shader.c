@@ -232,8 +232,8 @@ void *load_shader(const char *vert_file, const char *frag_file) {
 
     VkPipelineShaderStageCreateInfo shader_stages[] = {vert_stage_info, frag_stage_info};
 
-    spv_t *vert_spv = spv_parse(vert_src);
-    spv_t *frag_spv = spv_parse(frag_src);
+    spv_t *vert_spv = spv_parse(vert_src, vert_len);
+    spv_t *frag_spv = spv_parse(frag_src, frag_len);
 
     unsigned long input_count = spv_get_input_count(vert_spv);
     unsigned long offset      = 0;
@@ -254,26 +254,28 @@ void *load_shader(const char *vert_file, const char *frag_file) {
         switch (type) {
             case _API_TYPE_FLOAT:
                 attr[i].format = VK_FORMAT_R32_SFLOAT;
-                attr[i].offset = offset + 4;
+                attr[i].offset = offset;
+                offset += 4;
                 break;
             case _API_TYPE_VEC2:
                 attr[i].format = VK_FORMAT_R32G32_SFLOAT;
-                attr[i].offset = offset + 8;
+                attr[i].offset = offset;
+                offset += 8;
                 break;
             case _API_TYPE_VEC3:
                 attr[i].format = VK_FORMAT_R32G32B32_SFLOAT;
-                attr[i].offset = offset + 12;
+                attr[i].offset = offset;
+                offset += 12;
                 break;
             case _API_TYPE_VEC4:
                 attr[i].format = VK_FORMAT_R32G32B32A32_SFLOAT;
-                attr[i].offset = offset + 16;
+                attr[i].offset = offset;
+                offset += 16;
                 break;
             default:
                 LOGF_ERR("Invalid number of floats for vertex input.\n");
                 return (void *)0x0;
         }
-
-        offset = attr[i].offset;
     }
 
     VkVertexInputBindingDescription binding_desc = {0};
@@ -488,6 +490,7 @@ void *vbuffer_create(void *v, unsigned int size, unsigned int stride, v_layout_t
     vbuffer->buffer = buffer;
     vbuffer->memory = buffer_memory;
     vbuffer->size   = buffer_size;
+    vbuffer->count  = size / stride;
 
     return (void *)vbuffer;
 }
@@ -544,7 +547,7 @@ void mesh_set_shader(void *m, void *s) {
 
     unsigned long i;
 
-    for (i = 0; i < num_uniforms_vert; ++i) {
+    for (i = 0; i < num_uniforms_vert + num_uniforms_frag; ++i) {
         _api_type_e type = spv_get_uniform_type(mesh->shader->vert_spv, i);
 
         if (type == _API_TYPE_NONE) {
@@ -555,7 +558,7 @@ void mesh_set_shader(void *m, void *s) {
             for (unsigned long j = 0; j < CHIK_GFXVK_FRAMES_IN_FLIGHT; ++j) {
                 VkDescriptorImageInfo image_info;
                 image_info.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-                image_info.imageView   = imageops_get_temp_texture_view();
+                image_info.imageView   = imageops_get_temp_texture();
                 image_info.sampler     = instance_get_texture_sampler();
 
                 VkWriteDescriptorSet descriptor_write;

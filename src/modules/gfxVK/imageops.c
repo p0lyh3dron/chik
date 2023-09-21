@@ -189,9 +189,9 @@ VkImageView imageops_create_image_view(VkImage image, VkFormat format, VkImageAs
 
     if (vkCreateImageView(instance_get_device(), &view_info, (const VkAllocationCallbacks*)0x0, &view) != VK_SUCCESS) {
         LOGF_ERR("Failed to create image view.\n");
-
-        return view;
     }
+
+    return view;
 }
 
 /*
@@ -251,6 +251,8 @@ void imageops_create_temp_texture() {
     vkCmdCopyBufferToImage(command, staging_buffer, _temp_texture->image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
 
     presentation_destroy_command(command);
+
+    imageops_transition_image_layout(_temp_texture->image, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, 1);
 
     vkDestroyBuffer(instance_get_device(), staging_buffer, (const VkAllocationCallbacks*)0x0);
     vkFreeMemory(instance_get_device(), staging_buffer_memory, (const VkAllocationCallbacks*)0x0);

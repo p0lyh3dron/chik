@@ -93,11 +93,16 @@ void swapchain_create(unsigned long count) {
     for (i = 0; i < _swapchain_image_count; i++) {
         _swapchain_image_views[i] = imageops_create_image_view(_swapchain_images[i], CHIK_GFXVK_RENDERPASSES_FORMAT, VK_IMAGE_ASPECT_COLOR_BIT, 1);
 
-        VkImageView attachments[3] = {
-            _color->view,
-            _depth->view,
-            _swapchain_image_views[i]
-        };
+        VkImageView attachments[3];
+        
+        if (shell_get_variable("gfx_msaa_samples").i > 1) {
+            attachments[0] = _color->view;
+            attachments[1] = _depth->view;
+            attachments[2] = _swapchain_image_views[i];
+        } else {
+            attachments[0] = _swapchain_image_views[i];
+            attachments[1] = _depth->view;
+        }
 
         VkFramebufferCreateInfo framebuffer_info = {
             .sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO,

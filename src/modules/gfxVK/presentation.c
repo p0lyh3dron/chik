@@ -133,7 +133,7 @@ void presentation_record_commands(void) {
         vkCmdBindPipeline(_command_buffers[_current_frame], VK_PIPELINE_BIND_POINT_GRAPHICS, meshes[i]->shader->pipeline);
         vkCmdBindVertexBuffers(_command_buffers[_current_frame], 0, 1, vertex_buffers, offsets);
         vkCmdBindDescriptorSets(_command_buffers[_current_frame], VK_PIPELINE_BIND_POINT_GRAPHICS, meshes[i]->shader->p_layout, 0, 1, &meshes[i]->d_set[_current_frame], 0, nullptr);
-        vkCmdDraw(_command_buffers[_current_frame], 3, 1, 0, 0);
+        vkCmdDraw(_command_buffers[_current_frame], meshes[i]->vbuffer->count, 1, 0, 0);
     }
     
     vkCmdEndRenderPass(_command_buffers[_current_frame]);
