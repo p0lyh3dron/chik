@@ -9,8 +9,13 @@
  */
 #include "imageops.h"
 
+#define CHIK_GFXVK_CACHED_IMAGES 16
+
 #include "instance.h"
 #include "presentation.h"
+
+uploaded_image_t _cached_images[CHIK_GFXVK_CACHED_IMAGES] = {0};
+unsigned long    _cached_images_count = 0;
 
 vulkan_image_t *_temp_texture;
 
@@ -208,29 +213,40 @@ void imageops_destroy_image(vulkan_image_t *image) {
 }
 
 /*
- *    Creates the temporary texture.
+ *    Uploads an image to the GPU.
+ *
+ *    @param image_t *image        The image.
  */
-void imageops_create_temp_texture() {
-    VkDeviceSize image_size = 2 * 2 * 4;
+void imageops_upload_image(image_t *image) {
+    unsigned long i;
 
-    char pixels[] = {
-        110, 200, 250, 255,        220, 250, 255, 255,
-        220, 250, 255, 255,        110, 200, 250, 255,
-    };
+    for (i = 0; i < _cached_images_count; ++i) {
+        if (_cached_images[i].image_data == image) {
+            return;
+        }
+    }
+
+    if (_cached_images_count >= CHIK_GFXVK_CACHED_IMAGES) {
+        LOGF_ERR("Failed to cache image.\n");
+
+        return;
+    }
+
+    uploaded_image_t *img = &_cached_images[_cached_images_count++];
 
     VkBuffer staging_buffer;
     VkDeviceMemory staging_buffer_memory;
 
-    instance_create_buffer(image_size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, &staging_buffer, &staging_buffer_memory);
+    instance_create_buffer(image->size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, &staging_buffer, &staging_buffer_memory);
 
     void *data;
-    vkMapMemory(instance_get_device(), staging_buffer_memory, 0, image_size, 0, &data);
-    memcpy(data, pixels, (size_t)image_size);
+    vkMapMemory(instance_get_device(), staging_buffer_memory, 0, image->size, 0, &data);
+    memcpy(data, image->buf, (size_t)image->size);
     vkUnmapMemory(instance_get_device(), staging_buffer_memory);
 
-    _temp_texture = imageops_create_image(VK_FORMAT_R8G8B8A8_SRGB, 2, 2, 1, VK_SAMPLE_COUNT_1_BIT, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, VK_IMAGE_ASPECT_COLOR_BIT);
+    img->image = imageops_create_image(VK_FORMAT_R8G8B8A8_SRGB, image->width, image->height, 1, VK_SAMPLE_COUNT_1_BIT, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, VK_IMAGE_ASPECT_COLOR_BIT);
 
-    imageops_transition_image_layout(_temp_texture->image, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1);
+    imageops_transition_image_layout(img->image->image, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1);
 
     VkCommandBuffer command = presentation_create_command();
 
@@ -245,17 +261,62 @@ void imageops_create_temp_texture() {
             .layerCount = 1
         },
         .imageOffset = {0, 0, 0},
-        .imageExtent = {2, 2, 1},
+        .imageExtent = {image->width, image->height, 1},
     };
 
-    vkCmdCopyBufferToImage(command, staging_buffer, _temp_texture->image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
+    vkCmdCopyBufferToImage(command, staging_buffer, img->image->image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
 
     presentation_destroy_command(command);
 
-    imageops_transition_image_layout(_temp_texture->image, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, 1);
+    imageops_transition_image_layout(img->image->image, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, 1);
 
     vkDestroyBuffer(instance_get_device(), staging_buffer, (const VkAllocationCallbacks*)0x0);
     vkFreeMemory(instance_get_device(), staging_buffer_memory, (const VkAllocationCallbacks*)0x0);
+
+    img->image_data = image;
+}
+
+/*
+ *    Retreives a cached image.
+ *
+ *    @param image_t *image        The image.
+ *
+ *    @return vulkan_image_t *     The vulkan image.
+ */
+vulkan_image_t *imageops_get_cached_image(image_t *image) {
+    unsigned long i;
+
+    for (i = 0; i < _cached_images_count; ++i) {
+        if (_cached_images[i].image_data == image) {
+            return _cached_images[i].image;
+        }
+    }
+
+    return (vulkan_image_t*)0x0;
+}
+
+/*
+ *    Creates the temporary texture.
+ */
+void imageops_create_temp_texture() {
+    VkDeviceSize image_size = 2 * 2 * 4;
+
+    char pixels[] = {
+        110, 200, 250, 255,        220, 250, 255, 255,
+        220, 250, 255, 255,        110, 200, 250, 255,
+    };
+
+    image_t image;
+
+    image.buf    = pixels;
+    image.size   = image_size;
+    image.fmt    = 69;
+    image.width  = 2;
+    image.height = 2;
+
+    imageops_upload_image(&image);
+
+    _temp_texture = imageops_get_cached_image(&image);
 }
 
 /*

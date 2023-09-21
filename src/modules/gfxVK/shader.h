@@ -46,6 +46,8 @@ typedef struct {
     uniform_t        uniforms[CHIK_GFXVK_FRAMES_IN_FLIGHT];
 
     shader_t        *shader;
+
+    void            *push;
 } mesh_t;
 
 typedef struct {

@@ -514,6 +514,7 @@ void *mesh_create(void *v) {
 
     mesh->vbuffer = v;
     mesh->shader  = (shader_t *)0x0;
+    mesh->push    = (void *)malloc(64);
 
     return (void *)mesh;
 }
@@ -581,6 +582,55 @@ void mesh_set_shader(void *m, void *s) {
     }
 }
 
+void mesh_set_texture(void *m, image_t *t, unsigned long index) {
+    unsigned long i;
+    mesh_t *mesh = (mesh_t *)m;
+
+    _api_type_e type = spv_get_uniform_type(mesh->shader->vert_spv, index);
+
+    if (type == _API_TYPE_NONE) {
+        type = spv_get_uniform_type(mesh->shader->frag_spv, index);
+    }
+
+    if (type == _API_TYPE_SAMPLER) {
+        for (i = 0; i < CHIK_GFXVK_FRAMES_IN_FLIGHT; ++i) {
+            vulkan_image_t *image  = imageops_get_cached_image(t);
+            VkImageView image_view;
+
+            if (image == (vulkan_image_t *)0x0) {
+                LOGF_ERR("Given image has not been uploaded to GPU.\n");
+
+                image_view = imageops_get_temp_texture();
+            }
+
+            else {
+                image_view = image->view;
+            }
+
+            VkDescriptorImageInfo image_info;
+            image_info.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+            image_info.imageView   = image_view;
+            image_info.sampler     = instance_get_texture_sampler();
+
+            VkWriteDescriptorSet descriptor_write;
+            descriptor_write.sType            = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+            descriptor_write.pNext            = (void *)0x0;
+            descriptor_write.dstSet           = mesh->d_set[i];
+            descriptor_write.dstBinding       = index;
+            descriptor_write.dstArrayElement  = 0;
+            descriptor_write.descriptorCount  = 1;
+            descriptor_write.descriptorType   = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+            descriptor_write.pImageInfo       = &image_info;
+
+            vkUpdateDescriptorSets(instance_get_device(), 1, &descriptor_write, 0, (VkDescriptorSet *)0x0);
+        }
+    }
+
+    else {
+        LOGF_ERR("Invalid uniform type for texture.\n");
+    }
+}
+
 void mesh_set_vbuffer(void *m, void *v) {
     mesh_t *mesh = (mesh_t *)m;
 
@@ -601,34 +651,21 @@ void mesh_set_asset(void *m, void *a, unsigned long size, unsigned long index) {
         return;
     }
 
-    if (type == _API_TYPE_SAMPLER) {
-        for (i = 0; i < CHIK_GFXVK_FRAMES_IN_FLIGHT; ++i) {        
-            VkDescriptorImageInfo image_info;
-            image_info.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-            image_info.imageView   = imageops_get_temp_texture_view();
-            image_info.sampler     = instance_get_texture_sampler();
-
-            VkWriteDescriptorSet descriptor_write;
-            descriptor_write.sType            = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-            descriptor_write.pNext            = (void *)0x0;
-            descriptor_write.dstSet           = mesh->d_set[i];
-            descriptor_write.dstBinding       = index;
-            descriptor_write.dstArrayElement  = 0;
-            descriptor_write.descriptorCount  = 1;
-            descriptor_write.descriptorType   = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-            descriptor_write.pImageInfo       = &image_info;
-
-            vkUpdateDescriptorSets(instance_get_device(), 1, &descriptor_write, 0, (VkDescriptorSet *)0x0);
+    if (type == _API_TYPE_STORAGE_BUFFER || type == _API_TYPE_UNIFORM_BUFFER) {
+        for (i = 0; i < CHIK_GFXVK_FRAMES_IN_FLIGHT; ++i) {
+            /* If data and not image  */
+            memcpy(mesh->uniforms[i].data[index], a, size);
         }
-    }
-
-    for (i = 0; i < CHIK_GFXVK_FRAMES_IN_FLIGHT; ++i) {
-        /* If data and not image  */
-        memcpy(mesh->uniforms[i].data[index], a, size);
     }
 }
 
 void *mesh_get_asset(void *m, unsigned long index) {
+}
+
+void mesh_push_data(void *m, void *d) {
+    mesh_t *mesh = (mesh_t *)m;
+
+    memcpy(mesh->push, d, 64);
 }
 
 void mesh_draw(void *m) {

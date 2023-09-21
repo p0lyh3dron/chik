@@ -10,6 +10,8 @@
 #ifndef CHIK_GFXVK_IMAGEOPS_H
 #define CHIK_GFXVK_IMAGEOPS_H
 
+#include "libchik.h"
+
 #include <vulkan/vulkan.h>
 
 typedef struct {
@@ -17,6 +19,12 @@ typedef struct {
     VkDeviceMemory memory;
     VkImageView    view;
 } vulkan_image_t;
+
+typedef struct {
+    vulkan_image_t *image;
+
+    image_t        *image_data;
+} uploaded_image_t;
 
 /*
  *    Creates a vulkan image.
@@ -56,6 +64,22 @@ VkImageView imageops_create_image_view(VkImage image, VkFormat format, VkImageAs
  *    @param vulkan_image_t *image The vulkan image.
  */
 void imageops_destroy_image(vulkan_image_t *image);
+
+/*
+ *    Uploads an image to the GPU.
+ *
+ *    @param image_t *image        The image.
+ */
+void imageops_upload_image(image_t *image);
+
+/*
+ *    Retreives a cached image.
+ *
+ *    @param image_t *image        The image.
+ *
+ *    @return vulkan_image_t *     The vulkan image.
+ */
+vulkan_image_t *imageops_get_cached_image(image_t *image);
 
 /*
  *    Creates the temporary texture.
