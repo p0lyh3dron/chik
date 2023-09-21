@@ -252,6 +252,17 @@ void surface_quit(void) {
 }
 
 /*
+ *    Sets SDL window size.
+ *
+ *    @param vec2u_t size    The size to set.
+ */
+void surface_set_size(vec2u_t size) {
+#if USE_SDL
+    SDL_SetWindowSize(_win, size.x, size.y);
+#endif /* USE_SDL  */
+}
+
+/*
  *    Capture input events.
  */
 unsigned int input_capture(void) {

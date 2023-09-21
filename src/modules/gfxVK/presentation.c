@@ -155,6 +155,10 @@ void presentation_draw_frame(void) {
 
     if (result == VK_ERROR_OUT_OF_DATE_KHR) {
         LOGF_ERR("Swapchain out of date.\n");
+
+        graphics_recreate_swapchain((char *)0x0);
+
+        return;
     } else if (result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR) {
         LOGF_ERR("Failed to acquire swapchain image.\n");
     }
@@ -197,7 +201,7 @@ void presentation_draw_frame(void) {
     result = vkQueuePresentKHR(instance_get_present_queue(), &present_info);
 
     if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR) {
-        LOGF_ERR("Swapchain out of date.\n");
+        graphics_recreate_swapchain((char *)0x0);
     } else if (result != VK_SUCCESS) {
         LOGF_ERR("Failed to present swapchain image.\n");
     }

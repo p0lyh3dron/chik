@@ -174,15 +174,15 @@ unsigned int engine_update(void) {
  *    Frees the engine.
  */
 void engine_free() {
-    unsigned long i;
+    long i;
 
-    for (i = 0; i < ENGINE_MAX_MODULES; ++i) {
+    for (i = ENGINE_MAX_MODULES - 1; i >= 0; --i) {
         if (_modules[i].handle) {
             if (_modules[i].exit != nullptr) {
                 if (_modules[i].exit()) {
                     VLOGF_NOTE("Module exited: %s\n", _modules[i].name);
                 } else {
-                    VLOGF_FATAL("Module failed to exit: %s\n", _modules[i].name);
+                    VLOGF_FAT("Module failed to exit: %s\n", _modules[i].name);
                 }
             }
             dl_close(_modules[i].handle);

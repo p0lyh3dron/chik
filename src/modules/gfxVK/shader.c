@@ -299,28 +299,14 @@ void *load_shader(const char *vert_file, const char *frag_file) {
     input_assembly_info.topology               = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
     input_assembly_info.primitiveRestartEnable = VK_FALSE;
 
-    VkViewport viewport = {0};
-    viewport.x        = 0.0f;
-    viewport.y        = 0.0f;
-    viewport.width    = (float)shell_get_variable("gfx_width").i;
-    viewport.height   = (float)shell_get_variable("gfx_height").i;
-    viewport.minDepth = 0.0f;
-    viewport.maxDepth = 1.0f;
-
-    VkRect2D scissor = {0};
-    scissor.offset.x      = 0;
-    scissor.offset.y      = 0;
-    scissor.extent.width  = shell_get_variable("gfx_width").i;
-    scissor.extent.height = shell_get_variable("gfx_height").i;
-
     VkPipelineViewportStateCreateInfo viewport_info = {0};
     viewport_info.sType         = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
     viewport_info.pNext         = (void *)0x0;
     viewport_info.flags         = 0;
     viewport_info.viewportCount = 1;
-    viewport_info.pViewports    = &viewport;
+    viewport_info.pViewports    = (VkViewport *)0x0;
     viewport_info.scissorCount  = 1;
-    viewport_info.pScissors     = &scissor;
+    viewport_info.pScissors     = (VkRect2D *)0x0;
 
     VkPipelineRasterizationStateCreateInfo rasterizer_info = {0};
     rasterizer_info.sType                   = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
@@ -376,6 +362,15 @@ void *load_shader(const char *vert_file, const char *frag_file) {
     push_constant_range.offset     = 0;
     push_constant_range.size       = 64;
 
+    VkDynamicState dynamic_states[] = {VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR};
+
+    VkPipelineDynamicStateCreateInfo dynamic_state_info = {0};
+    dynamic_state_info.sType             = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
+    dynamic_state_info.pNext             = (void *)0x0;
+    dynamic_state_info.flags             = 0;
+    dynamic_state_info.dynamicStateCount = 2;
+    dynamic_state_info.pDynamicStates    = dynamic_states;
+
     VkPipelineLayoutCreateInfo layout_info = {0};
     layout_info.sType                  = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
     layout_info.pNext                  = (void *)0x0;
@@ -427,7 +422,7 @@ void *load_shader(const char *vert_file, const char *frag_file) {
     pipeline_info.pMultisampleState   = &multisample_info;
     pipeline_info.pDepthStencilState  = &depth_stencil_info;
     pipeline_info.pColorBlendState    = &color_blend_info;
-    pipeline_info.pDynamicState       = (VkPipelineDynamicStateCreateInfo *)0x0;
+    pipeline_info.pDynamicState       = &dynamic_state_info;
     pipeline_info.layout              = shader->p_layout;
     pipeline_info.renderPass          = renderpasses_get();
     pipeline_info.subpass             = 0;
@@ -669,7 +664,7 @@ void mesh_push_data(void *m, void *d) {
 }
 
 void mesh_draw(void *m) {
-    _meshes[_mesh_count++] = (mesh_t *)m;
+    _meshes[_mesh_count++ % 32] = (mesh_t *)m;
 }
 
 void mesh_free(void *m) {
