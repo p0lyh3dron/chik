@@ -20,8 +20,6 @@
 
 cached_shader_t _shader_cache[CHIK_GFXVK_SHADER_CACHE_SIZE] = {0};
 
-VkDescriptorPool _descriptor_pool;
-
 mesh_t       *_meshes[32] = {0};
 unsigned long _mesh_count = 0;
 
@@ -29,31 +27,14 @@ unsigned long _mesh_count = 0;
  *    Initializes the descriptor pool.
  */
 void shader_init(void) {
-    VkDescriptorPoolSize pool_sizes[2];
-    pool_sizes[0].type            = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-    pool_sizes[0].descriptorCount = 256;
-    pool_sizes[1].type            = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-    pool_sizes[1].descriptorCount = 256;
 
-    VkDescriptorPoolCreateInfo pool_info;
-    pool_info.sType         = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
-    pool_info.pNext         = (void *)0x0;
-    pool_info.flags         = 0;
-    pool_info.maxSets       = CHIK_GFXVK_FRAMES_IN_FLIGHT;
-    pool_info.poolSizeCount = 2;
-    pool_info.pPoolSizes    = pool_sizes;
-
-    if (vkCreateDescriptorPool(instance_get_device(), &pool_info, (VkAllocationCallbacks *)0x0, &_descriptor_pool) != VK_SUCCESS) {
-        LOGF_ERR("Failed to create descriptor pool.\n");
-        return;
-    }
 }
 
 /*
  *    Frees the descriptor pool.
  */
 void shader_exit(void) {
-    vkDestroyDescriptorPool(instance_get_device(), _descriptor_pool, (VkAllocationCallbacks *)0x0);
+    
 }
 
 /*
@@ -335,9 +316,9 @@ void *load_shader(const char *vert_file, const char *frag_file) {
     multisample_info.alphaToOneEnable      = VK_FALSE;
 
     VkPipelineColorBlendAttachmentState color_blend_attachment = {0};
-    color_blend_attachment.blendEnable         = VK_FALSE;
-    color_blend_attachment.srcColorBlendFactor = VK_BLEND_FACTOR_ONE;
-    color_blend_attachment.dstColorBlendFactor = VK_BLEND_FACTOR_ZERO;
+    color_blend_attachment.blendEnable         = VK_TRUE;
+    color_blend_attachment.srcColorBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA;
+    color_blend_attachment.dstColorBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
     color_blend_attachment.colorBlendOp        = VK_BLEND_OP_ADD;
     color_blend_attachment.srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE;
     color_blend_attachment.dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO;
@@ -398,8 +379,8 @@ void *load_shader(const char *vert_file, const char *frag_file) {
     depth_stencil_info.sType                 = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
     depth_stencil_info.pNext                 = (void *)0x0;
     depth_stencil_info.flags                 = 0;
-    depth_stencil_info.depthTestEnable       = VK_TRUE;
-    depth_stencil_info.depthWriteEnable      = VK_TRUE;
+    depth_stencil_info.depthTestEnable       = VK_FALSE;
+    depth_stencil_info.depthWriteEnable      = VK_FALSE;
     depth_stencil_info.depthCompareOp        = VK_COMPARE_OP_LESS;
     depth_stencil_info.depthBoundsTestEnable = VK_FALSE;
     depth_stencil_info.stencilTestEnable     = VK_FALSE;
@@ -519,6 +500,25 @@ void mesh_set_shader(void *m, void *s) {
 
     mesh->shader = (shader_t *)s;
 
+    VkDescriptorPoolSize pool_sizes[2];
+    pool_sizes[0].type            = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+    pool_sizes[0].descriptorCount = CHIK_GFXVK_FRAMES_IN_FLIGHT;
+    pool_sizes[1].type            = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+    pool_sizes[1].descriptorCount = CHIK_GFXVK_FRAMES_IN_FLIGHT;
+
+    VkDescriptorPoolCreateInfo pool_info;
+    pool_info.sType         = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
+    pool_info.pNext         = (void *)0x0;
+    pool_info.flags         = 0;
+    pool_info.maxSets       = CHIK_GFXVK_FRAMES_IN_FLIGHT;
+    pool_info.poolSizeCount = 2;
+    pool_info.pPoolSizes    = pool_sizes;
+
+    if (vkCreateDescriptorPool(instance_get_device(), &pool_info, (VkAllocationCallbacks *)0x0, &mesh->d_pool) != VK_SUCCESS) {
+        LOGF_ERR("Failed to create descriptor pool.\n");
+        return;
+    }
+
     VkDescriptorSetLayout layouts[CHIK_GFXVK_FRAMES_IN_FLIGHT];
     for (unsigned long i = 0; i < CHIK_GFXVK_FRAMES_IN_FLIGHT; ++i) {
         layouts[i] = mesh->shader->d_layout;
@@ -529,11 +529,22 @@ void mesh_set_shader(void *m, void *s) {
     VkDescriptorSetAllocateInfo alloc_info;
     alloc_info.sType              = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
     alloc_info.pNext              = (void *)0x0;
-    alloc_info.descriptorPool     = _descriptor_pool;
+    alloc_info.descriptorPool     = mesh->d_pool;
     alloc_info.descriptorSetCount = CHIK_GFXVK_FRAMES_IN_FLIGHT;
     alloc_info.pSetLayouts        = layouts;
 
-    if (vkAllocateDescriptorSets(instance_get_device(), &alloc_info, mesh->d_set) != VK_SUCCESS) {
+    VkResult result = vkAllocateDescriptorSets(instance_get_device(), &alloc_info, mesh->d_set);
+
+    if (result == VK_ERROR_OUT_OF_DEVICE_MEMORY) {
+        LOGF_ERR("Out of device memory.\n");
+        return;
+    }
+
+    else if (result == VK_ERROR_OUT_OF_HOST_MEMORY) {
+        LOGF_ERR("Out of host memory.\n");
+    }
+
+    else if (result != VK_SUCCESS) {
         LOGF_ERR("Failed to allocate descriptor sets.\n");
         return;
     }
@@ -664,6 +675,11 @@ void mesh_push_data(void *m, void *d) {
 }
 
 void mesh_draw(void *m) {
+    if (m == (void *)0x0) {
+        LOGF_ERR("Invalid mesh.\n");
+        return;
+    }
+
     _meshes[_mesh_count++ % 32] = (mesh_t *)m;
 }
 
@@ -671,7 +687,8 @@ void mesh_free(void *m) {
     mesh_t *mesh = (mesh_t *)m;
 
     vbuffer_free(mesh->vbuffer);
-    vkFreeDescriptorSets(instance_get_device(), _descriptor_pool, CHIK_GFXVK_FRAMES_IN_FLIGHT, mesh->d_set);
+    vkFreeDescriptorSets(instance_get_device(), mesh->d_pool, CHIK_GFXVK_FRAMES_IN_FLIGHT, mesh->d_set);
+    vkDestroyDescriptorPool(instance_get_device(), mesh->d_pool, (VkAllocationCallbacks *)0x0);
 
     free(mesh);
 }

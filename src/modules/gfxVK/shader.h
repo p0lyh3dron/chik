@@ -42,6 +42,7 @@ typedef struct {
 typedef struct {
     vbuffer_t       *vbuffer;
     VkDescriptorSet *d_set;
+    VkDescriptorPool d_pool;
 
     uniform_t        uniforms[CHIK_GFXVK_FRAMES_IN_FLIGHT];
 

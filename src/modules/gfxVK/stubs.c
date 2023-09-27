@@ -47,7 +47,7 @@ image_t *image_create(unsigned int width, unsigned int height, unsigned int form
  *    @return image_t *    The image.
  */
 image_t *image_load_ppm(const char *file) {
-    unsigned long len;
+    unsigned int len;
 
     char *buf = (char *)file_read(file, &len);
 

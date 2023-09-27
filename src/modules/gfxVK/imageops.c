@@ -9,7 +9,7 @@
  */
 #include "imageops.h"
 
-#define CHIK_GFXVK_CACHED_IMAGES 16
+#define CHIK_GFXVK_CACHED_IMAGES 32
 
 #include "instance.h"
 #include "presentation.h"
