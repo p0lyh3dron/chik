@@ -83,6 +83,52 @@ void vertex_perspective_divide(void *v) {
 }
 
 /*
+ *    Creates a vertex differential.
+ *
+ *    @param void *vd          The destination raw vertex data.
+ *    @param void *v0          The raw vertex data of the first vertex.
+ *    @param void *v1          The raw vertex data of the second vertex.
+ *    @param float dist        The "distance" between the two.
+ */
+void vertex_build_differential(void *vd, void *v0, void *v1, float dist) {
+    unsigned long                 i;
+    static __thread unsigned char buf[VERTEX_ASM_MAX_VERTEX_SIZE];
+
+    for (i = 0; i < _layout.count; i++) {
+        vec_sub((vec_t *)(buf + _layout.attributes[i].offset),
+                v1 + _layout.attributes[i].offset,
+                v0 + _layout.attributes[i].offset, _layout.attributes[i].fmt);
+            
+        vec_scale((vec_t *)(buf + _layout.attributes[i].offset),
+                  buf + _layout.attributes[i].offset, dist,
+                  _layout.attributes[i].fmt);
+    }
+
+    memcpy(vd, buf, _layout.stride);
+
+}
+
+/*
+ *    Adds two vertices together.
+ *
+ *    @param void *vd          The destination raw vertex data.
+ *    @param void *v0          The raw vertex data of the first vertex.
+ *    @param void *v1          The raw vertex data of the second vertex.
+ */
+void vertex_add(void *vd, void *v0, void *v1) {
+    unsigned long                 i;
+    static __thread unsigned char buf[VERTEX_ASM_MAX_VERTEX_SIZE];
+
+    for (i = 0; i < _layout.count; i++) {
+        vec_add((vec_t *)(buf + _layout.attributes[i].offset),
+                v0 + _layout.attributes[i].offset,
+                v1 + _layout.attributes[i].offset, _layout.attributes[i].fmt);
+    }
+
+    memcpy(vd, buf, _layout.stride);
+}
+
+/*
  *    Builds a new vertex given two vertices and a normalized difference.
  *
  *    @param void *v0          The raw vertex data of the first vertex.
@@ -109,14 +155,12 @@ void *vertex_build_interpolated(void *v0, void *v1, float diff) {
 /*
  *    Scales a vertex by a scalar.
  *
- *    @param void *v            The raw vertex data.
- *    @param float   scale        The scalar to scale the vertex by.
- *    @param unsigned int   flags        A usage flag that determines how to scale the
- * vertex.
- *
- *    @return void *       The raw vertex data of the scaled vertex.
+ *    @param void *vd               The return vertex.
+ *    @param void *v                The raw vertex data.
+ *    @param float   scale          The scalar to scale the vertex by.
+ *    @param unsigned int   flags   A usage flag that determines how to scale the vertex.
  */
-void *vertex_scale(void *v, float scale, unsigned int flags) {
+void vertex_scale(void *vd, void *v, float scale, unsigned int flags) {
     unsigned long                 i;
     static __thread unsigned char buf[VERTEX_ASM_MAX_VERTEX_SIZE];
 
@@ -132,7 +176,7 @@ void *vertex_scale(void *v, float scale, unsigned int flags) {
         }
     }
 
-    return buf;
+    memcpy(vd, buf, _layout.stride);
 }
 
 /*

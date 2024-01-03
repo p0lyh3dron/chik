@@ -84,8 +84,7 @@ unsigned int raster_check_depth(unsigned int x, unsigned int y, float d) {
 /*
  *    Draw a scanline.
  *
- *    @param int x1          The screen x coordinate of the start of the
- * scanline.
+ *    @param int x1          The screen x coordinate of the start of the scanline.
  *    @param int x2          The screen x coordinate of the end of the scanline.
  *    @param int y           The screen y coordinate of the scanline.
  *    @param void *v1        The first vertex of the scanline.
@@ -102,7 +101,8 @@ void raster_draw_scanline(int x1, int x2, int y, void *v1, void *v2, void *asset
     vec4_t     p1;
     vec4_t     p2;
     vec_t      v[MAX_VECTOR_ATTRIBUTES];
-    vec_t     *new_v;
+    vec_t      scaled_v[MAX_VECTOR_ATTRIBUTES];
+    vec_t      diff[MAX_VECTOR_ATTRIBUTES];
     fragment_t f;
 
     /*
@@ -143,6 +143,12 @@ void raster_draw_scanline(int x1, int x2, int y, void *v1, void *v2, void *asset
     f.pos.x = x;
     f.pos.y = y;
 
+    /*
+     *    Build the differential.
+     */
+    vertex_build_differential(diff, v1, v2, 1.0 / (x2 - x1));
+    memcpy(&v, v1, sizeof(v));
+
     while (x < end_x && x < (int)_raster_target->target->width) {
         /*
          *    Linearly interpolate between inverted z coordinates, and invert.
@@ -150,16 +156,16 @@ void raster_draw_scanline(int x1, int x2, int y, void *v1, void *v2, void *asset
         z = 1 / ((p1.z - iz1 * (float)(x - x1)) + iz2 * (float)(x - x1));
         if (!raster_check_depth(x, y, z)) {
             x++;
-            continue;
+            continue;   
         }
 
         /*
          *    Interpolate the vector values, and apply to the fragment.
          */
-        new_v = vertex_build_interpolated(v1, v2, (float)(x - x1) / (x2 - x1));
-        new_v = vertex_scale(new_v, z, V_POS);
+        vertex_add(&v, &v, diff);
+        vertex_scale(&scaled_v, &v, z, V_POS);
 
-        fragment_apply(new_v, &f, assets);
+        fragment_apply(&scaled_v, &f, assets);
 
         /*
          *    Draw the vertex.
@@ -298,9 +304,9 @@ void raster_rasterize_triangle(void *r0, void *r1, void *r2, void *assets) {
      *    In the drawing process, we will then divide by the inverse
      *    z-coordinate again to perform perspective correction.
      */
-    memcpy(pIA, vertex_scale(r0, 1 / z1, V_POS), VERTEX_ASM_MAX_VERTEX_SIZE);
-    memcpy(pIB, vertex_scale(r1, 1 / z2, V_POS), VERTEX_ASM_MAX_VERTEX_SIZE);
-    memcpy(pIC, vertex_scale(r2, 1 / z3, V_POS), VERTEX_ASM_MAX_VERTEX_SIZE);
+    vertex_scale(pIA, r0, 1 / z1, V_POS);
+    vertex_scale(pIB, r1, 1 / z2, V_POS);
+    vertex_scale(pIC, r2, 1 / z3, V_POS);
 
     /*
      *    We'll also interpolate the z coordinate by the inverse z-coordinates.
