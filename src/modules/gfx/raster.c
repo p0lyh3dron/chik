@@ -94,6 +94,7 @@ void raster_draw_scanline(int x1, int x2, int y, void *v1, void *v2, void *asset
     int        x;
     int        end_x;
     int        temp;
+    int        width;
     float      z;
     float      iz1;
     float      iz2;
@@ -149,7 +150,9 @@ void raster_draw_scanline(int x1, int x2, int y, void *v1, void *v2, void *asset
     vertex_build_differential(diff, v1, v2, 1.0 / (x2 - x1));
     memcpy(&v, v1, sizeof(v));
 
-    while (x < end_x && x < (int)_raster_target->target->width) {
+    width = _raster_target->target->width;
+
+    while (x < end_x && x < width) {
         /*
          *    Linearly interpolate between inverted z coordinates, and invert.
          */

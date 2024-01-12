@@ -95,17 +95,14 @@ void vertex_build_differential(void *vd, void *v0, void *v1, float dist) {
     static __thread unsigned char buf[VERTEX_ASM_MAX_VERTEX_SIZE];
 
     for (i = 0; i < _layout.count; i++) {
-        vec_sub((vec_t *)(buf + _layout.attributes[i].offset),
+        vec_sub((vec_t *)(vd + _layout.attributes[i].offset),
                 v1 + _layout.attributes[i].offset,
                 v0 + _layout.attributes[i].offset, _layout.attributes[i].fmt);
             
-        vec_scale((vec_t *)(buf + _layout.attributes[i].offset),
-                  buf + _layout.attributes[i].offset, dist,
+        vec_scale((vec_t *)(vd + _layout.attributes[i].offset),
+                  vd + _layout.attributes[i].offset, dist,
                   _layout.attributes[i].fmt);
     }
-
-    memcpy(vd, buf, _layout.stride);
-
 }
 
 /*
@@ -116,16 +113,7 @@ void vertex_build_differential(void *vd, void *v0, void *v1, float dist) {
  *    @param void *v1          The raw vertex data of the second vertex.
  */
 void vertex_add(void *vd, void *v0, void *v1) {
-    unsigned long                 i;
-    static __thread unsigned char buf[VERTEX_ASM_MAX_VERTEX_SIZE];
-
-    for (i = 0; i < _layout.count; i++) {
-        vec_add((vec_t *)(buf + _layout.attributes[i].offset),
-                v0 + _layout.attributes[i].offset,
-                v1 + _layout.attributes[i].offset, _layout.attributes[i].fmt);
-    }
-
-    memcpy(vd, buf, _layout.stride);
+    _layout.v_add(vd, v0, v1);
 }
 
 /*
@@ -161,22 +149,7 @@ void *vertex_build_interpolated(void *v0, void *v1, float diff) {
  *    @param unsigned int   flags   A usage flag that determines how to scale the vertex.
  */
 void vertex_scale(void *vd, void *v, float scale, unsigned int flags) {
-    unsigned long                 i;
-    static __thread unsigned char buf[VERTEX_ASM_MAX_VERTEX_SIZE];
-
-    for (i = 0; i < _layout.count; i++) {
-        if (!(_layout.attributes[i].usage & flags)) {
-            vec_scale((vec_t *)(buf + _layout.attributes[i].offset),
-                      v + _layout.attributes[i].offset, scale,
-                      _layout.attributes[i].fmt);
-        } else {
-            memcpy(buf + _layout.attributes[i].offset,
-                   v + _layout.attributes[i].offset,
-                   _layout.attributes[i].stride);
-        }
-    }
-
-    memcpy(vd, buf, _layout.stride);
+    _layout.v_scale(vd, v, scale);
 }
 
 /*
