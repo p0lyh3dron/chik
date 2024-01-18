@@ -32,6 +32,13 @@ typedef struct {
 void raster_setup(void);
 
 /*
+ *    Sets the vertex layout.
+ *
+ *    @param v_layout_t    The vertex layout.
+ */
+void raster_set_vertex_layout(v_layout_t layout);
+
+/*
  *    Sets the rasterization stage's bitmap.
  *
  *    @param    rendertarget_t *    The rendertarget to use for rasterization.

@@ -15,6 +15,8 @@ rendertarget_t *_raster_target;
 
 rendertarget_t *_z_buffer;
 
+extern v_layout_t _layout;
+
 /*
  *    Sets up the rasterization stage.
  */
@@ -36,6 +38,15 @@ void raster_setup(void) {
         LOGF_FAT("Could not create Z buffer.");
         return;
     }
+}
+
+/*
+ *    Sets the vertex layout.
+ *
+ *    @param v_layout_t    The vertex layout.
+ */
+void raster_set_vertex_layout(v_layout_t layout) {
+
 }
 
 /*
@@ -61,27 +72,6 @@ void raster_clear_depth(void) {
 }
 
 /*
- *    Check a pixel against the depth buffer.
- *
- *    @param    unsigned int x              The x coordinate of the pixel.
- *    @param    unsigned int y              The y coordinate of the pixel.
- *    @param    float d              The depth of the pixel.
- *
- *    @return   unsigned int              Whether the pixel should be drawn.
- */
-unsigned int raster_check_depth(unsigned int x, unsigned int y, float d) {
-    float       *pDepth = (float *)_z_buffer->target->buf;
-    unsigned int i      = y * _z_buffer->target->width + x;
-
-    if (d < pDepth[i]) {
-        pDepth[i] = d;
-        return 1;
-    }
-
-    return 0;
-}
-
-/*
  *    Draw a scanline.
  *
  *    @param int x1          The screen x coordinate of the start of the scanline.
@@ -92,12 +82,12 @@ unsigned int raster_check_depth(unsigned int x, unsigned int y, float d) {
  */
 void raster_draw_scanline(int x1, int x2, int y, void *v1, void *v2, void *assets) {
     int        x;
-    int        end_x;
     int        temp;
     int        width;
+    float      iz;
     float      z;
-    float      iz1;
-    float      iz2;
+    float      dz;
+    float     *depth;
     vec_t     *tempv;
     vec4_t     p1;
     vec4_t     p2;
@@ -105,6 +95,9 @@ void raster_draw_scanline(int x1, int x2, int y, void *v1, void *v2, void *asset
     vec_t      scaled_v[MAX_VECTOR_ATTRIBUTES];
     vec_t      diff[MAX_VECTOR_ATTRIBUTES];
     fragment_t f;
+    void (*f_fun)(fragment_t *, void *, void *) = _layout.f_fun;
+    void (*v_scale)(void *, void *, float) = _layout.v_scale;
+    void (*v_add)(void *, void *, void *) = _layout.v_add;
 
     /*
      *    Early out if the scanline is outside the render target,
@@ -125,7 +118,6 @@ void raster_draw_scanline(int x1, int x2, int y, void *v1, void *v2, void *asset
     }
 
     x     = MAX(x1, 0);
-    end_x = x2;
 
     p1 = vertex_get_position(v1);
     p2 = vertex_get_position(v2);
@@ -133,13 +125,6 @@ void raster_draw_scanline(int x1, int x2, int y, void *v1, void *v2, void *asset
     if (p1.z == 0.0f || p2.z == 0.0f) {
         return;
     }
-
-    /*
-     *    Make a temporary because there's a coefficient that doesn't
-     *    need to be recalculated.
-     */
-    iz1 = p1.z / (x2 - x1);
-    iz2 = p2.z / (x2 - x1);
 
     f.pos.x = x;
     f.pos.y = y;
@@ -151,24 +136,23 @@ void raster_draw_scanline(int x1, int x2, int y, void *v1, void *v2, void *asset
     memcpy(&v, v1, sizeof(v));
 
     width = _raster_target->target->width;
+    z     = p1.z;
+    dz    = (p2.z - p1.z) / (x2 - x1);
+    depth = (float *)_z_buffer->target->buf + x + y * width;
 
-    while (x < end_x && x < width) {
-        /*
-         *    Linearly interpolate between inverted z coordinates, and invert.
-         */
-        z = 1 / ((p1.z - iz1 * (float)(x - x1)) + iz2 * (float)(x - x1));
-        if (!raster_check_depth(x, y, z)) {
+    while (x < x2 && x < width) {
+        iz = 1.0f / z;
+
+        if (*depth <= iz) {
+            depth++;
             x++;
             continue;   
         }
 
-        /*
-         *    Interpolate the vector values, and apply to the fragment.
-         */
-        vertex_add(&v, &v, diff);
-        vertex_scale(&scaled_v, &v, z, V_POS);
+        *depth = iz;
 
-        fragment_apply(&scaled_v, &f, assets);
+        v_scale(&scaled_v, &v, iz);
+        f_fun(&f, &scaled_v, assets);
 
         /*
          *    Draw the vertex.
@@ -176,6 +160,15 @@ void raster_draw_scanline(int x1, int x2, int y, void *v1, void *v2, void *asset
         memcpy(_raster_target->target->buf +
                    (y * _raster_target->target->width + x),
                &f.color, sizeof(f.color));
+
+        /*
+         *    Interpolate the vector values, and apply to the fragment.
+         */
+        v_add(&v, &v, diff);
+
+        z += dz;
+
+        depth++;
 
         x++;
     }
