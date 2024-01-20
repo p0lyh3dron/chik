@@ -89,6 +89,7 @@ void raster_draw_scanline(int x1, int x2, int y, void *v1, void *v2, void *asset
     float      z;
     float      dz;
     float     *depth;
+    char      *raster;
     vec_t     *tempv;
     vec4_t     p1;
     vec4_t     p2;
@@ -118,8 +119,6 @@ void raster_draw_scanline(int x1, int x2, int y, void *v1, void *v2, void *asset
         v2    = tempv;
     }
 
-    x     = MAX(x1, 0);
-
     p1 = vertex_get_position(v1);
     p2 = vertex_get_position(v2);
 
@@ -130,22 +129,31 @@ void raster_draw_scanline(int x1, int x2, int y, void *v1, void *v2, void *asset
     f.pos.x = x;
     f.pos.y = y;
 
+    x      = MAX(x1, 0);
+    z      = p1.z;
+    dz     = (p2.z - p1.z) / (x2 - x1);
+    width  = _raster_target->target->width;
+    depth  = (float *)_z_buffer->target->buf + x + y * width;
+    raster = _raster_target->target->buf + (y * width + x) * 3;
+    end_x  = MIN(x2, width);
+
     /*
      *    Build the differential.
      */
     vertex_build_differential(diff, v1, v2, 1.0 / (x2 - x1));
     memcpy(&v, v1, sizeof(v));
 
-    width = _raster_target->target->width;
-    z     = p1.z;
-    dz    = (p2.z - p1.z) / (x2 - x1);
-    depth = (float *)_z_buffer->target->buf + x + y * width;
-    end_x = MIN(x2, width);
-
     while (x < end_x) {
         iz = 1.0f / z;
 
         if (*depth <= iz) {
+            /*
+             *    Interpolate the vector values, and apply to the fragment.
+             */
+            v_add(&v, &v, diff);
+            
+            z      += dz;
+            raster += 3;
             depth++;
             x++;
             continue;   
@@ -159,19 +167,16 @@ void raster_draw_scanline(int x1, int x2, int y, void *v1, void *v2, void *asset
         /*
          *    Draw the vertex.
          */
-        memcpy(_raster_target->target->buf +
-                   (y * _raster_target->target->width + x) * 3,
-               &f.color, 3);
+        memcpy(raster, &f.color, 3);
 
         /*
          *    Interpolate the vector values, and apply to the fragment.
          */
         v_add(&v, &v, diff);
 
-        z += dz;
-
+        z      += dz;
+        raster += 3;
         depth++;
-
         x++;
     }
 }
