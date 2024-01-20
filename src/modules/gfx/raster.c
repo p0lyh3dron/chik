@@ -82,6 +82,7 @@ void raster_clear_depth(void) {
  */
 void raster_draw_scanline(int x1, int x2, int y, void *v1, void *v2, void *assets) {
     int        x;
+    int        end_x;
     int        temp;
     int        width;
     float      iz;
@@ -139,8 +140,9 @@ void raster_draw_scanline(int x1, int x2, int y, void *v1, void *v2, void *asset
     z     = p1.z;
     dz    = (p2.z - p1.z) / (x2 - x1);
     depth = (float *)_z_buffer->target->buf + x + y * width;
+    end_x = MIN(x2, width);
 
-    while (x < x2 && x < width) {
+    while (x < end_x) {
         iz = 1.0f / z;
 
         if (*depth <= iz) {

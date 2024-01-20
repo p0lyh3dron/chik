@@ -220,6 +220,6 @@ vec2_t get_screen_size(void) {
  */
 void draw_frame(void) {
     platform_draw_image(_back_buffer->target);
-    image_clear(_back_buffer->target, 0xFF111111);
+    image_clear(_back_buffer->target, 0xFF202020);
     raster_clear_depth();
 }
