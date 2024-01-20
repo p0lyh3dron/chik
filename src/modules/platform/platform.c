@@ -31,8 +31,8 @@
 #define PCM_SAMPLE_WIDTH 16
 #define PCM_WRITE_SIZE   PCM_BUFFER_SIZE / PCM_CHANNELS * PCM_SAMPLE_WIDTH / 8
 
-#define DEFAULT_WIDTH  1152
-#define DEFAULT_HEIGHT 864
+#define DEFAULT_WIDTH  2560
+#define DEFAULT_HEIGHT 1440
 #define DEFAULT_TITLE  "Chik Application"
 
 #define MAX_INPUT_TYPES  256
@@ -191,8 +191,8 @@ unsigned int surface_init(void) {
     /*
      *    Create the window.
      */
-    _win = SDL_CreateWindow(pTitle, SDL_WINDOWPOS_CENTERED,
-                            SDL_WINDOWPOS_CENTERED, width, height,
+    _win = SDL_CreateWindow(pTitle, 0,
+                            0, width, height,
                             SDL_WINDOW_SHOWN | SDL_WINDOW_RESIZABLE | SDL_WINDOW_VULKAN);
     if (_win == nullptr) {
         VLOGF_ERR("Window could not be created! "
@@ -217,7 +217,7 @@ unsigned int surface_init(void) {
         /*
          *    Create the texture.
          */
-        _tex = SDL_CreateTexture(_rend, SDL_PIXELFORMAT_ARGB8888,
+        _tex = SDL_CreateTexture(_rend, SDL_PIXELFORMAT_RGB24,
                                  SDL_TEXTUREACCESS_STREAMING, width, height);
         if (_tex == nullptr) {
             VLOGF_ERR("Texture could not be created! "
@@ -380,7 +380,7 @@ unsigned int input_parse(const char *file) {
 unsigned int platform_draw_image(image_t *image) {
 #if USE_SDL
     SDL_RenderClear(_rend);
-    SDL_UpdateTexture(_tex, nullptr, image->buf, image->width * sizeof(unsigned int));
+    SDL_UpdateTexture(_tex, nullptr, image->buf, image->width * _pixel_sizes[image->fmt]);
     SDL_RenderCopyEx(_rend, _tex, nullptr, nullptr, 0.0, nullptr,
                      SDL_FLIP_VERTICAL);
     SDL_RenderPresent(_rend);

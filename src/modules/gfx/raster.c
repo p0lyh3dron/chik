@@ -32,7 +32,7 @@ void raster_setup(void) {
         height = 864;
     }
 
-    _z_buffer = rendertarget_create(width, height, 32);
+    _z_buffer = rendertarget_create(width, height, IMAGE_FMT_RGBA8);
 
     if (!_z_buffer) {
         LOGF_FAT("Could not create Z buffer.");
@@ -160,8 +160,8 @@ void raster_draw_scanline(int x1, int x2, int y, void *v1, void *v2, void *asset
          *    Draw the vertex.
          */
         memcpy(_raster_target->target->buf +
-                   (y * _raster_target->target->width + x),
-               &f.color, sizeof(f.color));
+                   (y * _raster_target->target->width + x) * 3,
+               &f.color, 3);
 
         /*
          *    Interpolate the vector values, and apply to the fragment.

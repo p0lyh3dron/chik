@@ -47,13 +47,13 @@ typedef struct {
  *
  *    @param unsigned int width           The width of the image.
  *    @param unsigned int height          The height of the image.
- *    @param unsigned int format          The format of the image.
+ *    @param image_fmt_e  format          The format of the image.
  *
  *    @return image_t *    The image.
  *                         NULL if the image could not be created.
  *                         The image should be freed with image_free().
  */
-image_t *image_create(unsigned int width, unsigned int height, unsigned int format);
+image_t *image_create(unsigned int width, unsigned int height, image_fmt_e format);
 
 /*
  *    Deduces a file format from a file.

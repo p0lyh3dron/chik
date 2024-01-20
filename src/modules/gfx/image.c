@@ -19,14 +19,14 @@
  *
  *    @param unsigned int width           The width of the image.
  *    @param unsigned int height          The height of the image.
- *    @param unsigned int format          The format of the image.
+ *    @param image_fmt_e  format          The format of the image.
  *
  *    @return image_t *    The image.
  *                         NULL if the image could not be created.
  *                         The image should be freed with image_free().
  */
-image_t *image_create(unsigned int width, unsigned int height, unsigned int format) {
-    image_t *image = (image_t *)malloc(sizeof(image_t));
+image_t *image_create(unsigned int width, unsigned int height, image_fmt_e format) {
+    image_t      *image = (image_t *)malloc(sizeof(image_t));
 
     if (image == NULL) {
         LOGF_ERR("Could not allocate memory for image.");
@@ -40,7 +40,7 @@ image_t *image_create(unsigned int width, unsigned int height, unsigned int form
      *    In the future, image data may not be just width * height * format.
      *    For now, we just allocate the amount of memory we need.
      */
-    image->buf = (unsigned int *)malloc(width * height * sizeof(unsigned int));
+    image->buf = (unsigned int *)malloc(width * height * _pixel_sizes[format]);
 
     if (image->buf == NULL) {
         LOGF_ERR("Could not allocate memory for image buffer.");
@@ -122,7 +122,7 @@ image_t *image_load_bmp(const char *file) {
     /*
      *    Create the image.
      */
-    image = image_create(header.width, header.height, 32);
+    image = image_create(header.width, header.height, IMAGE_FMT_RGBA8);
 
     if (image == NULL) {
         LOGF_ERR("Could not create image.");
@@ -213,7 +213,7 @@ unsigned int image_clear(image_t *image, unsigned int color) {
     /*
      *    Fastest way to clear is to memset the entire buffer.
      */
-    memset(image->buf, color, image->width * image->height * sizeof(unsigned int));
+    memset(image->buf, color, image->width * image->height * _pixel_sizes[image->fmt]);
 
     return 1;
 }

@@ -112,7 +112,7 @@ rendertarget_t **rendertarget_get_list(void) { return _render_targets; }
  */
 rendertarget_t *rendertarget_create_backbuffer(void) {
     vec2u_t         res           = platform_get_screen_size();
-    rendertarget_t *render_target = rendertarget_create(res.x, res.y, 69);
+    rendertarget_t *render_target = rendertarget_create(res.x, res.y, IMAGE_FMT_RGB8);
 
     if (render_target == NULL) {
         LOGF_ERR("Could not create backbuffer render target.");
