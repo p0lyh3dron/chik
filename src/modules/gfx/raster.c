@@ -63,7 +63,7 @@ void raster_set_rendertarget(rendertarget_t *target) {
  *    Clears the depth buffer.
  */
 void raster_clear_depth(void) {
-    unsigned long i;
+    size_t i;
     float        *pDepth = (float *)_z_buffer->target->buf;
 
     for (i = 0; i < _z_buffer->target->width * _z_buffer->target->height; i++) {
@@ -81,16 +81,16 @@ void raster_clear_depth(void) {
  *    @param void *v2        The second vertex of the scanline.
  */
 void raster_draw_scanline(int x1, int x2, int y, void *v1, void *v2, void *assets) {
-    int        x;
-    int        end_x;
-    int        temp;
-    int        width;
-    float      iz;
-    float      z;
-    float      dz;
-    float     *depth;
-    char      *raster;
-    vec_t     *tempv;
+    int        x = 0;
+    int        end_x = 0;
+    int        temp = 0;
+    int        width = 0;
+    float      iz = 0.f;
+    float      z = 0.f;
+    float      dz = 0.f;
+    float     *depth = nullptr;
+    char      *raster = nullptr;
+    vec_t     *tempv = nullptr;
     vec4_t     p1;
     vec4_t     p2;
     vec_t      v[MAX_VECTOR_ATTRIBUTES];

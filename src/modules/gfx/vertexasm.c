@@ -13,6 +13,14 @@
 
 #include "cull.h"
 
+
+#ifdef _WIN32
+    #define THREAD_LOCAL __declspec( thread )
+#else
+    #define THREAD_LOCAL __thread
+#endif
+
+
 v_layout_t _layout  = {.attributes = {0}, .count = 0};
 void      *_uniform = nullptr;
 
@@ -35,7 +43,7 @@ void vertexasm_set_layout(v_layout_t layout) {
  *    @return vec4_t       The position of the vertex.
  */
 vec4_t vertex_get_position(void *v) {
-    unsigned long i;
+    size_t i;
 
     for (i = 0; i < _layout.count; i++) {
         if (_layout.attributes[i].usage == V_POS)
@@ -55,7 +63,7 @@ vec4_t vertex_get_position(void *v) {
  *    @param vec4_t pos       The position of the vertex.
  */
 void vertex_set_position(void *v, vec4_t pos) {
-    unsigned long i;
+    size_t i;
 
     for (i = 0; i < _layout.count; i++) {
         if (_layout.attributes[i].usage == V_POS)
@@ -73,7 +81,7 @@ void vertex_set_position(void *v, vec4_t pos) {
  *
  *    @param void *v          The raw vertex data.
  */
-void vertex_perspective_divide(void *v) {
+void vertex_perspective_divide(char *v) {
     vec4_t pos = vertex_get_position(v);
 
     pos.x /= pos.w;
@@ -90,9 +98,9 @@ void vertex_perspective_divide(void *v) {
  *    @param void *v1          The raw vertex data of the second vertex.
  *    @param float dist        The "distance" between the two.
  */
-void vertex_build_differential(void *vd, void *v0, void *v1, float dist) {
-    unsigned long                 i;
-    static __thread unsigned char buf[VERTEX_ASM_MAX_VERTEX_SIZE];
+void vertex_build_differential(char *vd, char *v0, char *v1, float dist) {
+    size_t                 i;
+    static THREAD_LOCAL unsigned char buf[VERTEX_ASM_MAX_VERTEX_SIZE];
 
     for (i = 0; i < _layout.count; i++) {
         vec_sub((vec_t *)(vd + _layout.attributes[i].offset),
@@ -112,7 +120,7 @@ void vertex_build_differential(void *vd, void *v0, void *v1, float dist) {
  *    @param void *v0          The raw vertex data of the first vertex.
  *    @param void *v1          The raw vertex data of the second vertex.
  */
-void vertex_add(void *vd, void *v0, void *v1) {
+void vertex_add(char *vd, char *v0, char *v1) {
     _layout.v_add(vd, v0, v1);
 }
 
@@ -126,9 +134,9 @@ void vertex_add(void *vd, void *v0, void *v1) {
  *
  *    @return void *       The raw vertex data of the new vertex.
  */
-void *vertex_build_interpolated(void *v0, void *v1, float diff) {
-    unsigned long                 i;
-    static __thread unsigned char buf[VERTEX_ASM_MAX_VERTEX_SIZE];
+void *vertex_build_interpolated(char *v0, char *v1, float diff) {
+    size_t                 i;
+    static THREAD_LOCAL unsigned char buf[VERTEX_ASM_MAX_VERTEX_SIZE];
 
     for (i = 0; i < _layout.count; i++) {
         vec_interp((vec_t *)(buf + _layout.attributes[i].offset),

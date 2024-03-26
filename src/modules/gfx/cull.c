@@ -110,7 +110,7 @@ unsigned int cull_clip_vertex(plane_t *plane, void *v0, void *v1, void *ret, uns
  *    @param unsigned int             len      The list size.
  */
 void cull_insert_vertex(void *v, void **list, unsigned int idx, unsigned int count, unsigned int len) {
-    unsigned long i;
+    size_t i;
 
     if (idx >= len) {
         LOGF_ERR("Index out of bounds.\n");
@@ -144,7 +144,7 @@ void cull_insert_vertex(void *v, void **list, unsigned int idx, unsigned int cou
  *    @param unsigned int             len     The list size.
  */
 void cull_remove_vertex(unsigned int idx, void **list, unsigned int len, unsigned int sSize) {
-    unsigned long i;
+    size_t i;
 
     if (idx >= sSize) {
         LOGF_ERR("Index out of bounds.\n");
@@ -279,8 +279,8 @@ void cull_create_frustum() {
  */
 void *cull_clip_triangle(void *v0, void *v1, void *v2, int *num_verts,
                          unsigned int is_clipped) {
-    unsigned long i;
-    unsigned long j;
+    size_t i;
+    size_t j;
     unsigned int  remove_first;
     unsigned int  ret;
 

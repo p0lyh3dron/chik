@@ -96,7 +96,7 @@ void vbuffer_free(void *buf) {
  *    @return void *    The mesh.
  */
 void *mesh_create(void *v) {
-    unsigned long i;
+    size_t i;
     mesh_t       *mesh = (mesh_t *)malloc(sizeof(mesh_t));
 
     if (mesh == (mesh_t *)0x0) {
@@ -104,9 +104,11 @@ void *mesh_create(void *v) {
         return (void *)0x0;
     }
 
+    memset(mesh, 0, sizeof(mesh_t));
+
     mesh->vbuf         = (vbuffer_t *)v;
     mesh->assets       = (void *)0x0;
-    mesh->assets_size  = CHIK_GFX_DRAWABLE_MESH_MAX_ASSETS * sizeof(unsigned long);
+    mesh->assets_size  = CHIK_GFX_DRAWABLE_MESH_MAX_ASSETS * 8;
     mesh->assets_count = 0;
 
     return (void *)mesh;
@@ -137,12 +139,12 @@ void mesh_set_vbuffer(void *m, void *v) {
  *
  *    @param void *m              The mesh.
  *    @param void *a              The asset.
- *    @param unsigned long size   The size of the asset.
+ *    @param size_t size   The size of the asset.
  */
-void mesh_append_asset(void *m, void *a, unsigned long size) {
-    unsigned long j;
-    unsigned long index;
-    unsigned long offset = sizeof(unsigned long) * CHIK_GFX_DRAWABLE_MESH_MAX_ASSETS;
+void mesh_append_asset(void *m, void *a, size_t size) {
+    size_t j;
+    size_t index;
+    size_t offset = 8 * CHIK_GFX_DRAWABLE_MESH_MAX_ASSETS;
 
     if (m == (void *)0x0) {
         LOGF_ERR("Mesh is null.\n");
@@ -161,8 +163,12 @@ void mesh_append_asset(void *m, void *a, unsigned long size) {
         return;
     }
 
-    memcpy((void *)((unsigned long)mesh->assets + mesh->assets_count * sizeof(unsigned long)), &mesh->assets_size, sizeof(mesh->assets_size));
-    memcpy((void *)((unsigned long)mesh->assets + mesh->assets_size), a, size);
+    memset(mesh->assets, 0, mesh->assets_size + size + offset);
+
+    auto value = _heapchk();
+
+    memcpy((void *)((size_t)mesh->assets + mesh->assets_count * 8), &mesh->assets_size, sizeof(mesh->assets_size));
+    memcpy((void *)((size_t)mesh->assets + mesh->assets_size), a, size);
     mesh->assets_size += size;
     mesh->assets_count++;
 }
@@ -172,12 +178,12 @@ void mesh_append_asset(void *m, void *a, unsigned long size) {
  *
  *    @param void *m              The mesh.
  *    @param void *a              The asset.
- *    @param unsigned long size   The size of the asset.
- *    @param unsigned long i      The index of the asset.
+ *    @param size_t size   The size of the asset.
+ *    @param size_t i      The index of the asset.
  */
-void mesh_set_asset(void *m, void *a, unsigned long size, unsigned long i) {
-    unsigned long j;
-    unsigned long offset;
+void mesh_set_asset(void *m, void *a, size_t size, size_t i) {
+    size_t j;
+    size_t offset;
 
     if (m == (void *)0x0) {
         LOGF_ERR("Mesh is null.\n");
@@ -190,28 +196,28 @@ void mesh_set_asset(void *m, void *a, unsigned long size, unsigned long i) {
 
     mesh_t *mesh = (mesh_t *)m;
 
-    offset = *(unsigned long *)((unsigned long)mesh->assets + i * sizeof(unsigned long));
+    offset = *(size_t *)((size_t)mesh->assets + i * 8);
 
-    memcpy((void *)((unsigned long)mesh->assets + offset), a, size);
+    memcpy((void *)((size_t)mesh->assets + offset), a, size);
 }
 
 /*
  *    Returns the data of an asset.
  *
  *    @param void *a            The assets.
- *    @param unsigned long i    The index of the asset.
+ *    @param size_t i    The index of the asset.
  *
  *    @return void *            The asset data.
  */
-void *mesh_get_asset(void *a, unsigned long i) {
+void *mesh_get_asset(void *a, size_t i) {
     if (a == (void *)0x0) {
         LOGF_ERR("Assets are null.\n");
         return (void *)0x0;
     }
 
-    unsigned long offset = *(unsigned long *)((unsigned long)a + i * sizeof(unsigned long));
+    size_t offset = *(size_t *)((size_t)a + i * 8);
 
-    return (void *)((unsigned long)a + offset);
+    return (void *)((size_t)a + offset);
 }
 
 /*
@@ -307,7 +313,7 @@ void mesh_draw(void *m) {
             }
         }
     }
-    threadpool_wait();
+    //threadpool_wait();
 }
 
 /*

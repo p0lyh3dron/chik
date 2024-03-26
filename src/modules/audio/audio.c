@@ -65,14 +65,14 @@ unsigned int audio_update(float dt) {
     /* Clear the audio buffer.  */
     memset(_audio_buf, 0, _sample_width * _num_channels * _num_samples);
     /* Write audio data to the sound buffer.  */
-    unsigned long i;
+    size_t i;
     for (i = 0; i < CHIK_AUDIO_MAX_AUDIO_HANDLES; ++i) {
         if (_audio[i] != nullptr) {
             audio_t *audio = _audio[i];
             if (audio->data != (unsigned char*)0x0) {
                 /* Simply add the audio data to the buffer.  */
                 if (audio->flags & CHIK_AUDIO_TYPE_LOOP && 0) {
-                    unsigned long j;
+                    size_t j;
                     for (j = 0; j < _num_samples * 4; j += _sample_width / 8) {
                         short *buf = (short *)(_audio_buf + j);
                         *buf += *(short*)(audio->data + audio->pos * _sample_width / 8 + j);
@@ -99,7 +99,7 @@ unsigned int audio_update(float dt) {
 
                     float         strength;
                     char          left;
-                    unsigned long j;
+                    size_t j;
                     for (j = left = 0; j < _num_samples * 4; j += _sample_width / 8) {
                         strength = left ? ear_strength.y : ear_strength.x;
 
@@ -131,7 +131,7 @@ unsigned int audio_shutdown(void) {
  *    @return audio_t *    The audio pointer.
  */
 audio_t *audio_ptr_init(void) {
-    unsigned long i;
+    size_t i;
     audio_t      *audio = (audio_t *)malloc(sizeof(audio_t));
 
     if (audio == (audio_t *)0x0) {
@@ -158,11 +158,11 @@ audio_t *audio_ptr_init(void) {
  *    Populates a buffer with WAV data.
  *
  *    @param const char    *path    The path to the WAV file.
- *    @param unsigned long *samples     The number of samples.
+ *    @param size_t *samples     The number of samples.
  *
  *    @return unsigned char *         The buffer.
  */
-unsigned char *audio_read_wav(const char *path, unsigned long *samples) {
+unsigned char *audio_read_wav(const char *path, size_t *samples) {
     unsigned int   len  = 0;
     unsigned char *data = file_read(path, &len);
 
@@ -172,7 +172,7 @@ unsigned char *audio_read_wav(const char *path, unsigned long *samples) {
         return (unsigned char *)0x0;
     }
 
-    unsigned long pos = 0;
+    size_t pos = 0;
 
     /* Check the RIFF header.  */
     if (data[pos++] != 'R' || data[pos++] != 'I' || data[pos++] != 'F' || data[pos++] != 'F') {
@@ -251,7 +251,7 @@ unsigned char *audio_read_wav(const char *path, unsigned long *samples) {
 
     unsigned char *audio_data = (unsigned char *)malloc(data_size);
 
-    unsigned long idx;
+    size_t idx;
     while (pos < len) {
         if (bits_per_sample == 8) {
             unsigned short sample = (unsigned short)data[pos++];
@@ -368,7 +368,7 @@ unsigned int audio_stop(void *audio) {
  */
 unsigned int audio_set_listener_position(void *audio, vec3_t listen_pos, vec3_t source_pos, vec2_t direction) {
     if (audio == (void *)0x0) {
-        LOGF_ERR("Failed to get audio from resources!\n");
+        //LOGF_ERR("Failed to get audio from resources!\n");
 
         return 0;
     }

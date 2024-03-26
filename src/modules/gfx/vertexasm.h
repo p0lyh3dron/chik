@@ -87,7 +87,8 @@ void *vertex_build_interpolated(void *v0, void *v1, float diff);
  *    @param float   scale          The scalar to scale the vertex by.
  *    @param unsigned int   flags   A usage flag that determines how to scale the vertex.
  */
-void vertex_scale(void *vd, void *v, float scale, unsigned int flags);
+void vertex_scale(void *vd, void *v, float scale,
+                             unsigned int flags);
 
 /*
  *    Binds the fragment shader's uniform data to the vertex assembler.

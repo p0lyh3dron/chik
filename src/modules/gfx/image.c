@@ -86,7 +86,7 @@ file_type_e file_type(const char *file) {
 image_t *image_load_bmp(const char *file) {
     unsigned int   len;
     unsigned int   padding = 0;
-    unsigned long  i;
+    size_t  i;
     bmp_header_t   header;
     image_t       *image;
     unsigned char *data;

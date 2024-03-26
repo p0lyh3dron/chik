@@ -21,7 +21,7 @@
 #endif /* USE_ALSA  */
 
 #if USE_SDL
-#include <SDL2/SDL.h>
+#include <SDL.h>
 #endif /* USE_SDL  */
 
 #define PCM_DEVICE       "default"
@@ -31,8 +31,8 @@
 #define PCM_SAMPLE_WIDTH 16
 #define PCM_WRITE_SIZE   PCM_BUFFER_SIZE / PCM_CHANNELS * PCM_SAMPLE_WIDTH / 8
 
-#define DEFAULT_WIDTH  2560
-#define DEFAULT_HEIGHT 1440
+#define DEFAULT_WIDTH  1920
+#define DEFAULT_HEIGHT 1080
 #define DEFAULT_TITLE  "Chik Application"
 
 #define MAX_INPUT_TYPES  256
@@ -262,6 +262,8 @@ void surface_set_size(vec2u_t size) {
 #endif /* USE_SDL  */
 }
 
+static vec2u_t gMouseDelta;
+
 /*
  *    Capture input events.
  */
@@ -281,6 +283,36 @@ unsigned int input_capture(void) {
 
     SDL_PumpEvents();
     _key_state = SDL_GetKeyboardState(nullptr);
+
+    // get total event count first
+    int eventCount = SDL_PeepEvents(nullptr, 0, SDL_PEEKEVENT, SDL_FIRSTEVENT,
+                                SDL_LASTEVENT);
+
+    // resize event vector with events found
+    SDL_Event *events = malloc(sizeof(SDL_Event) * eventCount);
+
+    // fill event vector with events found
+    SDL_PeepEvents(events, eventCount, SDL_GETEVENT, SDL_FIRSTEVENT, SDL_LASTEVENT);
+
+    gMouseDelta.x = 0;
+    gMouseDelta.y = 0;
+
+    for (int i = 0; i < eventCount; i++) {
+        SDL_Event event = events[i];
+
+        switch (event.type) {
+            case SDL_MOUSEMOTION: {
+              // aMousePos.x = event.motion.x;
+              // aMousePos.y = event.motion.y;
+              gMouseDelta.x += event.motion.xrel;
+              gMouseDelta.y += event.motion.yrel;
+              break;
+            }
+        }
+    }
+
+    free(events);
+
 #endif /* USE_SDL  */
     return 1;
 }
@@ -412,7 +444,7 @@ vec2u_t platform_get_screen_size(void) {
  */
 char *platform_get_event(unsigned int *info) {
 #if USE_SDL
-    unsigned long i;
+    size_t i;
 
     for (i = 0; i < MAX_INPUT_TYPES; ++i) {
         if (_key_state[_keys[i]] && _key_mask[_keys[i]] == 0) {
@@ -481,7 +513,8 @@ unsigned int platform_write_sound(char *buf) {
  *    @param unsigned int *num_channels     The channels.
  *    @param unsigned int *buf_len          The buffer size.
  */
-void platform_get_sound_info(unsigned int *bits_per_samp, unsigned int *sample_rate,
+void platform_get_sound_info(unsigned int *bits_per_samp,
+                                        unsigned int *sample_rate,
                              unsigned int *num_channels, unsigned int *buf_len) {
     *bits_per_samp = PCM_SAMPLE_WIDTH;
     *sample_rate   = PCM_SAMPLE_RATE;

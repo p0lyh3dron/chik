@@ -16,6 +16,35 @@
 
 #include "stat.h"
 
+#ifdef _WIN32
+#include <WinSock2.h>
+
+#define WIN32_LEAN_AND_MEAN
+#include <stdint.h>  // portable: uint64_t   MSVC: __int64
+
+// https://stackoverflow.com/questions/10905892/equivalent-of-gettimeofday-for-windows
+int gettimeofday(struct timeval *tp, struct timezone *tzp) {
+  // Note: some broken versions only have 8 trailing zero's, the correct epoch
+  // has 9 trailing zero's This magic number is the number of 100 nanosecond
+  // intervals since January 1, 1601 (UTC) until 00:00:00 January 1, 1970
+  static const uint64_t EPOCH = ((uint64_t)116444736000000000ULL);
+
+  SYSTEMTIME system_time;
+  FILETIME file_time;
+  uint64_t time;
+
+  GetSystemTime(&system_time);
+  SystemTimeToFileTime(&system_time, &file_time);
+  time = ((uint64_t)file_time.dwLowDateTime);
+  time += ((uint64_t)file_time.dwHighDateTime) << 32;
+
+  tp->tv_sec = (long)((time - EPOCH) / 10000000L);
+  tp->tv_usec = (long)(system_time.wMilliseconds * 1000);
+  return 0;
+}
+#endif
+
+
 #define CHIK_ENGINE_SHELL_MAX_COMMAND_LENGTH 256
 
 module_t _modules[ENGINE_MAX_MODULES] = {0};
@@ -33,7 +62,7 @@ int  _shl_cmd_indx                                   = 0;
  *    @return void *       Returns a pointer to the function.
  */
 void *engine_load_function(const char *name) {
-    unsigned long i;
+    size_t i;
     void         *fun;
 
     for (i = 0; i < ENGINE_MAX_MODULES; i++) {
@@ -138,6 +167,7 @@ unsigned int engine_init(const char *modules, ...) {
 unsigned int engine_update_shell(void) {
     char *pBuf = plat_read_stdin();
 
+#ifdef SHEEL
     if (pBuf != nullptr)
         memcpy(_shl_cmds + _shl_cmd_indx++, pBuf, 1);
 
@@ -146,6 +176,7 @@ unsigned int engine_update_shell(void) {
         shell_execute(_shl_cmds);
         _shl_cmd_indx = 0;
     }
+#endif
 
     return 1;
 }

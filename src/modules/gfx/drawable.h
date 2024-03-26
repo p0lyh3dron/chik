@@ -18,7 +18,7 @@
 #include "image.h"
 
 typedef struct {
-    void        *buf;
+    char        *buf;
     unsigned int stride;
     unsigned int size;
     v_layout_t   layout;
@@ -26,7 +26,7 @@ typedef struct {
 
 typedef struct {
     vbuffer_t    *vbuf;
-    void         *assets;
+    char         *assets;
     unsigned long assets_size;
     unsigned long assets_count;
 } mesh_t;

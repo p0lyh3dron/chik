@@ -11,7 +11,14 @@
 #include "stat.h"
 
 #include <math.h>
+
+
+#ifdef _WIN32
+#include <WinSock2.h>
+#else
 #include <sys/time.h>
+#endif
+
 
 stat_t _stat = {0};
 
@@ -19,7 +26,7 @@ stat_t _stat = {0};
  *    Starts a new frame.
  */
 void stat_start_frame() {
-    unsigned long  i;
+    size_t  i;
     struct timeval tv;
 
     gettimeofday(&tv, NULL);
@@ -70,6 +77,8 @@ void stat_start_frame() {
             _stat.frame_rate_max = _stat.frame_rate;
         }
     }
+
+    printf("Frame rate: %f\n", _stat.frame_rate);
 }
 
 /*
