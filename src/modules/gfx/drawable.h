@@ -25,10 +25,18 @@ typedef struct {
 } vbuffer_t;
 
 typedef struct {
-    vbuffer_t    *vbuf;
-    char         *assets;
-    unsigned long assets_size;
-    unsigned long assets_count;
+    u32        offset;
+    u32        size;
+    material_t material;
+} mesh_surface_t;
+
+typedef struct {
+    vbuffer_t      *vbuf;
+    mesh_surface_t *surfaces;
+    u32             surface_count;
+    char           *assets;
+    u64             assets_size;
+    u64             assets_count;
 } mesh_t;
 
 /*
@@ -97,6 +105,65 @@ void mesh_set_asset(void *m, void *a, unsigned long size, unsigned long i);
 void *mesh_get_asset(void *a, unsigned long i);
 
 /*
+ *    Gets the amount of surfaces a mesh has
+ *
+ *    @param void *m              The mesh.
+ *
+ *    @return u32                 The amount of surfaces the mesh has
+ */
+u32 mesh_get_surface_count(void* m);
+
+/*
+ *    Sets the amount of surfaces a mesh has
+ *
+ *    @param void *m              The mesh.
+ *    @param u32                  Set the amount of surfaces for the mesh
+ *
+ *    @return bool                Returns if it succeeded or failed
+ */
+bool mesh_set_surface_count(void *m, u32 count);
+
+/*
+ *    Sets the buffer data for a surfaces a mesh has
+ *
+ *    @param void *m              The mesh.
+ *    @param u32                  The surface to set buffer data for
+ *    @param u32                  How many vertices offset from the start this surface uses
+ *    @param u32                  How many vertices this surfaces uses
+ */
+void mesh_set_surface_buffer_data(void *m, u32 surface, u32 offset, u32 size);
+
+/*
+ *    Gets a material on a mesh surface
+ *
+ *    @param void *m              The mesh.
+ *    @param u32                  The surface to set buffer data for
+ *
+ *    @return material_t*         The material for this surface
+ */
+material_t* mesh_get_material(void *m, u32 surface);
+
+/*
+ *    Sets the assets of a mesh.
+ *
+ *    @param void *m              The mesh.
+ *    @param void *a              The asset.
+ *    @param unsigned long size   The size of the asset.
+ *    @param unsigned long i      The index of the asset.
+ */
+void mesh_set_asset(void *m, void *a, unsigned long size, unsigned long i);
+
+/*
+ *    Returns the data of an asset.
+ *
+ *    @param void *a            The assets.
+ *    @param unsigned long i    The index of the asset.
+ *
+ *    @return void *            The asset data.
+ */
+void *mesh_get_asset(void *a, unsigned long i);
+
+/*
  *    Draws a mesh.
  *
  *    @param void *m    The mesh.
@@ -109,3 +176,8 @@ void mesh_draw(void *m);
  *    @param void *m    The mesh.
  */
 void mesh_free(void *m);
+
+/*
+ *    Initializes the mesh system.
+ */
+void mesh_init();
