@@ -42,6 +42,7 @@
 
 unsigned int _keys[MAX_INPUT_TYPES]                        = {0};
 char         _key_alias[MAX_INPUT_TYPES][MAX_ALIAS_LENGTH] = {{'\0'}};
+char         _mouse_capture = 1;
 
 #if USE_ALSA
 snd_pcm_t *_aud_dev = nullptr;
@@ -191,8 +192,8 @@ unsigned int surface_init(void) {
     /*
      *    Create the window.
      */
-    _win = SDL_CreateWindow(pTitle, 0,
-                            0, width, height,
+    _win = SDL_CreateWindow(pTitle, SDL_WINDOWPOS_CENTERED,
+                            SDL_WINDOWPOS_CENTERED, width, height,
                             SDL_WINDOW_SHOWN | SDL_WINDOW_RESIZABLE | SDL_WINDOW_VULKAN);
     if (_win == nullptr) {
         VLOGF_ERR("Window could not be created! "
@@ -217,8 +218,13 @@ unsigned int surface_init(void) {
         /*
          *    Create the texture.
          */
-        _tex = SDL_CreateTexture(_rend, SDL_PIXELFORMAT_RGB24,
-                                 SDL_TEXTUREACCESS_STREAMING, width, height);
+        _tex = SDL_CreateTexture(_rend,
+#if _WIN32
+            SDL_PIXELFORMAT_BGR24,
+#else
+            SDL_PIXELFORMAT_RGB24,
+#endif
+            SDL_TEXTUREACCESS_STREAMING, width, height);
         if (_tex == nullptr) {
             VLOGF_ERR("Texture could not be created! "
                       "SDL_Error: %s\n",
@@ -263,6 +269,7 @@ void surface_set_size(vec2u_t size) {
 }
 
 static vec2u_t gMouseDelta;
+void platform_set_mouse_capture(char capture);
 
 /*
  *    Capture input events.
@@ -271,16 +278,16 @@ unsigned int input_capture(void) {
 #if USE_SDL
     vec2u_t res = platform_get_screen_size();
 
-    if ((SDL_GetWindowFlags(_win) & SDL_WINDOW_INPUT_FOCUS)) {
-        SDL_SetRelativeMouseMode(SDL_TRUE);
-        /*
-         *    Center the mouse.
-         */
-        SDL_WarpMouseInWindow(_win, res.x / 2, res.y / 2);
-    } else {
-        SDL_SetRelativeMouseMode(SDL_FALSE);
+    if (_mouse_capture) {
+        if ((SDL_GetWindowFlags(_win) & SDL_WINDOW_INPUT_FOCUS)) {
+            platform_set_mouse_capture(1);
+            /*
+             *    Center the mouse.
+             */
+            SDL_WarpMouseInWindow(_win, res.x / 2, res.y / 2);
+        }
     }
-
+    
     SDL_PumpEvents();
     _key_state = SDL_GetKeyboardState(nullptr);
 
@@ -288,10 +295,15 @@ unsigned int input_capture(void) {
     int eventCount = SDL_PeepEvents(nullptr, 0, SDL_PEEKEVENT, SDL_FIRSTEVENT,
                                 SDL_LASTEVENT);
 
-    // resize event vector with events found
-    SDL_Event *events = malloc(sizeof(SDL_Event) * eventCount);
+    // allocate event array with event count
+    SDL_Event *events = calloc(eventCount, sizeof(SDL_Event));
 
-    // fill event vector with events found
+    if (!events) {
+        LOGF_ERR("Failed to allocate SDL_Event list\n");
+        return;
+    }
+
+    // fill event array with events found
     SDL_PeepEvents(events, eventCount, SDL_GETEVENT, SDL_FIRSTEVENT, SDL_LASTEVENT);
 
     gMouseDelta.x = 0;
@@ -302,11 +314,15 @@ unsigned int input_capture(void) {
 
         switch (event.type) {
             case SDL_MOUSEMOTION: {
-              // aMousePos.x = event.motion.x;
-              // aMousePos.y = event.motion.y;
-              gMouseDelta.x += event.motion.xrel;
-              gMouseDelta.y += event.motion.yrel;
-              break;
+                // aMousePos.x = event.motion.x;
+                // aMousePos.y = event.motion.y;
+                gMouseDelta.x += event.motion.xrel;
+                gMouseDelta.y += event.motion.yrel;
+                break;
+            }
+            case SDL_QUIT: {
+                shell_execute("quit");
+                break;
             }
         }
     }
@@ -470,6 +486,7 @@ vec2u_t platform_get_joystick_event() {
         SDL_GetRelativeMouseState(&event.x, &event.y);
 
     return event;
+    // return gMouseDelta;
 #endif /* USE_SDL  */
 }
 
@@ -586,6 +603,17 @@ unsigned int platform_cleanup(void) {
     audio_quit();
     surface_quit();
     return 1;
+}
+
+void platform_set_mouse_capture(char capture) {
+    _mouse_capture = capture;
+
+    if (capture) {
+        SDL_SetRelativeMouseMode(SDL_TRUE);
+    }
+    else {
+        SDL_SetRelativeMouseMode(SDL_FALSE);
+    }
 }
 
 CHIK_MODULE(platform_init, platform_update, platform_cleanup)
