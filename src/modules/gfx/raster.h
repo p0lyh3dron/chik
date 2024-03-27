@@ -21,9 +21,10 @@
 
 typedef struct {
     void *v0;
-    void *v1;
-    void *v2;
-    void *assets;
+    void* v1;
+    void* v2;
+    void* assets;
+    material_t* material;
 } triangle_t;
 
 /*
@@ -70,7 +71,7 @@ unsigned int raster_check_depth(unsigned int sX, unsigned int sY, float sDepth);
  *    @param void *        The first vertex of the scanline.
  *    @param void *        The second vertex of the scanline.
  */
-void raster_draw_scanline(int sX1, int sX2, int sY, void *spV1, void *spV2, void *assets);
+void raster_draw_scanline(int sX1, int sX2, int sY, void *spV1, void *spV2, void *assets, material_t* mat);
 
 /*
  *    Rasterizes a single triangle.
@@ -79,7 +80,7 @@ void raster_draw_scanline(int sX1, int sX2, int sY, void *spV1, void *spV2, void
  *    @param void *        The raw vertex data for the second vertex.
  *    @param void *        The raw vertex data for the third vertex.
  */
-void raster_rasterize_triangle(void *spV1, void *spV2, void *spV3, void *assets);
+void raster_rasterize_triangle(void *spV1, void *spV2, void *spV3, void *assets, material_t* mat);
 
 /*
  *    Uses threads to rasterize a triangle.

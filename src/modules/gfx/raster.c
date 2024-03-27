@@ -80,7 +80,7 @@ void raster_clear_depth(void) {
  *    @param void *v1        The first vertex of the scanline.
  *    @param void *v2        The second vertex of the scanline.
  */
-void raster_draw_scanline(int x1, int x2, int y, void *v1, void *v2, void *assets) {
+void raster_draw_scanline(int x1, int x2, int y, void *v1, void *v2, void *assets, material_t *mat) {
     int        x = 0;
     int        end_x = 0;
     int        temp = 0;
@@ -97,7 +97,7 @@ void raster_draw_scanline(int x1, int x2, int y, void *v1, void *v2, void *asset
     vec_t      scaled_v[MAX_VECTOR_ATTRIBUTES];
     vec_t      diff[MAX_VECTOR_ATTRIBUTES];
     fragment_t f;
-    void (*f_fun)(fragment_t *, void *, void *) = _layout.f_fun;
+    void (*f_fun)(fragment_t *, void *, void *, material_t *) = _layout.f_fun;
     void (*v_scale)(void *, void *, float) = _layout.v_scale;
     void (*v_add)(void *, void *, void *) = _layout.v_add;
 
@@ -162,7 +162,7 @@ void raster_draw_scanline(int x1, int x2, int y, void *v1, void *v2, void *asset
         *depth = iz;
 
         v_scale(&scaled_v, &v, iz);
-        f_fun(&f, &scaled_v, assets);
+        f_fun(&f, &scaled_v, assets, mat);
 
         /*
          *    Draw the vertex.
@@ -188,7 +188,7 @@ void raster_draw_scanline(int x1, int x2, int y, void *v1, void *v2, void *asset
  *    @param void *v1        The raw vertex data for the second vertex.
  *    @param void *v2        The raw vertex data for the third vertex.
  */
-void raster_rasterize_triangle(void *r0, void *r1, void *r2, void *assets) {
+void raster_rasterize_triangle(void *r0, void *r1, void *r2, void *assets, material_t *mat) {
     /*
      *    Extract position data and rasterize it.
      */
@@ -361,7 +361,7 @@ void raster_rasterize_triangle(void *r0, void *r1, void *r2, void *assets) {
                                              (float)(v1.y - y) / (v1.y - v3.y)),
                    VERTEX_ASM_MAX_VERTEX_SIZE);
             raster_draw_scanline(v2.x + (y - v1.y) * dy2,
-                                 v1.x + (y - v1.y) * dy1, y, v0, v, assets);
+                                 v1.x + (y - v1.y) * dy1, y, v0, v, assets, mat);
             y--;
         }
         return;
@@ -402,7 +402,7 @@ void raster_rasterize_triangle(void *r0, void *r1, void *r2, void *assets) {
                                              (float)(v1.y - y) / (v1.y - v3.y)),
                    VERTEX_ASM_MAX_VERTEX_SIZE);
             raster_draw_scanline(v1.x + (y - v1.y) * dy0,
-                                 v1.x + (y - v1.y) * dy1, y, v0, v, assets);
+                                 v1.x + (y - v1.y) * dy1, y, v0, v, assets, mat);
             y--;
         }
         return;
@@ -423,14 +423,14 @@ void raster_rasterize_triangle(void *r0, void *r1, void *r2, void *assets) {
                            pIA, pIB, (float)(v1.y - y) / (v1.y - v2.y)),
                        VERTEX_ASM_MAX_VERTEX_SIZE);
                 raster_draw_scanline(v1.x + (y - v1.y) * dy0,
-                                     v1.x + (y - v1.y) * dy1, y, v0, v, assets);
+                                     v1.x + (y - v1.y) * dy1, y, v0, v, assets, mat);
             } else {
                 memcpy(v0,
                        vertex_build_interpolated(
                            pIB, pIC, (float)(v2.y - y) / (v2.y - v3.y)),
                        VERTEX_ASM_MAX_VERTEX_SIZE);
                 raster_draw_scanline(v2.x + (y - v2.y) * dy2,
-                                     v1.x + (y - v1.y) * dy1, y, v0, v, assets);
+                                     v1.x + (y - v1.y) * dy1, y, v0, v, assets, mat);
             }
         }
         /*
@@ -447,14 +447,14 @@ void raster_rasterize_triangle(void *r0, void *r1, void *r2, void *assets) {
                            pIA, pIB, (float)(v1.y - y) / (v1.y - v2.y)),
                        VERTEX_ASM_MAX_VERTEX_SIZE);
                 raster_draw_scanline(v1.x + (y - v1.y) * dy1,
-                                     v1.x + (y - v1.y) * dy0, y, v0, v, assets);
+                                     v1.x + (y - v1.y) * dy0, y, v0, v, assets, mat);
             } else {
                 memcpy(v,
                        vertex_build_interpolated(
                            pIB, pIC, (float)(v2.y - y) / (v2.y - v3.y)),
                        VERTEX_ASM_MAX_VERTEX_SIZE);
                 raster_draw_scanline(v1.x + (y - v1.y) * dy1,
-                                     v2.x + (y - v2.y) * dy2, y, v0, v, assets);
+                                     v2.x + (y - v2.y) * dy2, y, v0, v, assets, mat);
             }
         }
         y--;
@@ -469,7 +469,7 @@ void raster_rasterize_triangle(void *r0, void *r1, void *r2, void *assets) {
 void *raster_rasterize_triangle_thread(void *params) {
     triangle_t *tri = (triangle_t *)params;
 
-    raster_rasterize_triangle(tri->v0, tri->v1, tri->v2, tri->assets);
+    raster_rasterize_triangle(tri->v0, tri->v1, tri->v2, tri->assets, tri->material);
 
     free(tri->v0);
     free(tri->v1);

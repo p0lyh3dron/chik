@@ -62,6 +62,7 @@ unsigned int graphics_init(void) {
     cull_create_frustum();
     rendertarget_create_backbuffer();
     raster_set_rendertarget(_back_buffer);
+    mesh_init();
 
     return 1;
 }

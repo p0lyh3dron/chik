@@ -221,26 +221,150 @@ void *mesh_get_asset(void *a, size_t i) {
 }
 
 /*
- *    Draws a mesh.
+ *    Gets the amount of surfaces a mesh has
  *
- *    @param void *m    The mesh.
+ *    @param void *m              The mesh.
+ *
+ *    @return u32                 The amount of surfaces the mesh has
  */
-void mesh_draw(void *m) {
-    mesh_t *mesh = (mesh_t *)m;
+u32 mesh_get_surface_count(void* m) {
+    if (m == (void*)0x0) {
+        LOGF_ERR("Mesh is null.\n");
+        return 0;
+    }
 
-    if (mesh == (mesh_t *)0x0) {
+    mesh_t* mesh = (mesh_t*)m;
+    return mesh->surface_count;
+}
+
+/*
+ *    Sets the amount of surfaces a mesh has
+ *
+ *    @param void *m              The mesh.
+ *    @param u32                  Set the amount of surfaces for the mesh
+ */
+bool mesh_set_surface_count(void* m, u32 count) {
+    if (m == (void*)0x0) {
+        LOGF_ERR("Mesh is null.\n");
+        return false;
+    }
+
+    mesh_t* mesh = (mesh_t*)m;
+
+    u32 old_count = mesh->surface_count;
+
+    void* surfaces = realloc( mesh->surfaces, sizeof( mesh_surface_t ) * count );
+
+    if (surfaces == CH_NULL) {
+        free(mesh->surfaces);
+        return false;
+    }
+
+    mesh->surfaces = surfaces;
+    mesh->surface_count = count;
+
+    // zero out memory of new surfaces
+    for (u32 i = old_count; i < mesh->surface_count; i++) {
+        memset(&mesh->surfaces[i], 0, sizeof(mesh_surface_t));
+    }
+
+    return true;
+}
+
+/*
+ *    Sets the buffer data for a surfaces a mesh has
+ *
+ *    @param void *m              The mesh.
+ *    @param u32                  The surface to set buffer data for
+ *    @param u32                  How many vertices offset from the start this surface uses
+ *    @param u32                  How many vertices this surfaces uses
+ */
+void mesh_set_surface_buffer_data(void* m, u32 surface, u32 offset, u32 size) {
+    if (m == (void*)0x0) {
         LOGF_ERR("Mesh is null.\n");
         return;
     }
 
-    vbuffer_t *buf = mesh->vbuf;
+    mesh_t* mesh = (mesh_t*)m;
 
-    if (buf == (vbuffer_t *)0x0) {
-        LOGF_ERR("Vertex buffer is null.\n");
+    if (mesh->surface_count == 0 || mesh->surfaces == 0x0) {
+        LOGF_ERR("Mesh has no surfaces.\n");
         return;
     }
 
-    unsigned int num_verts = buf->size / buf->stride;
+    if (surface > mesh->surface_count) {
+        VLOGF_ERR("Mesh does not have %d surfaces, only %d\n", surface, mesh->surface_count);
+        return;
+    }
+
+    mesh->surfaces[surface].offset = offset;
+    mesh->surfaces[surface].size   = size;
+}
+
+/*
+ *    Gets a material on a mesh surface
+ *
+ *    @param void *m              The mesh.
+ *    @param u32                  The surface to set buffer data for
+ *
+ *    @return material_t*         The material for this surface
+ */
+material_t* mesh_get_material(void* m, u32 surface) {
+    if (m == (void*)0x0) {
+        LOGF_ERR("Mesh is null.\n");
+        return CH_NULL;
+    }
+
+    mesh_t* mesh = (mesh_t*)m;
+
+    if (mesh->surface_count == 0 || mesh->surfaces == 0x0) {
+        LOGF_ERR("Mesh has no surfaces.\n");
+        return CH_NULL;
+    }
+
+    if (surface > mesh->surface_count) {
+        VLOGF_ERR("Mesh does not have %d surfaces, only %d\n", surface, mesh->surface_count);
+        return CH_NULL;
+    }
+
+    return &mesh->surfaces[surface].material;
+}
+
+/*
+ *    Rasterizes a mesh multithreaded
+ *
+ *    @param void *m    The mesh.
+ *    @param     The mesh.
+ */
+
+void mesh_surface_raster_threaded(unsigned char* a0, unsigned char* b0, unsigned char* c0, char* assets, material_t* material) {
+    triangle_t* pTri = (triangle_t*)malloc(sizeof(triangle_t));
+    pTri->v0 = malloc(VERTEX_ASM_MAX_VERTEX_SIZE);
+    pTri->v1 = malloc(VERTEX_ASM_MAX_VERTEX_SIZE);
+    pTri->v2 = malloc(VERTEX_ASM_MAX_VERTEX_SIZE);
+    pTri->assets = assets;
+    pTri->material = material;
+
+    memcpy(pTri->v0, a0, VERTEX_ASM_MAX_VERTEX_SIZE);
+    memcpy(pTri->v1, b0, VERTEX_ASM_MAX_VERTEX_SIZE);
+    memcpy(pTri->v2, c0, VERTEX_ASM_MAX_VERTEX_SIZE);
+    threadpool_submit(raster_rasterize_triangle_thread, (void*)pTri);
+}
+
+char* (*mesh_surface_raster_func)(unsigned char*, unsigned char*, unsigned char*, char* assets, material_t* material) = 0;
+
+/*
+ *    Draws a mesh surface.
+ *
+ *    @param void *m    The mesh.
+ *    @param     The mesh.
+ */
+void mesh_surface_draw(mesh_t* mesh, mesh_surface_t* surface) {
+    vbuffer_t* buf = mesh->vbuf;
+
+    char* buffer = buf->buf + (surface->offset * buf->stride);
+
+    unsigned int num_verts = surface->size;
 
     vertexasm_set_layout(buf->layout);
 
@@ -249,9 +373,9 @@ void mesh_draw(void *m) {
         unsigned char b0[VERTEX_ASM_MAX_VERTEX_SIZE];
         unsigned char c0[VERTEX_ASM_MAX_VERTEX_SIZE];
 
-        void *a = buf->buf + (i + 0) * buf->stride;
-        void *b = buf->buf + (i + 1) * buf->stride;
-        void *c = buf->buf + (i + 2) * buf->stride;
+        void* a = buffer + (i + 0) * buf->stride;
+        void* b = buffer + (i + 1) * buf->stride;
+        void* c = buffer + (i + 2) * buf->stride;
 
         /*
          *    Copy the vertex data into a buffer.
@@ -262,8 +386,9 @@ void mesh_draw(void *m) {
 
         /*
          *    Apply the vertex shader.
+         *    TODO: Do this check earlier
          */
-        if (buf->layout.v_fun != (void *)0x0) {
+        if (buf->layout.v_fun != (void*)0x0) {
             buf->layout.v_fun(a0, a, mesh->assets);
             buf->layout.v_fun(b0, b, mesh->assets);
             buf->layout.v_fun(c0, c, mesh->assets);
@@ -276,18 +401,18 @@ void mesh_draw(void *m) {
          */
         int clipped_vertices = 0;
 
-        unsigned char *new_verts = cull_clip_triangle(a0, b0, c0, &clipped_vertices, 1);
+        unsigned char* new_verts = cull_clip_triangle(a0, b0, c0, &clipped_vertices, 1);
 
         /*
          *    Draw the clipped vertices.
          */
         for (long j = 0; j < clipped_vertices - 2; ++j) {
             memcpy(a0, new_verts + (0 + 0) * VERTEX_ASM_MAX_VERTEX_SIZE,
-                   buf->stride);
+                buf->stride);
             memcpy(b0, new_verts + (j + 1) * VERTEX_ASM_MAX_VERTEX_SIZE,
-                   buf->stride);
+                buf->stride);
             memcpy(c0, new_verts + (j + 2) * VERTEX_ASM_MAX_VERTEX_SIZE,
-                   buf->stride);
+                buf->stride);
 
             vertex_perspective_divide(a0);
             vertex_perspective_divide(b0);
@@ -296,24 +421,39 @@ void mesh_draw(void *m) {
             /*
              *    Draw the triangle.
              */
-            if (args_has("--multithreaded-render")) {
-                triangle_t *pTri = (triangle_t *)malloc(sizeof(triangle_t));
-                pTri->v0         = malloc(VERTEX_ASM_MAX_VERTEX_SIZE);
-                pTri->v1         = malloc(VERTEX_ASM_MAX_VERTEX_SIZE);
-                pTri->v2         = malloc(VERTEX_ASM_MAX_VERTEX_SIZE);
-                pTri->assets     = mesh->assets;
-
-                memcpy(pTri->v0, a0, VERTEX_ASM_MAX_VERTEX_SIZE);
-                memcpy(pTri->v1, b0, VERTEX_ASM_MAX_VERTEX_SIZE);
-                memcpy(pTri->v2, c0, VERTEX_ASM_MAX_VERTEX_SIZE);
-                threadpool_submit(raster_rasterize_triangle_thread, (void *)pTri);
-            }
-            else {
-                raster_rasterize_triangle(a0, b0, c0, mesh->assets);
-            }
+            mesh_surface_raster_func(a0, b0, c0, mesh->assets, &surface->material);
         }
     }
     //threadpool_wait();
+}
+
+
+/*
+ *    Draws a mesh.
+ *
+ *    @param void *m    The mesh.
+ */
+void mesh_draw(void *m) {
+    mesh_t *mesh = (mesh_t *)m;
+
+    if (mesh == (mesh_t *)0x0) {
+        LOGF_ERR("Mesh is null.\n");
+        return;
+    }
+
+    if (mesh->surface_count == 0 || mesh->surfaces == 0x0) {
+        LOGF_ERR("Mesh has no surfaces.\n");
+        return;
+    }
+
+    if (mesh->vbuf == (vbuffer_t*)0x0) {
+        LOGF_ERR("Vertex buffer is null.\n");
+        return;
+    }
+
+    for ( u32 i = 0; i < mesh->surface_count; i++ ) {
+        mesh_surface_draw(mesh, &mesh->surfaces[i]);
+    }
 }
 
 /*
@@ -332,5 +472,24 @@ void mesh_free(void *m) {
     if (mesh->assets != (void *)0x0)
         free(mesh->assets);
 
+    if (mesh->surfaces != (void*)0x0) {
+        for (u32 i = 0; i < mesh->surface_count; i++) {
+            if (mesh->surfaces[i].material.albedo) {
+
+            }
+        }
+
+        free(mesh->surfaces);
+    }
+
     free(mesh);
+}
+
+void mesh_init() {
+    if (args_has("--multithreaded-render")) {
+        mesh_surface_raster_func = mesh_surface_raster_threaded;
+    }
+    else {
+        mesh_surface_raster_func = raster_rasterize_triangle;
+    }
 }
