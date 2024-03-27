@@ -16,14 +16,15 @@
 #include "libchik.h"
 
 typedef struct {
-    long  frames;
-    long  frame_times[FRAMES_AVG_COUNT];
+    s64   frames;
+    s64   frame_times[FRAMES_AVG_COUNT];
     float frame_rate;
     float frame_rate_avg;
     float frame_rate_max;
-    long  start_time;
-    long  prev_time;
-    long  time_diff;
+    s64   start_time;
+    s64   prev_time;
+    s64   cur_time;
+    s64   time_diff;
 } stat_t;
 
 /*
