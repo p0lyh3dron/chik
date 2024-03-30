@@ -53,7 +53,7 @@ vec4_t vertex_get_position(void *v) {
     if (i == _layout.count)
         return (vec4_t){0, 0, 0, 0};
 
-    return *(vec4_t *)((unsigned char *)v + _layout.attributes[i].offset);
+    return *(vec4_t *)(v + _layout.attributes[i].offset);
 }
 
 /*
@@ -73,7 +73,7 @@ void vertex_set_position(void *v, vec4_t pos) {
     if (i == _layout.count)
         return;
 
-    *(vec4_t *)((unsigned char *)v + _layout.attributes[i].offset) = pos;
+    *(vec4_t *)(v + _layout.attributes[i].offset) = pos;
 }
 
 /*
@@ -81,7 +81,7 @@ void vertex_set_position(void *v, vec4_t pos) {
  *
  *    @param void *v          The raw vertex data.
  */
-void vertex_perspective_divide(char *v) {
+void vertex_perspective_divide(void *v) {
     vec4_t pos = vertex_get_position(v);
 
     pos.x /= pos.w;
@@ -98,7 +98,7 @@ void vertex_perspective_divide(char *v) {
  *    @param void *v1          The raw vertex data of the second vertex.
  *    @param float dist        The "distance" between the two.
  */
-void vertex_build_differential(char *vd, char *v0, char *v1, float dist) {
+void vertex_build_differential(void *vd, void *v0, void *v1, float dist) {
     size_t                 i;
     static THREAD_LOCAL unsigned char buf[VERTEX_ASM_MAX_VERTEX_SIZE];
 
@@ -120,7 +120,7 @@ void vertex_build_differential(char *vd, char *v0, char *v1, float dist) {
  *    @param void *v0          The raw vertex data of the first vertex.
  *    @param void *v1          The raw vertex data of the second vertex.
  */
-void vertex_add(char *vd, char *v0, char *v1) {
+void vertex_add(void *vd, void *v0, void *v1) {
     _layout.v_add(vd, v0, v1);
 }
 
@@ -134,7 +134,7 @@ void vertex_add(char *vd, char *v0, char *v1) {
  *
  *    @return void *       The raw vertex data of the new vertex.
  */
-void *vertex_build_interpolated(char *v0, char *v1, float diff) {
+void *vertex_build_interpolated(void *v0, void *v1, float diff) {
     size_t                 i;
     static THREAD_LOCAL unsigned char buf[VERTEX_ASM_MAX_VERTEX_SIZE];
 

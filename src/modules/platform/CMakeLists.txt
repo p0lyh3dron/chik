@@ -16,6 +16,7 @@ if ( MSVC )
     include_directories( "${LIBCHIK}" "${LIBCHIK}/../../SDL2/include" )
 else()
     link_libraries( asound )
+    include_directories( "${LIBCHIK}" /usr/include/SDL2 )
 endif()
 
 add_library( Chik_Platform SHARED ${SOURCES} )
