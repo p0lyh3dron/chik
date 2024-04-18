@@ -251,8 +251,8 @@ unsigned char *audio_read_wav(const char *path, size_t *samples) {
 
     unsigned char *audio_data = (unsigned char *)malloc(data_size);
 
-    size_t idx;
-    while (pos < len) {
+    unsigned long long idx = 0;
+    while (pos < len && idx < data_size) {
         if (bits_per_sample == 8) {
             unsigned short sample = (unsigned short)data[pos++];
             memcpy(audio_data + idx, &sample, 2);

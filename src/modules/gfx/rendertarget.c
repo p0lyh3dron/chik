@@ -67,7 +67,7 @@ rendertarget_t *rendertarget_create(unsigned int width, unsigned int height, uns
 
         _render_targets[i] = render_target;
         _render_targets =
-            realloc(_render_targets, sizeof(rendertarget_t *) * (i + 1));
+            realloc(_render_targets, sizeof(rendertarget_t *) * (i + 2));
 
         if (_render_targets == NULL) {
             LOGF_ERR("Could not reallocate memory for render target list.");
