@@ -43,7 +43,7 @@ void vertexasm_set_layout(v_layout_t layout) {
  *    @return vec4_t       The position of the vertex.
  */
 vec4_t vertex_get_position(void *v) {
-    size_t i;
+    unsigned int i;
 
     for (i = 0; i < _layout.count; i++) {
         if (_layout.attributes[i].usage == V_POS)
@@ -63,7 +63,7 @@ vec4_t vertex_get_position(void *v) {
  *    @param vec4_t pos       The position of the vertex.
  */
 void vertex_set_position(void *v, vec4_t pos) {
-    size_t i;
+    unsigned int i;
 
     for (i = 0; i < _layout.count; i++) {
         if (_layout.attributes[i].usage == V_POS)
@@ -99,7 +99,7 @@ void vertex_perspective_divide(void *v) {
  *    @param float dist        The "distance" between the two.
  */
 void vertex_build_differential(void *vd, void *v0, void *v1, float dist) {
-    size_t                 i;
+    unsigned int                 i;
     static THREAD_LOCAL unsigned char buf[VERTEX_ASM_MAX_VERTEX_SIZE];
 
     for (i = 0; i < _layout.count; i++) {
@@ -135,7 +135,7 @@ void vertex_add(void *vd, void *v0, void *v1) {
  *    @return void *       The raw vertex data of the new vertex.
  */
 void *vertex_build_interpolated(void *v0, void *v1, float diff) {
-    size_t                 i;
+    unsigned int                 i;
     static THREAD_LOCAL unsigned char buf[VERTEX_ASM_MAX_VERTEX_SIZE];
 
     for (i = 0; i < _layout.count; i++) {

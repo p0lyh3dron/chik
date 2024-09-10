@@ -15,7 +15,7 @@ if ( MSVC )
     link_directories( "${LIBCHIK}/../../SDL2/lib/x64" )
     include_directories( "${LIBCHIK}" "${LIBCHIK}/../../SDL2/include" )
 else()
-    link_libraries( asound )
+    #link_libraries( asound )
     include_directories( "${LIBCHIK}" /usr/include/SDL2 )
 endif()
 

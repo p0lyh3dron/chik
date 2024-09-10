@@ -434,7 +434,7 @@ void *vbuffer_create(void *v, unsigned int size, unsigned int stride, v_layout_t
 
     void *data;
     vkMapMemory(instance_get_device(), staging_buffer_memory, 0, buffer_size, 0, &data);
-    memcpy(data, v, (size_t)buffer_size);
+    memcpy(data, v, (unsigned int)buffer_size);
     vkUnmapMemory(instance_get_device(), staging_buffer_memory);
 
     VkBuffer       buffer;

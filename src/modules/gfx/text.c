@@ -225,10 +225,10 @@ unsigned char _font[95][13] = {
  */
 image_t *text_create(const char *text) {
     char          c;
-    size_t i;
-    size_t j;
-    size_t k;
-    size_t len;
+    unsigned int i;
+    unsigned int j;
+    unsigned int k;
+    unsigned int len;
     image_t      *font;
     trap_t        trap;
 

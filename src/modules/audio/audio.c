@@ -65,14 +65,14 @@ unsigned int audio_update(float dt) {
     /* Clear the audio buffer.  */
     memset(_audio_buf, 0, _sample_width * _num_channels * _num_samples);
     /* Write audio data to the sound buffer.  */
-    size_t i;
+    unsigned int i;
     for (i = 0; i < CHIK_AUDIO_MAX_AUDIO_HANDLES; ++i) {
         if (_audio[i] != nullptr) {
             audio_t *audio = _audio[i];
             if (audio->data != (unsigned char*)0x0) {
                 /* Simply add the audio data to the buffer.  */
                 if (audio->flags & CHIK_AUDIO_TYPE_LOOP && 0) {
-                    size_t j;
+                    unsigned int j;
                     for (j = 0; j < _num_samples * 4; j += _sample_width / 8) {
                         short *buf = (short *)(_audio_buf + j);
                         *buf += *(short*)(audio->data + audio->pos * _sample_width / 8 + j);
@@ -99,7 +99,7 @@ unsigned int audio_update(float dt) {
 
                     float         strength;
                     char          left;
-                    size_t j;
+                    unsigned int j;
                     for (j = left = 0; j < _num_samples * 4; j += _sample_width / 8) {
                         strength = left ? ear_strength.y : ear_strength.x;
 
@@ -131,7 +131,7 @@ unsigned int audio_shutdown(void) {
  *    @return audio_t *    The audio pointer.
  */
 audio_t *audio_ptr_init(void) {
-    size_t i;
+    unsigned int i;
     audio_t      *audio = (audio_t *)malloc(sizeof(audio_t));
 
     if (audio == (audio_t *)0x0) {
@@ -158,11 +158,11 @@ audio_t *audio_ptr_init(void) {
  *    Populates a buffer with WAV data.
  *
  *    @param const char    *path    The path to the WAV file.
- *    @param size_t *samples     The number of samples.
+ *    @param unsigned int *samples     The number of samples.
  *
  *    @return unsigned char *         The buffer.
  */
-unsigned char *audio_read_wav(const char *path, size_t *samples) {
+unsigned char *audio_read_wav(const char *path, unsigned long *samples) {
     unsigned int   len  = 0;
     unsigned char *data = file_read(path, &len);
 
@@ -172,7 +172,7 @@ unsigned char *audio_read_wav(const char *path, size_t *samples) {
         return (unsigned char *)0x0;
     }
 
-    size_t pos = 0;
+    unsigned int pos = 0;
 
     /* Check the RIFF header.  */
     if (data[pos++] != 'R' || data[pos++] != 'I' || data[pos++] != 'F' || data[pos++] != 'F') {

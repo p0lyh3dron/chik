@@ -62,7 +62,7 @@ int  _shl_cmd_indx                                   = 0;
  *    @return void *       Returns a pointer to the function.
  */
 void *engine_load_function(const char *name) {
-    size_t i;
+    unsigned int i;
     void         *fun;
 
     for (i = 0; i < ENGINE_MAX_MODULES; i++) {
@@ -167,16 +167,15 @@ unsigned int engine_init(const char *modules, ...) {
 unsigned int engine_update_shell(void) {
     char *pBuf = plat_read_stdin();
 
-#ifdef SHEEL
-    if (pBuf != nullptr)
-        memcpy(_shl_cmds + _shl_cmd_indx++, pBuf, 1);
+    if (pBuf == (char*)0x0) return 1;
 
-    if (_shl_cmds[_shl_cmd_indx - 1] == '\n') {
+    memcpy(_shl_cmds + _shl_cmd_indx++, pBuf, 1);
+
+    if (*pBuf == '\n') {
         _shl_cmds[_shl_cmd_indx - 1] = '\0';
         shell_execute(_shl_cmds);
         _shl_cmd_indx = 0;
     }
-#endif
 
     return 1;
 }

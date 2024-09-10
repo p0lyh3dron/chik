@@ -63,7 +63,7 @@ void raster_set_rendertarget(rendertarget_t *target) {
  *    Clears the depth buffer.
  */
 void raster_clear_depth(void) {
-    size_t i;
+    unsigned int i;
     float        *pDepth = (float *)_z_buffer->target->buf;
 
     for (i = 0; i < _z_buffer->target->width * _z_buffer->target->height; i++) {

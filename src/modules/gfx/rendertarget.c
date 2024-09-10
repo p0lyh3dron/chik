@@ -29,7 +29,7 @@ rendertarget_t *_back_buffer = NULL;
  * created. The render target should be freed with rendertarget_free().
  */
 rendertarget_t *rendertarget_create(unsigned int width, unsigned int height, unsigned int fmt) {
-    size_t   i;
+    unsigned int   i;
     image_t        *image;
     rendertarget_t *render_target = malloc(sizeof(rendertarget_t));
 
@@ -137,7 +137,7 @@ rendertarget_t *rendertarget_get_backbuffer(void) { return _back_buffer; }
  *    Frees all render targets.
  */
 void rendertarget_free_all(void) {
-    size_t i;
+    unsigned int i;
 
     if (_render_targets == NULL)
         return;

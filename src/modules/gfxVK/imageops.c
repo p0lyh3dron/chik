@@ -241,7 +241,7 @@ void imageops_upload_image(image_t *image) {
 
     void *data;
     vkMapMemory(instance_get_device(), staging_buffer_memory, 0, image->size, 0, &data);
-    memcpy(data, image->buf, (size_t)image->size);
+    memcpy(data, image->buf, (unsigned int)image->size);
     vkUnmapMemory(instance_get_device(), staging_buffer_memory);
 
     img->image = imageops_create_image(VK_FORMAT_R8G8B8A8_SRGB, image->width, image->height, 1, VK_SAMPLE_COUNT_1_BIT, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, VK_IMAGE_ASPECT_COLOR_BIT);

@@ -31,8 +31,8 @@
 #define PCM_SAMPLE_WIDTH 16
 #define PCM_WRITE_SIZE   PCM_BUFFER_SIZE / PCM_CHANNELS * PCM_SAMPLE_WIDTH / 8
 
-#define DEFAULT_WIDTH  1920
-#define DEFAULT_HEIGHT 1080
+#define DEFAULT_WIDTH  512
+#define DEFAULT_HEIGHT 320
 #define DEFAULT_TITLE  "Chik Application"
 
 #define MAX_INPUT_TYPES  256
@@ -177,7 +177,7 @@ unsigned int surface_init(void) {
         return 0;
     }
 
-    if (width == -1 || height == -1) {
+    if (width <= 0 || height <= 0) {
         width  = DEFAULT_WIDTH;
         height = DEFAULT_HEIGHT;
     }
@@ -194,7 +194,7 @@ unsigned int surface_init(void) {
      */
     _win = SDL_CreateWindow(pTitle, SDL_WINDOWPOS_CENTERED,
                             SDL_WINDOWPOS_CENTERED, width, height,
-                            SDL_WINDOW_SHOWN | SDL_WINDOW_RESIZABLE | SDL_WINDOW_VULKAN);
+                            SDL_WINDOW_SHOWN | SDL_WINDOW_RESIZABLE);
     if (_win == nullptr) {
         VLOGF_ERR("Window could not be created! "
                   "SDL_Error: %s\n",
@@ -222,7 +222,7 @@ unsigned int surface_init(void) {
 #if _WIN32
             SDL_PIXELFORMAT_BGR24,
 #else
-            SDL_PIXELFORMAT_RGB24,
+            SDL_PIXELFORMAT_BGR24,
 #endif
             SDL_TEXTUREACCESS_STREAMING, width, height);
         if (_tex == nullptr) {
@@ -460,7 +460,7 @@ vec2u_t platform_get_screen_size(void) {
  */
 char *platform_get_event(unsigned int *info) {
 #if USE_SDL
-    size_t i;
+    unsigned int i;
 
     for (i = 0; i < MAX_INPUT_TYPES; ++i) {
         if (_key_state[_keys[i]] && _key_mask[_keys[i]] == 0) {
