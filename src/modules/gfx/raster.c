@@ -9,6 +9,8 @@
  */
 #include "raster.h"
 
+#include <string.h>
+
 #include "vertexasm.h"
 
 rendertarget_t *_raster_target;
@@ -16,6 +18,13 @@ rendertarget_t *_raster_target;
 rendertarget_t *_z_buffer;
 
 extern v_layout_t _layout;
+
+void raster_set_viewport(int x, int y) {
+
+}
+
+vec2u_t _viewport;
+vec2u_t _viewport_offset;
 
 /*
  *    Sets up the rasterization stage.
@@ -33,6 +42,12 @@ void raster_setup(void) {
     }
 
     _z_buffer = rendertarget_create(width, height, IMAGE_FMT_RGBA8);
+
+    _viewport.x = width / 2;
+    _viewport.y = height * 2;
+
+    _viewport_offset.x = 0;
+    _viewport_offset.y = 0;
 
     if (!_z_buffer) {
         LOGF_FAT("Could not create Z buffer.");
@@ -105,7 +120,7 @@ void raster_draw_scanline(int x1, int x2, int y, void *v1, void *v2, void *asset
      *    Early out if the scanline is outside the render target,
      *    or if the line is a degenerate.
      */
-    if (y < 0 || y >= _raster_target->target->height || (x1 < 0 && x2 < 0)) {
+    if (y < _viewport_offset.y || y >= _viewport.y || (x1 < _viewport_offset.x && x2 < _viewport_offset.x)) {
         return;
     }
 
@@ -129,10 +144,10 @@ void raster_draw_scanline(int x1, int x2, int y, void *v1, void *v2, void *asset
     f.pos.x = x;
     f.pos.y = y;
 
-    x      = MAX(x1, 0);
+    x      = MAX(x1, _viewport_offset.x);
     z      = p1.z;
     dz     = (p2.z - p1.z) / (x2 - x1);
-    width  = _raster_target->target->width;
+    width  = _viewport.x;
     depth  = (float *)_z_buffer->target->buf + x + y * width;
     raster = _raster_target->target->buf + (y * width + x) * 3;
     end_x  = MIN(x2, width);
@@ -200,16 +215,16 @@ void raster_rasterize_triangle(void *r0, void *r1, void *r2, void *assets, mater
      *    Map the normalized coordinates to screen coordinates.
      */
     vec2u_t v1 = {
-        .x = (unsigned int)((p1.x + 1.0f) * _raster_target->target->width / 2),
-        .y = (unsigned int)((p1.y + 1.0f) * _raster_target->target->height / 2),
+        .x = (unsigned int)((p1.x + 1.0f) * _viewport.x / 2),
+        .y = (unsigned int)((p1.y + 1.0f) * _viewport.y / 2),
     };
     vec2u_t v2 = {
-        .x = (unsigned int)((p2.x + 1.0f) * _raster_target->target->width / 2),
-        .y = (unsigned int)((p2.y + 1.0f) * _raster_target->target->height / 2),
+        .x = (unsigned int)((p2.x + 1.0f) * _viewport.x / 2),
+        .y = (unsigned int)((p2.y + 1.0f) * _viewport.y / 2),
     };
     vec2u_t v3 = {
-        .x = (unsigned int)((p3.x + 1.0f) * _raster_target->target->width / 2),
-        .y = (unsigned int)((p3.y + 1.0f) * _raster_target->target->height / 2),
+        .x = (unsigned int)((p3.x + 1.0f) * _viewport.x / 2),
+        .y = (unsigned int)((p3.y + 1.0f) * _viewport.y / 2),
     };
 
     unsigned char v0[VERTEX_ASM_MAX_VERTEX_SIZE];
@@ -292,8 +307,8 @@ void raster_rasterize_triangle(void *r0, void *r1, void *r2, void *assets, mater
     /*
      *    Rasterize the starting y position.
      */
-    int y = MAX(v1.y, 0);
-    y     = MIN(y, _raster_target->target->height);
+    int y = MAX(v1.y, _viewport_offset.y);
+    y     = MIN(y, _viewport.y);
 
     /*
      *    Calculate the slopes of the lines.

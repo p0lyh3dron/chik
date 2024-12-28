@@ -40,7 +40,7 @@ image_t *image_create(unsigned int width, unsigned int height, image_fmt_e forma
      *    In the future, image data may not be just width * height * format.
      *    For now, we just allocate the amount of memory we need.
      */
-    image->buf = (unsigned int *)malloc(width * height * _pixel_sizes[format]);
+    image->buf = (unsigned char *)malloc(width * height * _pixel_sizes[format]);
 
     if (image->buf == NULL) {
         LOGF_ERR("Could not allocate memory for image buffer.");

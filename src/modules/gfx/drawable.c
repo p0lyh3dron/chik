@@ -165,8 +165,6 @@ void mesh_append_asset(void *m, void *a, unsigned long size) {
 
     memset(mesh->assets, 0, mesh->assets_size + size + offset);
 
-    auto value = _heapchk();
-
     memcpy((void *)((unsigned int)mesh->assets + mesh->assets_count * 8), &mesh->assets_size, sizeof(mesh->assets_size));
     memcpy((void *)((unsigned int)mesh->assets + mesh->assets_size), a, size);
     mesh->assets_size += size;
@@ -337,7 +335,7 @@ material_t* mesh_get_material(void* m, u32 surface) {
  *    @param     The mesh.
  */
 
-void mesh_surface_raster_threaded(unsigned char* a0, unsigned char* b0, unsigned char* c0, char* assets, material_t* material) {
+void mesh_surface_raster_threaded(void* a0, void* b0, void* c0, void* assets, material_t* material) {
     triangle_t* pTri = (triangle_t*)malloc(sizeof(triangle_t));
     pTri->v0 = malloc(VERTEX_ASM_MAX_VERTEX_SIZE);
     pTri->v1 = malloc(VERTEX_ASM_MAX_VERTEX_SIZE);
@@ -351,7 +349,7 @@ void mesh_surface_raster_threaded(unsigned char* a0, unsigned char* b0, unsigned
     threadpool_submit(raster_rasterize_triangle_thread, (void*)pTri);
 }
 
-char* (*mesh_surface_raster_func)(unsigned char*, unsigned char*, unsigned char*, char* assets, material_t* material) = 0;
+void (*mesh_surface_raster_func)(void*, void*, void*, void* assets, material_t* material) = 0;
 
 /*
  *    Draws a mesh surface.

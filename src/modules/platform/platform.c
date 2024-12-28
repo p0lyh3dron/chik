@@ -14,6 +14,7 @@
 
 #if __unix__
 #include <fcntl.h>
+#include <unistd.h>
 #endif /* __unix__  */
 
 #if USE_ALSA
@@ -300,7 +301,7 @@ unsigned int input_capture(void) {
 
     if (!events) {
         LOGF_ERR("Failed to allocate SDL_Event list\n");
-        return;
+        return 0;
     }
 
     // fill event array with events found
